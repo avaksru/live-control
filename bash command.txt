@@ -1,0 +1,8 @@
+npx degit sveltejs/template ./
+npm i -D tinro
+npm install
+npm run dev
+npm run build
+
+"start" :"sirv -H 127.0.0.1 -p 5001"
+"start": "sirv public"
