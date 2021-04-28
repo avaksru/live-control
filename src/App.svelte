@@ -2,6 +2,7 @@
 	//avaks
 	import { Tabs, Tab, TabList, TabPanel } from 'svelte-tabs';
 	import Toggle from "svelte-toggle";
+//  только 	для ESP32
 //	import Line from "svelte-chartjs/src/Line.svelte"
 	//
 	
@@ -175,7 +176,7 @@
 			} else {
 				console.log("NetworkMap.json отсутствует или содержит ошибки", res.status);
 				// Если файла не нашли подключаемся к локальной машне
-				configNetworkMap = '[{"deviceID":"' + chipID + '","deviceIP":"' + myip + '","deviceName":"' + espName + '"}]'; 
+				configNetworkMap = '[{"deviceID":"' +  getValues(chipID) + '","deviceIP":"' + myip + '","deviceName":"' + getValues(espName) + '"}]'; 
 				  try{
 					 devices= JSON.parse(configNetworkMap);
 					 console.log("Подключаемся локально",devices);
@@ -193,9 +194,9 @@
 	
 	// ==на время разработки==
 	
-	//	devices = '[{"deviceID":"0000000-0000000","deviceIP":"192.168.1.4","deviceName":"test_1"},{"deviceID":"0000000-0000000","deviceIP":"192.168.1.6","deviceName":"test_2"}]';  
-	//	devices= JSON.parse(devices);
-	//	addConnection(devices);
+		devices = '[{"deviceID":"0000000-0000000","deviceIP":"192.168.1.4","deviceName":"test_1"},{"deviceID":"0000000-0000000","deviceIP":"192.168.1.6","deviceName":"test_2"}]';  
+		devices= JSON.parse(devices);
+		addConnection(devices);
 	
 	
 	
@@ -468,14 +469,15 @@
 	// шлем данные в websocket
 		function WSpush(ws, uri, val){
 	   // console.log(ws, uri, val);
-		socket[ws].send('{"path":"'+uri+'/control", "status":"'+ val.toString()+'"}');
+	   	
+ 		socket[ws].send('{"path":"'+uri+'/control", "status":"'+ val.toString()+'"}');
 		console.log('Отправлено   {"path":"'+uri+'/control", "status":"'+ val.toString()+'"}');
 		  }
 	
 	
 	
 		  addConnection(devices);
-		 
+		// это временный пример как надо прописывать в файл 
 		let NetworkMap='[{"deviceID":"0000000-0000000","deviceIP":"192.168.1.4","deviceName":"test_1"},{"deviceID":"0000000-0000000","deviceIP":"192.168.1.6","deviceName":"test_2"}]';
 	//AVAKS end
 	</script>
@@ -535,7 +537,7 @@
 				  
 					<TabPanel>
 					
-					<table border="0" style="margin-left: 2%" width="90%">
+					<table border="1	" style="margin-left: 2%" width="90%">
 							
 					{#each wigets as widget, i}
 					
@@ -580,10 +582,25 @@
 		 {widget.descr}</span></td>
 		<td></td>
 		<td align="right"> 
-		 
-		 
-			 {!widget.status ? '' : widget.status}{!widget.after ? '' : widget.after}
-	 
+		 <!--Делаем температуру разноцветной-->
+			{#if widget.after === '°С' && widget.status<-99}
+				<lable align="left" style="color: grey">{!widget.status ? '' : widget.status}{!widget.after ? '' : widget.after}</lable>
+			{:else if widget.after === '°С' && widget.status<0} 
+				<lable align="left" style="color: #0000FF"><b>{!widget.status ? '' : widget.status}{!widget.after ? '' : widget.after}</b></lable> 
+			{:else if widget.after === '°С' &&  widget.status<12}
+					<lable align="left" style="color: #33CCFF"><b>{!widget.status ? '' : widget.status}{!widget.after ? '' : widget.after}</b></lable> 
+			{:else if  widget.after === '°С' && widget.status<99}
+			<lable align="left" style="color: #00CC00"><b>{!widget.status ? '' : widget.status}{!widget.after ? '' : widget.after}</b></lable> 
+		<!-- Влажность-->
+		{:else if  widget.after === '%'}
+		<lable align="left" style="color: #6699FF"><b>{!widget.status ? '' : widget.status}{!widget.after ? '' : widget.after}</b></lable> 
+	
+		
+			{:else}
+				<lable align="left" style="color: black"><b>
+				 {!widget.status ? '' : widget.status}{!widget.after ? '' : widget.after}
+				</b></lable>
+			{/if}
 			 
 	 
 	 </td>
@@ -594,10 +611,27 @@
 		 {widget.descr}</span></td>
 	  <td></td>
 		 {#if widget.type === 'number'}
-		 <td align="right"> <input style="text-align: right; color: gray" type=number bind:value={widget.status}  size="4" on:change={WSpush(widget.socket, widget.topic, widget.status)} min=0 max=1000000></td>
-			 {:else}
-			 <td align='right'> <input 	style="text-align: right; color: gray" bind:value={widget.status}  size="4"   on:change={WSpush(widget.socket, widget.topic, widget.status)}  ></td>
-		 {/if}
+		 <td > 
+			<div  style="float: right; display:inline-block">
+		<!--	<input type="button" value="-" style="width: 20%">
+		-->
+			<input style="text-align: right; border: 1px solid #6699FF; width: 100%" type=number neme={widget.topic} bind:value={widget.status} on:change={WSpush(widget.socket, widget.topic, widget.status)} min=-1000 max=1000000>
+		<!--
+			<input type="button" value="+" style="width: 20%" on:click='{widget.status + 1}'>
+		-->	
+		</div>
+		</td>
+	  	{:else if  widget.type === 'time'}
+		 
+		 <td align='right'>
+			   <div style="float: right; display:inline-block" ><input style="text-align: right; border: 1px solid #6699FF" type="time" bind:value={widget.status}  size="20" on:change={WSpush(widget.socket, widget.topic, widget.status)}  min="00:00" max="23:59" required ></div>
+			</td>
+		
+		 {:else}
+		 
+			 <td align='right'><div style="display:inline-block"> <input style="text-align: right; border: 1px solid #6699FF " bind:value={widget.status}  size="20"   on:change={WSpush(widget.socket, widget.topic, widget.status)}  ></div></td>
+			
+			 {/if}
 	  {/if}
 <!-- btn -->
 	  {#if widget.widget === 'btn'}
@@ -620,7 +654,6 @@
 						{#if widget.widget === 'range'}
 						<td  colspan="3">
 							
-						
 							{widget.descr}  {widget.status / 10} {widget.after}
 						
 							<label>	
@@ -849,6 +882,11 @@
 </div>
 
 <style>
+
+.inp{
+   display:  flex;
+   }
+
 	#menu__toggle {
 		opacity: 0;
 	}
