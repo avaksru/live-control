@@ -70,6 +70,7 @@
 			//	console.log("getСonfigSetupJson error", res.status);
 			}
 			getValues();
+			getNetworkMap() 
 		}
 	
 		function parseСonfigSetupJson(key) {
@@ -176,7 +177,7 @@
 			} else {
 				console.log("NetworkMap.json отсутствует или содержит ошибки", res.status);
 				// Если файла не нашли подключаемся к локальной машне
-				configNetworkMap = '[{"deviceID":"' +  getValues(chipID) + '","deviceIP":"' + myip + '","deviceName":"' + getValues(espName) + '"}]'; 
+				configNetworkMap = '[{"deviceID":"' +  chipID + '","deviceIP":"' + myip + '","deviceName":"' + espName + '"}]'; 
 				  try{
 					 devices= JSON.parse(configNetworkMap);
 					 console.log("Подключаемся локально",devices);
@@ -188,7 +189,7 @@
 			addConnection(devices);
 			
 		}
-		getNetworkMap() 
+		
 	
 	
 	
@@ -278,7 +279,7 @@
 	
 	tmp.forEach(function(json, i, array) {
 			
-			console.log('получено ',json);
+			console.log('получено ',deviceIP,json);
 			
 		
 	// собираем виджеты	
@@ -537,7 +538,7 @@
 				  
 					<TabPanel>
 					
-					<table border="1	" style="margin-left: 2%" width="90%">
+					<table border="0" style="margin-left: 2%" width="90%">
 							
 					{#each wigets as widget, i}
 					
@@ -589,13 +590,19 @@
 				<lable align="left" style="color: #0000FF"><b>{!widget.status ? '' : widget.status}{!widget.after ? '' : widget.after}</b></lable> 
 			{:else if widget.after === '°С' &&  widget.status<12}
 					<lable align="left" style="color: #33CCFF"><b>{!widget.status ? '' : widget.status}{!widget.after ? '' : widget.after}</b></lable> 
+			{:else if widget.after === '°С' &&  widget.status<30}
+					<lable align="left" style="color: #00CC00"><b>{!widget.status ? '' : widget.status}{!widget.after ? '' : widget.after}</b></lable> 
 			{:else if  widget.after === '°С' && widget.status<99}
-			<lable align="left" style="color: #00CC00"><b>{!widget.status ? '' : widget.status}{!widget.after ? '' : widget.after}</b></lable> 
-		<!-- Влажность-->
-		{:else if  widget.after === '%'}
-		<lable align="left" style="color: #6699FF"><b>{!widget.status ? '' : widget.status}{!widget.after ? '' : widget.after}</b></lable> 
-	
-		
+			<lable align="left" style="color: #FF8C00"><b>{!widget.status ? '' : widget.status}{!widget.after ? '' : widget.after}</b></lable> 
+			{:else if  widget.after === '°С' && widget.status<1000}
+			<lable align="left" style="color: #FF4500"><b>{!widget.status ? '' : widget.status}{!widget.after ? '' : widget.after}</b></lable> 
+			{:else if  widget.after === '°С' &&  !widget.status}
+			<lable align="left">...</lable> 
+			<!-- Влажность-->
+			{:else if  widget.after === '%' &&  widget.status}
+			<lable align="left" style="color: #99CCFF"><b>{!widget.status ? '' : widget.status}{!widget.after ? '' : widget.after}</b></lable> 
+			{:else if  widget.after === '%' &&  !widget.status}
+			<lable align="left">...</lable> 
 			{:else}
 				<lable align="left" style="color: black"><b>
 				 {!widget.status ? '' : widget.status}{!widget.after ? '' : widget.after}
@@ -615,7 +622,7 @@
 			<div  style="float: right; display:inline-block">
 		<!--	<input type="button" value="-" style="width: 20%">
 		-->
-			<input style="text-align: right; border: 1px solid #6699FF; width: 100%" type=number neme={widget.topic} bind:value={widget.status} on:change={WSpush(widget.socket, widget.topic, widget.status)} min=-1000 max=1000000>
+			<input style="text-align: right; border: 0px solid #6699FF; width: 100%" type=number neme={widget.topic} bind:value={widget.status} on:change={WSpush(widget.socket, widget.topic, widget.status)} min=-1000 max=1000000>
 		<!--
 			<input type="button" value="+" style="width: 20%" on:click='{widget.status + 1}'>
 		-->	
