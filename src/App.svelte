@@ -5,7 +5,7 @@
 
 
 	//  только 	для ESP32
-	import Line from "svelte-chartjs/src/Line.svelte"
+	//import Line from "svelte-chartjs/src/Line.svelte"
 	//
 	
 	
@@ -162,12 +162,12 @@
 	// = на время разработки = суда собираем все сообщения полученные через WS
 	let WsData="";
 	
+
 	 //Получаем из файла NetworkMap.json список ESP к которым надо подключатся
 	 let configNetworkMap = {};
 	 let myhost = document.location.host
 	 console.log("myhost", myhost);
 	 
-	
 	
 	 async function getNetworkMap() {
 			let res = await fetch("http://" + myip + "/NetworkMap.json", {
@@ -199,10 +199,10 @@
 	
 	// ==на время разработки==
 	
-	//	devices = '[{"deviceID":"0000000-0000000","deviceIP":"192.168.1.7","deviceName":"test_1"},{"deviceID":"0000000-0000000","deviceIP":"192.168.1.6","deviceName":"test_2"}]';  
-	//	devices= JSON.parse(devices);
-	//	addConnection(devices);
-	
+		devices = '[{"deviceID":"0000000-0000000","deviceIP":"192.168.1.7","deviceName":"test_1"},{"deviceID":"0000000-0000000","deviceIP":"192.168.1.6","deviceName":"test_2"}]';  
+		devices= JSON.parse(devices);
+		addConnection(devices);
+		
 	
 	
 	// это костыль. Задержка перед отправкой так как сразу не приходит
@@ -229,7 +229,7 @@
 						];
 	
 				console.log("WS CONNECTED! "+item.deviceIP);
-				setTimeout(() => { wait(i); }, 1000);
+			//		setTimeout(() => { wait(i); }, 1000);
 				
 	
 			});
@@ -628,7 +628,12 @@
 		<td></td>
 		<td align="right"> 
 		 <!--Делаем температуру разноцветной-->
-			{#if widget.after === '°С' && widget.status<-99}
+		 {#if widget.after === '°С' && widget.color}
+		 {#each widget.color as TemperatureColor, i}
+		 
+		 <lable align="left" style="color: #00CC00"><b>{!widget.status ? '' : widget.status}{!widget.after ? '' : widget.after}</b></lable> 
+		{/each}
+		<!-- {#if widget.after === '°С' && widget.status<-99}
 				<lable align="left" style="color: grey">{!widget.status ? '' : widget.status}{!widget.after ? '' : widget.after}</lable>
 			{:else if widget.after === '°С' && widget.status<0} 
 				<lable align="left" style="color: #0000FF"><b>{!widget.status ? '' : widget.status}{!widget.after ? '' : widget.after}</b></lable> 
@@ -641,7 +646,7 @@
 			{:else if  widget.after === '°С' && widget.status<1000}
 			<lable align="left" style="color: #FF4500"><b>{!widget.status ? '' : widget.status}{!widget.after ? '' : widget.after}</b></lable> 
 			{:else if  widget.after === '°С' &&  !widget.status}
-			<lable align="left">...</lable> 
+			<lable align="left">...</lable> -->
 			<!-- Влажность-->
 			{:else if  widget.after === '%' &&  widget.status}
 			<lable align="left" style="color: #99CCFF"><b>{!widget.status ? '' : widget.status}{!widget.after ? '' : widget.after}</b></lable> 
@@ -696,8 +701,8 @@
 						<td  colspan="3">
 							
 							{#if widget.status} 
-					<!--		графики отключил.-->
-							<Line data={widget.status} options={{ responsive: true}}/>	 
+							графики отключил.
+						<!--	<Line data={widget.status} options={{ responsive: true}}/>	 -->
 							{/if} 
 						</td>
 						{/if} 
