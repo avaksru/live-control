@@ -1,9 +1,11 @@
-<script>
+	<script>
 	//avaks
 	import { Tabs, Tab, TabList, TabPanel } from 'svelte-tabs';
 	import Toggle from "svelte-toggle";
-//  только 	для ESP32
-//	import Line from "svelte-chartjs/src/Line.svelte"
+
+
+	//  только 	для ESP32
+	import Line from "svelte-chartjs/src/Line.svelte"
 	//
 	
 	
@@ -149,12 +151,14 @@
 	let pages =[];
 	// декларируем массив для списка всех префиксов  
 	let prefics =[];
+	// выбраный префикс
+	let selected;	
 	// массивы для построения графиков
 	let graf_time=[];
 	let graf_val=[];
 	let dataLine=[];
 	
-		
+	
 	// = на время разработки = суда собираем все сообщения полученные через WS
 	let WsData="";
 	
@@ -195,9 +199,9 @@
 	
 	// ==на время разработки==
 	
-		devices = '[{"deviceID":"0000000-0000000","deviceIP":"192.168.1.4","deviceName":"test_1"},{"deviceID":"0000000-0000000","deviceIP":"192.168.1.6","deviceName":"test_2"}]';  
-		devices= JSON.parse(devices);
-		addConnection(devices);
+	//	devices = '[{"deviceID":"0000000-0000000","deviceIP":"192.168.1.7","deviceName":"test_1"},{"deviceID":"0000000-0000000","deviceIP":"192.168.1.6","deviceName":"test_2"}]';  
+	//	devices= JSON.parse(devices);
+	//	addConnection(devices);
 	
 	
 	
@@ -323,11 +327,27 @@
 		if (!NewWiget){	
 			// дописываем виджету из какого сокета он получен
 			json.socket = socket;
+			// дописываем виджету префикс 
+			json.prefics = getprefics(json.topic)
+			json.closed = true; 
 			
 			wigets = [
 			 ...wigets,
-			  json,	
+			  json,
 			  ];
+// сортируем 
+
+		  wigets.sort(function (a, b) {
+			a.closed = true;
+			if (a.order > b.order) {
+			  return -1;
+			}
+		if (a.order < b.order) {
+		  return 1;
+		}
+		return 0;
+	  });
+	 
 			 
 	
 		}
@@ -347,7 +367,7 @@
 				 ...prefics,
 				 JSON.parse( JSON.stringify({"prefics" : getprefics(json.topic)})),
 			  ];
-			//  console.log(prefics);  
+			  console.log("prefics",prefics);
 	}	
 	}  // закончили сбор виджетов
 	
@@ -412,7 +432,7 @@
 					 devices = [
 	...devices
 					 ];	
-	//	console.log(wigets);
+		//console.log(wigets);
 		//console.log(pages);
 	
 	
@@ -438,8 +458,11 @@
 	
 	
 	};
-	
-	
+	// функция если поменялся префикс
+	function handleSubmit() {
+			console.log("The selected option is " + JSON.stringify(selected.prefics));
+			selectedprefics = selected.prefics;
+		}
 	
 	
 	
@@ -480,7 +503,8 @@
 		  addConnection(devices);
 		// это временный пример как надо прописывать в файл 
 		let NetworkMap='[{"deviceID":"0000000-0000000","deviceIP":"192.168.1.4","deviceName":"test_1"},{"deviceID":"0000000-0000000","deviceIP":"192.168.1.6","deviceName":"test_2"}]';
-	//AVAKS end
+		let selectedprefics;
+		//AVAKS end
 	</script>
 	
 <div class="hamburger-menu">
@@ -514,10 +538,29 @@
 
 
 				<!-- AVAKS -->
-				<!--
-				<button type="button" on:click={getWsHello}>обновить статусы виджетов</button>
-			<br>
- -->
+
+			
+		
+				<ng-gauge size="200" type="full" thick="5" min="0" max="120" value="68.2" cap="round" label="Speed"  foreground-color="#ffcc66" background-color="rgba(255,255,255, 0.4)" append="mph"></ng-gauge>
+
+				
+		<!-- селектор префиксов  -->
+		{#if prefics[1]}
+		<form  on:submit|preventDefault={handleSubmit}>
+			<select style="float: left"  bind:value={selected}  on:change="{handleSubmit}">
+				{#each prefics as curentprefics}
+					<option value={curentprefics}>
+					{curentprefics.prefics}
+				  </option>
+			  {/each}
+		  </select>
+	  </form>
+	 {/if}
+	
+	  <!-- 					 закончили селектор префиксов -->
+
+
+  
 				<Tabs> 
 					<table border="0" style="margin-left: 2%" width="90%">
 						<tr><td>
@@ -541,8 +584,9 @@
 					<table border="0" style="margin-left: 2%" width="90%">
 							
 					{#each wigets as widget, i}
+					<!--Отображаем виджеты только для выбранного префикса-->
 					
-
+					{#if !selectedprefics || selectedprefics === widget.prefics}
 
 					{#if widget.page === pagesName.page}
 					<tr>
@@ -622,7 +666,7 @@
 			<div  style="float: right; display:inline-block">
 		<!--	<input type="button" value="-" style="width: 20%">
 		-->
-			<input style="text-align: right; border: 0px solid #6699FF; width: 100%" type=number neme={widget.topic} bind:value={widget.status} on:change={WSpush(widget.socket, widget.topic, widget.status)} min=-1000 max=1000000>
+			<input style="text-align: right; border: 1px solid #6699FF; width: 100%" type=number neme={widget.topic} bind:value={widget.status} size="20"  on:change={WSpush(widget.socket, widget.topic, widget.status)} min=-1000 max=1000000>
 		<!--
 			<input type="button" value="+" style="width: 20%" on:click='{widget.status + 1}'>
 		-->	
@@ -652,8 +696,8 @@
 						<td  colspan="3">
 							
 							{#if widget.status} 
-							графики отключил.
-				<!--			<Line data={widget.status} options={{ responsive: true}}/>	-->
+					<!--		графики отключил.-->
+							<Line data={widget.status} options={{ responsive: true}}/>	 
 							{/if} 
 						</td>
 						{/if} 
@@ -664,11 +708,7 @@
 							{widget.descr}  {widget.status / 10} {widget.after}
 						
 							<label>	
-							<!--
-								<input bind:value={widget.descr} placeholder="Ваше имя?">
-								<input type=number bind:value={widget.status} min=0 max=1000>
-							-->
-							
+													
 								<input type=range bind:value={widget.status} min={widget.min} max={widget.max * 10}  on:change={WSpush(widget.socket, widget.topic, widget.status)}>
 							</label>
 						
@@ -677,6 +717,7 @@
 						{/if} 
 						
 				 </tr>
+					{/if}  
 					{/if}  
 				  
 				 
@@ -708,7 +749,25 @@
 					{/if}  		  
 				
 				{/each}  
+
+				
 				  <br><br><br><br><br><br><br><br>
+				  <p align="left" style="margin-top: -5px; margin-bottom: -5px">V 0.0.4
+				</p>
+				<blockquote>
+				<p align="left" style="margin-top: -5px; margin-bottom: -5px">- Тестим ESP32 и mysensors
+				</p>
+				<p align="left" style="margin-top: -5px; margin-bottom: -5px">- Графики работают в версии для ESP32  
+				</p>
+					<p align="left" style="margin-top: -5px; margin-bottom: -5px">- Температура меняет цвет холдно\тепло\жарко 
+					</p>
+					<p align="left" style="margin-top: -5px; margin-bottom: -5px">- Сделал сортировку виджетов по полю "Позиция виджета" но работает пока не правильно
+					</p>
+					<p align="left" style="margin-top: -5px; margin-bottom: -5px">- Переработаны поля для ввода "Времени" и "Чисел"
+					</p>
+					<p align="left" style="margin-top: -5px; margin-bottom: -5px">- Добавлена поддержка нескольких префиксов!!!!!! для работы с большим количеством устройств в сети.
+					</p>
+				</blockquote>
 				  <p align="left" style="margin-top: -5px; margin-bottom: -5px">V 0.0.3
 				</p>
 				<blockquote><p align="left" style="margin-top: -5px; margin-bottom: -5px">- графики отключил 
@@ -748,31 +807,12 @@
 				
 				
 			<br>
-
-
-		
-			
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-				
 				<pre>
 				{parseСonfigSetupJson("name")}
 				</pre>
 				-->
 			</div>
+		
 		</Route>
 
 		<Route path="/wifi">
@@ -889,10 +929,6 @@
 </div>
 
 <style>
-
-.inp{
-   display:  flex;
-   }
 
 	#menu__toggle {
 		opacity: 0;
