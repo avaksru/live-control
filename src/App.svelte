@@ -2,12 +2,7 @@
 	//avaks
 	import { Tabs, Tab, TabList, TabPanel } from 'svelte-tabs';
 	import Toggle from "svelte-toggle";
-
-
-	//  только 	для ESP32
-	//import Line from "svelte-chartjs/src/Line.svelte"
-	//
-	
+	import Chart from 'svelte-frappe-charts';
 	
 		//роутер для навигации=========================================
 		import { Route, router, active } from "tinro";
@@ -45,6 +40,8 @@
 	//AVAKS
 		let espName = "IotManager";
 		let chipID = "0000000-0000000";
+		let colors;
+		let	lineOptions;
 	//AVAKS
 	
 		let routerssid;
@@ -199,19 +196,10 @@
 	
 	// ==на время разработки==
 	
-		devices = '[{"deviceID":"0000000-0000000","deviceIP":"192.168.1.7","deviceName":"test_1"},{"deviceID":"0000000-0000000","deviceIP":"192.168.1.6","deviceName":"test_2"}]';  
+		devices = '[{"deviceID":"0000000-0000000","deviceIP":"192.168.1.133","deviceName":"PZM"},{"deviceID":"0000000-0000000","deviceIP":"192.168.1.100","deviceName":"ESP_32"},{"deviceID":"0000000-0000000","deviceIP":"192.168.1.101","deviceName":"test1"},{"deviceID":"0000000-0000000","deviceIP":"192.168.1.102","deviceName":"test2"}]';  
 		devices= JSON.parse(devices);
-		addConnection(devices);
-		
-	
-	
-	// это костыль. Задержка перед отправкой так как сразу не приходит
-	function wait(i){
-		socket[i].send('HELLO');
-		
-	}
-	
-	
+
+			
 	
 	function addConnection (devices)  {
 	if(devices){ 
@@ -229,15 +217,13 @@
 						];
 	
 				console.log("WS CONNECTED! "+item.deviceIP);
-			//		setTimeout(() => { wait(i); }, 1000);
-				
-	
+					
 			});
 	// Listen for messages
 			socket[i].addEventListener('message', function (event) {
 			   
 		//	console.log('получено '+item.deviceIP, event.data);
-			WsData=WsData + "\r\n"+ "получено "+item.deviceIP+" "+ event.data;
+		//	WsData=WsData + "\r\n"+ "получено "+item.deviceIP+" "+ event.data;
 	
 	
 	// запускаем обработку пришедшего сообщения
@@ -283,7 +269,7 @@
 	
 	tmp.forEach(function(json, i, array) {
 			
-			console.log('получено ',deviceIP,json);
+//...	console.log('получено ',deviceIP,json);
 			
 		
 	// собираем виджеты	
@@ -330,25 +316,15 @@
 			// дописываем виджету префикс 
 			json.prefics = getprefics(json.topic)
 			json.closed = true; 
-			
-			wigets = [
+
+			 wigets = [
 			 ...wigets,
 			  json,
-			  ];
+			  ];	 
+		
 // сортируем 
-
-		  wigets.sort(function (a, b) {
-			a.closed = true;
-			if (a.order > b.order) {
-			  return -1;
-			}
-		if (a.order < b.order) {
-		  return 1;
-		}
-		return 0;
-	  });
+	  wigets.sort(( a, b ) =>  a.order - b.order);  
 	 
-			 
 	
 		}
 	// Дописываем новую страницу в массив страниц 
@@ -357,6 +333,17 @@
 				 ...pages,
 			 JSON.parse(JSON.stringify({"page" : json.page, "topic": json.topic})),
 			  ];
+			
+			  pages.sort(function (a, b) {
+     
+      if (a.page < b.page) {
+        return -1;
+      }
+      if (a.page > b.page) {
+        return 1;
+      }
+      return 0;
+    });
 			 
 	}
 	
@@ -367,7 +354,7 @@
 				 ...prefics,
 				 JSON.parse( JSON.stringify({"prefics" : getprefics(json.topic)})),
 			  ];
-			  console.log("prefics",prefics);
+		//	  console.log("prefics",prefics);
 	}	
 	}  // закончили сбор виджетов
 	
@@ -389,35 +376,56 @@
 				let hours = date.getHours();
 				let minutes = date.getMinutes();
 				graf_time = [... graf_time,  hours+':'+minutes, ];
-				  graf_val = [... graf_val, item.y1, ];
-				});
+				graf_val = [... graf_val, item.y1, ];
+			});
+
+			
+				
+			if (element.pointRadius=="0"){
+			lineOptions = {hideDots:1,regionFill:1};
+			} else{
+				lineOptions = {regionFill:1};
+			}
+
 				dataLine = {
-					labels: graf_time,
-					datasets: [
-					  {
-						label: element.descr,
-						fill: true,
-						lineTension: 0.3,
-						backgroundColor: "rgba(184, 185, 210, .3)",
-						pointRadius: 1,
-						data: graf_val
-						  }	
-					   ]
-				  };
-				 
-				if (!element.status){
+  				labels: graf_time,
+  				datasets: [
+//        {
+//           name: "Some Data", type: "bar",
+//            values: [25, 40, 30, 35, 8, 52, 17, -4]
+//        },
+        {
+            name: element.descr,
+			
+		heatline: 1,
+        height: 115,
+        region_fill: 1, 
+        xAxisMode: "tick",
+        yAxisMode: "span",
+        xIsSeries: 1,
+		truncateLegends: true,
+            values: graf_val
+        }
+    ],
+		
+}
+			
+	if (!element.status){
 				// архив графика отсутсутствует, то создаем статус и заполняем
 					element.status=dataLine;
-							 }
+				
+					WsData=WsData + "\r\n"+ JSON.stringify(dataLine);
+						 }
 				else {
 					//console.log(" дописываем новые значения к имеющимся");
 					element.status.labels = [...element.status.labels, dataLine.labels[0]];
-					element.status.datasets[0].data = [...element.status.datasets[0].data, dataLine.datasets[0].data[0] ]
+					element.status.datasets[0].values = [...element.status.datasets[0].values, dataLine.datasets[0].values[0] ]
+					WsData=WsData + "\r\n"+ JSON.stringify(element.status);
 					}
 			} catch (e) {
-				console.log('полученные данные для графика содержат ошибки');
+				console.log('полученные данные для графика содержат ошибки', element.status);
 			}
-					}
+			}
 		// данные для прочих витжетов	(заменяем статус на новый)
 					else {   
 					element.status = json.status;
@@ -432,7 +440,7 @@
 					 devices = [
 	...devices
 					 ];	
-		//console.log(wigets);
+	    //Console.log(JSON.stringify(wigets));
 		//console.log(pages);
 	
 	
@@ -458,37 +466,15 @@
 	
 	
 	};
-	// функция если поменялся префикс
+	// функция если произошла смена префикса в интерфейсе
 	function handleSubmit() {
 			console.log("The selected option is " + JSON.stringify(selected.prefics));
 			selectedprefics = selected.prefics;
 		}
 	
-	
-	
-	
-	
-	// отправляем на  ESP команду HELLO кнопкой 
-	function getWsHello(){
-		devices.forEach(function(item, i, arr) {
-		try{
-			socket[i].send("HELLO");
-			console.log(i,"HELLO");
-		} catch (e) {}
-	
-		})
-		}
-		// отправляем на  ESP команду STATUS кнопкой 
-	function getWsStatus(){
-		devices.forEach(function(item, i, arr) {
-		try{
-			socket[i].send("STATUS");
-			console.log(i,"STATUS");
-		} catch (e) {}
-	
-		})
-		}
-	
+
+
+
 	
 	// шлем данные в websocket
 		function WSpush(ws, uri, val){
@@ -538,11 +524,7 @@
 
 
 				<!-- AVAKS -->
-
-			
-		
-				<ng-gauge size="200" type="full" thick="5" min="0" max="120" value="68.2" cap="round" label="Speed"  foreground-color="#ffcc66" background-color="rgba(255,255,255, 0.4)" append="mph"></ng-gauge>
-
+				
 				
 		<!-- селектор префиксов  -->
 		{#if prefics[1]}
@@ -559,8 +541,7 @@
 	
 	  <!-- 					 закончили селектор префиксов -->
 
-
-  
+	  
 				<Tabs> 
 					<table border="0" style="margin-left: 2%" width="90%">
 						<tr><td>
@@ -593,7 +574,7 @@
 						<!-- Toggle -->
 						{#if widget.widget === 'toggle'}
 					 <td>
-					<span>
+					<span style="float: left">
 					{widget.descr}</span>
 					</td>
 					<td></td>
@@ -623,58 +604,48 @@
 					{/if}
 <!-- anydata -->				  
 		{#if widget.widget === 'anydata'}
-		<td><span>
+		<td><span style="float: left">
 		 {widget.descr}</span></td>
 		<td></td>
 		<td align="right"> 
-		 <!--Делаем температуру разноцветной-->
-		 {#if widget.after === '°С' && widget.color}
-		 {#each widget.color as TemperatureColor, i}
-		 
-		 <lable align="left" style="color: #00CC00"><b>{!widget.status ? '' : widget.status}{!widget.after ? '' : widget.after}</b></lable> 
-		{/each}
-		<!-- {#if widget.after === '°С' && widget.status<-99}
-				<lable align="left" style="color: grey">{!widget.status ? '' : widget.status}{!widget.after ? '' : widget.after}</lable>
-			{:else if widget.after === '°С' && widget.status<0} 
-				<lable align="left" style="color: #0000FF"><b>{!widget.status ? '' : widget.status}{!widget.after ? '' : widget.after}</b></lable> 
-			{:else if widget.after === '°С' &&  widget.status<12}
-					<lable align="left" style="color: #33CCFF"><b>{!widget.status ? '' : widget.status}{!widget.after ? '' : widget.after}</b></lable> 
-			{:else if widget.after === '°С' &&  widget.status<30}
-					<lable align="left" style="color: #00CC00"><b>{!widget.status ? '' : widget.status}{!widget.after ? '' : widget.after}</b></lable> 
-			{:else if  widget.after === '°С' && widget.status<99}
-			<lable align="left" style="color: #FF8C00"><b>{!widget.status ? '' : widget.status}{!widget.after ? '' : widget.after}</b></lable> 
-			{:else if  widget.after === '°С' && widget.status<1000}
-			<lable align="left" style="color: #FF4500"><b>{!widget.status ? '' : widget.status}{!widget.after ? '' : widget.after}</b></lable> 
-			{:else if  widget.after === '°С' &&  !widget.status}
-			<lable align="left">...</lable> -->
-			<!-- Влажность-->
-			{:else if  widget.after === '%' &&  widget.status}
-			<lable align="left" style="color: #99CCFF"><b>{!widget.status ? '' : widget.status}{!widget.after ? '' : widget.after}</b></lable> 
-			{:else if  widget.after === '%' &&  !widget.status}
+		 <!--Делаем anidata разноцветными если есть кастомизация цвета-->
+		{#if Array.isArray(widget.color) &&  widget.status}
+			 {#each widget.color as anydataColor, i}
+					{#if widget.status < anydataColor.level && widget.status > widget.color[i-1].level && i>0}
+			 		<lable align="left" style="color: {anydataColor.value} "><b>{!widget.status ? '' : widget.status}{!widget.after ? '' : widget.after}</b></lable> 
+					{/if}
+			{/each}
+			<!--если цвет задан значением а не массивом-->
+		{:else if  widget.color &&  widget.status} 
+			<lable align="left" style="color: {widget.color} "><b>{widget.status}{widget.after}</b></lable> 
+			<!--если цвет не задан и статус пустой-->
+		{:else if   !widget.status}
 			<lable align="left">...</lable> 
-			{:else}
+			<!--если цвет не задан-->
+		{:else if  widget.status}
+			<lable align="left"><b>{widget.status}{!widget.after ? '' : widget.after}</b></lable> 
+	
+		{:else}
 				<lable align="left" style="color: black"><b>
 				 {!widget.status ? '' : widget.status}{!widget.after ? '' : widget.after}
 				</b></lable>
-			{/if}
+		{/if}
 			 
 	 
 	 </td>
 	  {/if}
 <!-- input -->	
 	  {#if widget.widget === 'input'}
-	  <td><span>
+	  <td><span  style="float: left">
 		 {widget.descr}</span></td>
 	  <td></td>
 		 {#if widget.type === 'number'}
 		 <td > 
 			<div  style="float: right; display:inline-block">
-		<!--	<input type="button" value="-" style="width: 20%">
-		-->
-			<input style="text-align: right; border: 1px solid #6699FF; width: 100%" type=number neme={widget.topic} bind:value={widget.status} size="20"  on:change={WSpush(widget.socket, widget.topic, widget.status)} min=-1000 max=1000000>
-		<!--
-			<input type="button" value="+" style="width: 20%" on:click='{widget.status + 1}'>
-		-->	
+			<input type="button" value="-" style="width: 20%" on:click={WSpush(widget.socket, widget.topic, widget.status-1)}>
+			<input style="text-align: right; border: 1px solid #6699FF; width: 50%" type=number neme={widget.topic} bind:value={widget.status} size="20"  on:change={WSpush(widget.socket, widget.topic, widget.status)} min=-1000 max=1000000>
+			<input type="button" value="+" style="width: 20%" on:click={WSpush(widget.socket, widget.topic, widget.status-1+2)}>
+			
 		</div>
 		</td>
 	  	{:else if  widget.type === 'time'}
@@ -691,7 +662,7 @@
 	  {/if}
 <!-- btn -->
 	  {#if widget.widget === 'btn'}
-	  <td>><span>
+	  <td>><span style="float: left">
 		 {widget.descr}</span></td>>
 	  <td></td>
 	  <td align="right"> </td>
@@ -701,9 +672,10 @@
 						<td  colspan="3">
 							
 							{#if widget.status} 
-							графики отключил.
-						<!--	<Line data={widget.status} options={{ responsive: true}}/>	 -->
-							{/if} 
+                            {widget.descr}
+		<Chart data={widget.status}   lineOptions={lineOptions} colors={[!widget.color ? 'light-blue' : widget.color]} type= {!widget.type ? 'line' : widget.type} height="200" />
+							{/if}
+							
 						</td>
 						{/if} 
 <!-- range -->
@@ -804,8 +776,8 @@
 					<p align="left" style="margin-top: -5px; margin-bottom: -5px">- время работы устройства
 					</p>
 				</blockquote>
-<!--
-				  <br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
+
+			<!--		  <br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
 				    <textarea rows="15" name="S1" cols="200" >
 
 					{WsData}</textarea>
@@ -815,7 +787,7 @@
 				<pre>
 				{parseСonfigSetupJson("name")}
 				</pre>
-				-->
+			-->
 			</div>
 		
 		</Route>
