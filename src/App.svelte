@@ -4,6 +4,7 @@
 	import Toggle from "svelte-toggle";
 	import Chart from 'svelte-frappe-charts';
 	
+
 		//роутер для навигации=========================================
 		import { Route, router, active } from "tinro";
 		router.mode.hash(); // enables hash navigation method
@@ -196,7 +197,7 @@
 	
 	// ==на время разработки==
 	
-		devices = '[{"deviceID":"0000000-0000000","deviceIP":"192.168.1.133","deviceName":"PZM"},{"deviceID":"0000000-0000000","deviceIP":"192.168.1.100","deviceName":"ESP_32"},{"deviceID":"0000000-0000000","deviceIP":"192.168.1.101","deviceName":"test1"},{"deviceID":"0000000-0000000","deviceIP":"192.168.1.102","deviceName":"test2"}]';  
+		devices = '[{"deviceID":"0000000-0000000","deviceIP":"192.168.36.137","deviceName":"test"},{"deviceID":"0000000-0000000","deviceIP":"192.168.1.100","deviceName":"ESP_32"},{"deviceID":"0000000-0000000","deviceIP":"192.168.1.101","deviceName":"test1"},{"deviceID":"0000000-0000000","deviceIP":"192.168.1.102","deviceName":"test2"}]';  
 		devices= JSON.parse(devices);
 
 			
@@ -404,6 +405,9 @@
         yAxisMode: "span",
         xIsSeries: 1,
 		truncateLegends: true,
+		is_series: 5,
+		type: "line",
+
             values: graf_val
         }
     ],
@@ -440,7 +444,7 @@
 					 devices = [
 	...devices
 					 ];	
-	    //Console.log(JSON.stringify(wigets));
+	  //  console.log(JSON.stringify(wigets));
 		//console.log(pages);
 	
 	
@@ -604,13 +608,23 @@
 					{/if}
 <!-- anydata -->				  
 		{#if widget.widget === 'anydata'}
-		<td><span style="float: left">
-		 {widget.descr}</span></td>
+		<td>
+		{#if widget.descrColor}
+			<span style="float: left" >
+			<lable align="left" style="color: {widget.descrColor} ">{widget.descr}</lable> 
+		 	</span>
+		{:else}
+		<span style="float: left" >
+		{widget.descr}
+		</span>
+		{/if}
+		</td>
 		<td></td>
 		<td align="right"> 
 		 <!--Делаем anidata разноцветными если есть кастомизация цвета-->
 		{#if Array.isArray(widget.color) &&  widget.status}
 			 {#each widget.color as anydataColor, i}
+
 					{#if widget.status < anydataColor.level && widget.status > widget.color[i-1].level && i>0}
 			 		<lable align="left" style="color: {anydataColor.value} "><b>{!widget.status ? '' : widget.status}{!widget.after ? '' : widget.after}</b></lable> 
 					{/if}
@@ -673,7 +687,7 @@
 							
 							{#if widget.status} 
                             {widget.descr}
-		<Chart data={widget.status}   lineOptions={lineOptions} colors={[!widget.color ? 'light-blue' : widget.color]} type= {!widget.type ? 'line' : widget.type} height="200" />
+		<Chart data={widget.status} lineOptions={lineOptions} colors={[!widget.color ? 'light-blue' : widget.color]} type= {!widget.type ? 'line' : widget.type} height="200" />
 							{/if}
 							
 						</td>
@@ -729,6 +743,13 @@
 
 				
 				  <br><br><br><br><br><br><br><br>
+				  <p align="left" style="margin-top: -5px; margin-bottom: -5px">V 0.0.5
+				</p>
+				<blockquote>
+				<p align="left" style="margin-top: -5px; margin-bottom: -5px">- Графики работают вовсех версиях
+				</p>
+				<p align="left" style="margin-top: -5px; margin-bottom: -5px">- Можно задавать любое количество уровней и цветов отображения виджетов anydata  
+				</p>
 				  <p align="left" style="margin-top: -5px; margin-bottom: -5px">V 0.0.4
 				</p>
 				<blockquote>
