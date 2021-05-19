@@ -3,7 +3,7 @@
 	import { Tabs, Tab, TabList, TabPanel } from 'svelte-tabs';
 	import Toggle from "svelte-toggle";
 	import Chart from 'svelte-frappe-charts';
-	
+
 
 		//роутер для навигации=========================================
 		import { Route, router, active } from "tinro";
@@ -43,6 +43,9 @@
 		let chipID = "0000000-0000000";
 		let colors;
 		let	lineOptions;
+		let axisOptions;
+		let graf_1=[];
+		let graf_2=[];
 	//AVAKS
 	
 		let routerssid;
@@ -160,6 +163,13 @@
 	// = на время разработки = суда собираем все сообщения полученные через WS
 	let WsData="";
 	
+	// темная тема 
+	let darkMode = false;
+	function toggle() {
+        darkMode = !darkMode;
+        window.document.body.classList.toggle('dark');
+    }
+  
 
 	 //Получаем из файла NetworkMap.json список ESP к которым надо подключатся
 	 let configNetworkMap = {};
@@ -381,35 +391,23 @@
 			});
 
 			
-				
+			axisOptions={xAxisMode:'tick', xIsSeries: true};	
 			if (element.pointRadius=="0"){
-			lineOptions = {hideDots:1,regionFill:1};
+			lineOptions = {hideDots:1,regionFill:1,spline:1};
 			} else{
-				lineOptions = {regionFill:1};
+				lineOptions = {regionFill:1, dotSize: 3,spline:1};
 			}
-
+			
+				
 				dataLine = {
   				labels: graf_time,
   				datasets: [
-//        {
-//           name: "Some Data", type: "bar",
-//            values: [25, 40, 30, 35, 8, 52, 17, -4]
-//        },
-        {
+      {
             name: element.descr,
-			
-		heatline: 1,
-        height: 115,
-        region_fill: 1, 
-        xAxisMode: "tick",
-        yAxisMode: "span",
-        xIsSeries: 1,
-		truncateLegends: true,
-		is_series: 5,
-		type: "line",
-
-            values: graf_val
+		    values: graf_val
         }
+
+        
     ],
 		
 }
@@ -417,19 +415,28 @@
 	if (!element.status){
 				// архив графика отсутсутствует, то создаем статус и заполняем
 					element.status=dataLine;
-				
-					WsData=WsData + "\r\n"+ JSON.stringify(dataLine);
 						 }
 				else {
 					//console.log(" дописываем новые значения к имеющимся");
 					element.status.labels = [...element.status.labels, dataLine.labels[0]];
 					element.status.datasets[0].values = [...element.status.datasets[0].values, dataLine.datasets[0].values[0] ]
-					WsData=WsData + "\r\n"+ JSON.stringify(element.status);
+					
 					}
 			} catch (e) {
 				console.log('полученные данные для графика содержат ошибки', element.status);
 			}
-			}
+		
+		if (json.topic.includes('_1/status'))
+		{
+			graf_1=element.status.datasets[0];	
+		}
+		if (json.topic.includes('_2/status'))
+		{
+			graf_2=element.status.datasets[0];
+			element.status.datasets[1]= graf_1;
+		}
+		
+		}
 		// данные для прочих витжетов	(заменяем статус на новый)
 					else {   
 					element.status = json.status;
@@ -437,6 +444,10 @@
 			
 		}
 	
+		
+
+
+
 		wigets = [
 			 ...wigets
 					 ];
@@ -492,11 +503,21 @@
 	
 		  addConnection(devices);
 		// это временный пример как надо прописывать в файл 
-		let NetworkMap='[{"deviceID":"0000000-0000000","deviceIP":"192.168.1.4","deviceName":"test_1"},{"deviceID":"0000000-0000000","deviceIP":"192.168.1.6","deviceName":"test_2"}]';
+		let NetworkMap='';
 		let selectedprefics;
 		//AVAKS end
 	</script>
 	
+
+
+
+
+
+
+
+
+
+
 <div class="hamburger-menu">
 	<input id="menu__toggle" type="checkbox" />
 	<label class="menu__btn" for="menu__toggle">
@@ -543,11 +564,24 @@
 	  </form>
 	 {/if}
 	
-	  <!-- 					 закончили селектор префиксов -->
+	  <!--закончили селектор префиксов -->
+	
+	
+	
+	  <!-- темная тема  -->
+	
+	  <button on:click={toggle}>
+		{#if darkMode }
+			Go light
+		{:else}
+			Go dark
+		{/if}
+	</button>
+	
 
 	  
 				<Tabs> 
-					<table border="0" style="margin-left: 2%" width="90%">
+					<table border="0" style="margin-left: 0%" width="100%">
 						<tr><td>
 						
 					<TabList >
@@ -566,7 +600,7 @@
 				  
 					<TabPanel>
 					
-					<table border="0" style="margin-left: 2%" width="90%">
+					<table border="0"  style="margin-left: 0%" width="100%">
 							
 					{#each wigets as widget, i}
 					<!--Отображаем виджеты только для выбранного префикса-->
@@ -686,10 +720,15 @@
 						<td  colspan="3">
 							
 							{#if widget.status} 
-                            {widget.descr}
-		<Chart data={widget.status} lineOptions={lineOptions} colors={[!widget.color ? 'light-blue' : widget.color]} type= {!widget.type ? 'line' : widget.type} height="200" />
-							{/if}
+							{#if widget.topic.includes('_2')} 
+        <Chart data={widget.status} lineOptions={lineOptions} axisOptions={axisOptions} colors={[!widget.color ? 'red' : widget.color]} type= {!widget.type ? 'line' : widget.type} height="300" />
 							
+
+							{:else if !widget.topic.includes('_1')} 
+                            {widget.descr}
+		<Chart data={widget.status} lineOptions={lineOptions} axisOptions={axisOptions} colors={[!widget.color ? 'light-blue' : widget.color]} type= {!widget.type ? 'line' : widget.type} height="300" />
+							{/if}
+							{/if}
 						</td>
 						{/if} 
 <!-- range -->
@@ -750,7 +789,8 @@
 				</p>
 				<p align="left" style="margin-top: -5px; margin-bottom: -5px">- Можно задавать любое количество уровней и цветов отображения виджетов anydata  
 				</p>
-				  <p align="left" style="margin-top: -5px; margin-bottom: -5px">V 0.0.4
+			</blockquote>
+				<p align="left" style="margin-top: -5px; margin-bottom: -5px">V 0.0.4
 				</p>
 				<blockquote>
 				<p align="left" style="margin-top: -5px; margin-bottom: -5px">- Тестим ESP32 и mysensors
@@ -927,7 +967,61 @@
 </div>
 
 <style>
+	:root{
+		--bg-color: #FFFFFF;
+		--text-color: #000000;
+	}
 
+	:global(body) {
+		background: var(--bg-color);
+		color: var(--text-color);
+	}
+	:global(input) {
+		background: var(--bg-color);
+		color: var(--text-color);
+	}
+	:global(input.dark) {
+		--bg-color: #000000;
+		--text-color: #FFFFFF;
+	}
+
+	:global(select) {
+		background: var(--bg-color);
+		color: var(--text-color);
+	}
+	:global(select.dark) {
+		--bg-color: #000000;
+		--text-color: #FFFFFF;
+	}
+	:global(button) {
+		background: var(--bg-color);
+		color: var(--text-color);
+	}
+	:global(button.dark) {
+		--bg-color: #000000;
+		--text-color: #FFFFFF;
+	}
+	:global(body.dark) {
+		--bg-color: linear-gradient(#002222,#003E3E,#002222);
+		--text-color: #FFFFFF;
+	}
+	:global(.svelte-tabs__tab-list) {
+        display: flex;
+        justify-content: space-evenly;
+        flex-wrap: wrap;
+	}
+	:global(.svelte-tabs li.svelte-tabs__tab){
+		color: gray;
+		
+	}
+    :global(.svelte-tabs li.svelte-tabs__selected) {
+		  color: green;
+		  
+    }
+
+
+
+	
 	#menu__toggle {
 		opacity: 0;
 	}
@@ -1014,7 +1108,7 @@
 
 	.head {
 		text-align: center;
-		color: #000000;
+	
 		display: block;
 	}
 
