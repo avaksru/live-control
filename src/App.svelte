@@ -40,7 +40,7 @@
 		const mqttpasswd = "Пароль:";
 	//AVAKS
 		let espName = "IotManager";
-		let chipID = "0000000-0000000";
+		let chipID = "";
 		let colors;
 		let	lineOptions;
 		let axisOptions;
@@ -175,7 +175,7 @@
 	 let configNetworkMap = {};
 	 let myhost = document.location.host
 	 console.log("myhost", myhost);
-	 
+	
 	
 	 async function getNetworkMap() {
 			let res = await fetch("http://" + myip + "/NetworkMap.json", {
@@ -209,8 +209,8 @@
 	
 		devices = '[{"deviceID":"0000000-0000000","deviceIP":"192.168.36.137","deviceName":"test"},{"deviceID":"0000000-0000000","deviceIP":"192.168.1.100","deviceName":"ESP_32"},{"deviceID":"0000000-0000000","deviceIP":"192.168.1.101","deviceName":"test1"},{"deviceID":"0000000-0000000","deviceIP":"192.168.1.102","deviceName":"test2"}]';  
 		devices= JSON.parse(devices);
-
-			
+	
+	
 	
 	function addConnection (devices)  {
 	if(devices){ 
@@ -658,10 +658,9 @@
 		 <!--Делаем anidata разноцветными если есть кастомизация цвета-->
 		{#if Array.isArray(widget.color) &&  widget.status}
 			 {#each widget.color as anydataColor, i}
-
-					{#if widget.status < anydataColor.level && widget.status > widget.color[i-1].level && i>0}
-			 		<lable align="left" style="color: {anydataColor.value} "><b>{!widget.status ? '' : widget.status}{!widget.after ? '' : widget.after}</b></lable> 
-					{/if}
+			 {#if anydataColor.level && widget.status < anydataColor.level && widget.status > widget.color[i-1].level && i>0}
+			 <lable align="left" style="color: {anydataColor.value} "><b>{!widget.status ? '' : widget.status}{!widget.after ? '' : widget.after}</b></lable> 
+			{/if}
 			{/each}
 			<!--если цвет задан значением а не массивом-->
 		{:else if  widget.color &&  widget.status} 
