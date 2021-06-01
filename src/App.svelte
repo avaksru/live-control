@@ -13,15 +13,16 @@
 	});
 	// Панель управления
 	import Dashboard from './Dashboard.svelte';
+	import Setup from './Setup.svelte';
+
 	//обработка событий при загрузки===============================
 	import { onMount } from "svelte";
 	//секция переменных============================================
 	let myip = document.location.hostname;
 	let configSetupJson = "{}";
-	const setDashboard = "Панель управления";
-	const setMain = "Устройство";
-	const setWifi = "WiFi";
-	const setMqtt = "MQTT";
+	const setMain = "Dashboard";
+	const setConfig = "Configuration";
+	const setSetup = "Setup";
 	const wifissid = "Название сети:";
 	const wifipasswd = "Пароль:";
 	const mqttserver = "Имя сервера:";
@@ -84,7 +85,7 @@
 	}
 	function upgrade() {
 		toast.push("Upgrade in progress...", {
-			duration: 20000,
+			duration: 5000,
 			theme: {
 				"--toastBackground": "#48BB78",
 				"--toastProgressBackground": "#2F855A",
@@ -112,163 +113,54 @@
 	</label>
 	<ul class="menu__box">
 		<li>
-			<a class="menu__item" href="/Dashboard" on:click={getСonfigSetupJson}
-				>{setDashboard}</a
-			>
-		</li>
-		<li>
 			<a class="menu__item" href="/" on:click={getСonfigSetupJson}
-				>{setMain}</a
-			>
+				>{setMain}</a>
 		</li>
 
 		<li>
-			<a class="menu__item" href="/wifi" on:click={getСonfigSetupJson}
-				>{setWifi}</a
-			>
+			<a class="menu__item" href="/config" on:click={getСonfigSetupJson}
+				>{setConfig}</a>
 		</li>
 
 		<li>
-			<a class="menu__item" href="/mqtt" on:click={getСonfigSetupJson}
-				>{setMqtt}</a
-			>
+			<a class="menu__item" href="/setup" on:click={getСonfigSetupJson}
+				>{setSetup}</a>
 		</li>
 	</ul>
 
 	<ul class="menu__main">
-		<Route path="/Dashboard">
-			<div class="head">
-				<h2>{setDashboard}</h2>
-				
-				<Dashboard/>
-
-			</div>
-		</Route>
 		<Route path="/">
 			<div class="head">
 				<h2>{setMain}</h2>
-				<button type="button" on:click={getСonfigSetupJson}
-					>Get request</button
-				>
+				
+				<Dashboard/>
+
+
+				
 				<button type="button" on:click={upgrade}
 					>Всплывающее окно</button
 				>
-				<p>Result:</p>
-				<pre>
-				{parseСonfigSetupJson("name")}
-				</pre>
+				
 			</div>
 		</Route>
 
-		<Route path="/wifi">
+		<Route path="/config">
 			<div class="head">
-				<h2>{setWifi}</h2>
+				<h2>{setConfig}</h2>
 			</div>
 
-			<div class="content">
-				<div class="box">
-					<slot>
-						<form>
-							<div class="row">
-								<div class="left-column">
-									<label for="ssid">{wifissid}</label>
-								</div>
-								<div class="right-column">
-									<input type="text" value={routerssid} />
-								</div>
-							</div>
 
-							<div class="row">
-								<div class="left-column">
-									<label for="passwd">{wifipasswd}</label>
-								</div>
-								<div class="right-column">
-									<input type="password" value={routerpass} />
-								</div>
-							</div>
+		
 
-							<div class="row">
-								<div class="center-column">
-									<button
-										type="button"
-										on:click={doGetRequest}
-										>Сохранить
-									</button>
-								</div>
-							</div>
-						</form>
-					</slot>
-				</div>
-			</div>
+			
 		</Route>
 
-		<Route path="/mqtt">
+		<Route path="/setup">
 			<div class="head">
-				<h2>{setMqtt}</h2>
+				<h2>{setSetup}</h2>
 			</div>
-
-			<div class="content">
-				<div class="box">
-					<slot>
-						<form>
-							<div class="row">
-								<div class="left-column">
-									<label for="ssid">{mqttserver}</label>
-								</div>
-								<div class="right-column">
-									<input type="text" value={mqttServer} />
-								</div>
-							</div>
-
-							<div class="row">
-								<div class="left-column">
-									<label for="passwd">{mqttport}</label>
-								</div>
-								<div class="right-column">
-									<input type="text" value={mqttPort} />
-								</div>
-							</div>
-
-							<div class="row">
-								<div class="left-column">
-									<label for="passwd">{mqttprefix}</label>
-								</div>
-								<div class="right-column">
-									<input type="text" value={mqttPrefix} />
-								</div>
-							</div>
-
-							<div class="row">
-								<div class="left-column">
-									<label for="passwd">{mqttuser}</label>
-								</div>
-								<div class="right-column">
-									<input type="text" value={mqttUser} />
-								</div>
-							</div>
-
-							<div class="row">
-								<div class="left-column">
-									<label for="passwd">{mqttpasswd}</label>
-								</div>
-								<div class="right-column">
-									<input type="password" value={mqttPass} />
-								</div>
-							</div>
-
-							<div class="row">
-								<div class="center-column">
-									<button
-										type="button"
-										on:click={doGetRequest}
-										>Сохранить
-									</button>
-								</div>
-							</div>
-						</form>
-					</slot>
-				</div>
-			</div>
+			<Setup/>
+		
 		</Route>
 	</ul>
 </div>

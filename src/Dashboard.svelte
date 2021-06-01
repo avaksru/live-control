@@ -14,7 +14,7 @@ if (connectionType === 'MQTT'){
     let connected = false;
     let topic;
     let temp;
-    var MQTTconnections;
+    var MQTTconnections = [{"user_id" : "1", "connection_name" : "meef.ru", "connection_protocol" : "wss", "mqtt_host" : "meef.ru", "mqtt_port" : "18883", "mqtt_prefix" : "/IotTest", "mqtt_username" : "IotManager:guest", "mqtt_password" : "guest", "mqtt_path" : "/ws", "mqtt_id" : "mqtt_id"},{"user_id" : "1", "connection_name" : "cloudMQTT", "connection_protocol" : "wss", "mqtt_host" : "m20.cloudmqtt.com", "mqtt_port" : "33191", "mqtt_prefix" : "/IoTmanager", "mqtt_username" : "", "mqtt_password" : "", "mqtt_path" : "/", "mqtt_id" : "mqtt_id"}];
       clientId += '_' + Math.floor(Math.random() * 10000);
       connected = false;
       const mqtt_options = {
@@ -150,9 +150,6 @@ if (connectionType === 'MQTT'){
 	let dataLine=[];
 	
 	
-	// = на время разработки = суда собираем все сообщения полученные через WS
-	let WsData="";
-	
 	// темная тема 
 	let darkMode = false;
 	function toggle() {
@@ -199,8 +196,8 @@ if (connectionType === 'MQTT'){
 	
 	// ==на время разработки==
 	
-	//	devices = '[{"deviceID":"0000000-0000000","deviceIP":"192.168.36.137","deviceName":"test"},{"deviceID":"0000000-0000000","deviceIP":"192.168.36.145","deviceName":"test2"}]';  
-	//	devices= JSON.parse(devices);
+		devices = '[{"deviceID":"0000000-0000000","deviceIP":"192.168.36.137","deviceName":"test"},{"deviceID":"0000000-0000000","deviceIP":"192.168.36.145","deviceName":"test2"}]';  
+		devices= JSON.parse(devices);
 	
 	
 	
@@ -227,8 +224,8 @@ if (connectionType === 'MQTT'){
 	// Listen for messages
 			socket[i].addEventListener('message', function (event) {
 			   
-		//	console.log('получено '+item.deviceIP, event.data);
-		//	WsData=WsData + "\r\n"+ "получено "+item.deviceIP+" "+ event.data;
+			console.log('получено '+item.deviceIP, event.data);
+		
 	
 	
 	// запускаем обработку пришедшего сообщения
@@ -274,7 +271,7 @@ if (connectionType === 'MQTT'){
 	try{
 		tmp = JSON.parse(tmp);
 	tmp.forEach(function(json, i, array) {
-	//...	console.log('получено ',deviceIP,json);
+	//	console.log('получено ',deviceIP,json);
 			
 	// собираем виджеты	
 	// если пришедшее сообщение виджет 	
@@ -460,7 +457,7 @@ if (connectionType === 'MQTT'){
 					 devices = [
 	...devices
 					 ];	
-	  //  console.log(JSON.stringify(wigets));
+	    //console.log(wigets);
 	
 		
 	});
