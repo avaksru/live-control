@@ -14,6 +14,7 @@
 	// Панель управления
 	import Dashboard from './Dashboard.svelte';
 	import Setup from './Setup.svelte';
+	import Config from './Config.svelte';
 
 	//обработка событий при загрузки===============================
 	import { onMount } from "svelte";
@@ -137,9 +138,7 @@
 
 
 				
-				<button type="button" on:click={upgrade}
-					>Всплывающее окно</button
-				>
+			
 				
 			</div>
 		</Route>
@@ -149,8 +148,8 @@
 				<h2>{setConfig}</h2>
 			</div>
 
-
-		
+Это демо. Тут ничего не работает
+			<Config/>
 
 			
 		</Route>
@@ -159,6 +158,8 @@
 			<div class="head">
 				<h2>{setSetup}</h2>
 			</div>
+		
+		
 			<Setup/>
 		
 		</Route>

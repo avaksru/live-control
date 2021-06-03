@@ -4,6 +4,9 @@
 	import Toggle from "svelte-toggle";
 	import Chart from 'svelte-frappe-charts';
 	import mqtt from 'mqtt/dist/mqtt.min';
+
+
+
 	let connectionType = 'WS';
 	let client;
 	let topic;
@@ -14,7 +17,7 @@ if (connectionType === 'MQTT'){
     let connected = false;
     let topic;
     let temp;
-    var MQTTconnections = [{"user_id" : "1", "connection_name" : "meef.ru", "connection_protocol" : "wss", "mqtt_host" : "meef.ru", "mqtt_port" : "18883", "mqtt_prefix" : "/IotTest", "mqtt_username" : "IotManager:guest", "mqtt_password" : "guest", "mqtt_path" : "/ws", "mqtt_id" : "mqtt_id"},{"user_id" : "1", "connection_name" : "cloudMQTT", "connection_protocol" : "wss", "mqtt_host" : "m20.cloudmqtt.com", "mqtt_port" : "33191", "mqtt_prefix" : "/IoTmanager", "mqtt_username" : "", "mqtt_password" : "", "mqtt_path" : "/", "mqtt_id" : "mqtt_id"}];
+    var MQTTconnections = [{"user_id" : "1", "connection_name" : "meef.ru", "connection_protocol" : "wss", "mqtt_host" : "meef.ru", "mqtt_port" : "18883", "mqtt_prefix" : "/IotManager", "mqtt_username" : "IotManager:guest", "mqtt_password" : "guest", "mqtt_path" : "/ws", "mqtt_id" : "mqtt_id"},{"user_id" : "1", "connection_name" : "cloudMQTT", "connection_protocol" : "wss", "mqtt_host" : "m20.cloudmqtt.com", "mqtt_port" : "33191", "mqtt_prefix" : "/IoTmanager", "mqtt_username" : "", "mqtt_password" : "", "mqtt_path" : "/", "mqtt_id" : "mqtt_id"}];
       clientId += '_' + Math.floor(Math.random() * 10000);
       connected = false;
       const mqtt_options = {
@@ -114,7 +117,7 @@ if (connectionType === 'MQTT'){
 			if (res.ok) {
 				configSetupJson = await res.json();
 			} else {
-				//alert("status " + res.status);
+		
 			//	console.log("getСonfigSetupJson error", res.status);
 			}
 			getValues();
@@ -196,35 +199,34 @@ if (connectionType === 'MQTT'){
 	
 	// ==на время разработки==
 	
-		devices = '[{"deviceID":"0000000-0000000","deviceIP":"192.168.36.137","deviceName":"test"},{"deviceID":"0000000-0000000","deviceIP":"192.168.36.145","deviceName":"test2"}]';  
-		devices= JSON.parse(devices);
+	//	devices = '[{"deviceID":"0000000-0000000","deviceIP":"192.168.36.137","deviceName":"test"},{"deviceID":"0000000-0000000","deviceIP":"192.168.36.145","deviceName":"test2"},{"deviceID":"0000000-0000000","deviceIP":"192.168.36.138","deviceName":"test3"},{"deviceID":"0000000-0000000","deviceIP":"192.168.36.146","deviceName":"test4"}]';  
+	//	devices= JSON.parse(devices);
 	
 	
 	
 	function addConnection (devices)  {
-	if(devices){ 
+	if(devices){
+	
+
 			devices.forEach(function(item, i, arr) {
 				console.log("trying connect", item);
+				
 	// Create WebSocket connection.
 			socket[i] = new WebSocket('ws://'+item.deviceIP+'/ws');
 	// Connection opened
 			socket[i].addEventListener('open', function (event) {
-	
-	devices[i].id=i;
-	devices[i].status="connected";
+			devices[i].id=i;
+			devices[i].status="connected";
 //	console.log(devices);
-		
-	devices = [
-				...devices
-						];
+			devices = devices;
+			console.log("WS CONNECTED! "+item.deviceIP);
+
 	
-				console.log("WS CONNECTED! "+item.deviceIP);
-					
 			});
 	// Listen for messages
 			socket[i].addEventListener('message', function (event) {
 			   
-			console.log('получено '+item.deviceIP, event.data);
+		//	console.log('получено '+item.deviceIP, event.data);
 		
 	
 	
@@ -236,18 +238,14 @@ if (connectionType === 'MQTT'){
 			socket[i].addEventListener('close', (event) => {
 				  console.log('ws close '+item.deviceIP);
 				  devices[i].status="close"; 
-			 	console.log(devices);
-				  devices = [
-			 ...devices
-					 ];
+			 	  devices = devices;
+				  Shuttervisibil();
 			});
 			socket[i].addEventListener('error', function (event) {
-				  console.log(item.deviceIP+' WebSocket error: ', event);
-				  devices[i].status="close";
-				
-				  devices = [
-			 ...devices
-					 ];
+				console.log(item.deviceIP+' WebSocket error: ', event);
+				devices[i].status="close";
+				devices = devices;
+				Shuttervisibil();
 			});
 		});
 	}};
@@ -371,8 +369,9 @@ if (connectionType === 'MQTT'){
 	 	// ========================================================================
 
 		if (element.topic == messegetopic) {
-		// если получен статус график 
-		if (element.widget=="chart"){
+	// если получен статус график 
+	
+	if (element.widget=="chart"){
 			graf_time=[];
 			graf_val =[];
 		try {
@@ -411,6 +410,7 @@ if (connectionType === 'MQTT'){
 	if (!element.status){
 				// архив графика отсутсутствует, то создаем статус и заполняем
 					element.status=dataLine;
+				
 						 }
 				else {
 					//console.log(" дописываем новые значения к имеющимся");
@@ -442,28 +442,52 @@ if (connectionType === 'MQTT'){
 		// данные для прочих витжетов	(заменяем статус на новый)
 					else {   
 					element.status = json.status;
+				
 					}
-			
+
+	
+				
 		}
-	
-		
-
-
-
-		wigets = [
-			 ...wigets
-					 ];
-		
-					 devices = [
-	...devices
-					 ];	
-	    //console.log(wigets);
-	
-		
+		wigets = wigets;
+		devices = devices;	
+			
 	});
 	
 	
 	}
+	//  для mysens
+	if (json.info){
+// ищем виджет к которому относится INFO
+	wigets.forEach(function (element){
+	//отличие MQTT и WS========================================================!!!!!!!!!!!!!!
+	let messegetopic;
+	if (connectionType==="MQTT"){messegetopic=topic.replace("/status","");}
+	else{messegetopic=json.topic.replace("/status","");} 
+	 // ========================================================================
+
+	if (element.topic == messegetopic) {element.nodeInfo=json.info;}
+					});
+				 }
+				 if (json.color){
+// ищем виджет к которому относится цвет INFO
+	wigets.forEach(function (element){
+	//отличие MQTT и WS========================================================!!!!!!!!!!!!!!
+	let messegetopic;
+	if (connectionType==="MQTT"){messegetopic=topic.replace("/status","");}
+	else{messegetopic=json.topic.replace("/status","");} 
+	 // ========================================================================
+
+	if (element.topic == messegetopic) {element.nodeInfoColor=json.color;}
+					});
+				 }
+
+
+			
+				
+						
+	
+
+
 	});
 } catch (e) {
 				console.log('ERROR parse JSON', tmp);
@@ -525,37 +549,80 @@ if (connectionType === 'MQTT'){
 			{
 				addConnection(devices);
 			}
-	
-	
-	</script>
-	
 
+	// обратный отсчет для 		Shutter
+			let frame;	
+			let elapsed = 0;
+			let duration = 5000;
+			let last_time = window.performance.now();
+			(function update() {
+			frame = requestAnimationFrame(update);
+			const time = window.performance.now();
+			elapsed += Math.min(
+			time - last_time,
+			duration - elapsed
+			);
+				last_time = time;
+				if (elapsed==duration){
+					Shutterhiddn();
+				}
+			}());
 
-<!--visibility: hidden;-->
-	<div class="Shutter" style="visibility: hidden; position: absolute; width: 70%; z-index: 1; right: 2%; top: 2%" id="layer1">
+		let	Shuttervisibl= "visibility: hidden;";
+			 
+		function Shuttervisibil(){
+				Shuttervisibl= "visibility: visible;";
+			//	duration = sec;
+				elapsed = 0;
+				if (elapsed===duration){
+					Shuttervisibl= "visibility: hidden;";
+				}
+
+				};
+				function Shutterhiddn(){
+				Shuttervisibl= "visibility: hidden;";
+				};
+				Shuttervisibil();
+</script>
+
+	
+	
+<!---->
+
+{#if connectionType == 'MQTT'}
+
+{:else}
+	<div class="Shutter" style="{Shuttervisibl} position: absolute; z-index: 1; right: 4%; top: 3%" id="layer1">
 		<span>
+			<progress value="{elapsed / duration}"></progress>
 		  <!--Перечисляем девайсы в сети-->
 		  {#each devices as NetworkDevice , i}
 		  {#if !NetworkDevice.status}
 			  <p align="left" style=" margin-top: -5px; margin-bottom: -5px">
-			   {NetworkDevice.deviceIP} {NetworkDevice.deviceName} соединяюсь
+			   {NetworkDevice.deviceIP} {NetworkDevice.deviceName} waiting
 			  </p>
 		  {/if}  	
 			 {#if NetworkDevice.status === 'connected'}
 			  <p align="left" style="color: green; margin-top: -5px; margin-bottom: -5px">
-			   {NetworkDevice.deviceIP} {NetworkDevice.deviceName} подключено
+			   {NetworkDevice.deviceIP} {NetworkDevice.deviceName} connected
 			  </p>
 		  {/if}  		  
 		  {#if NetworkDevice.status === 'close'}
 			  <p align="left" style="color: red; margin-top: -5px; margin-bottom: -5px" on:click={addConnection(devices)}>
-			   {NetworkDevice.deviceIP} {NetworkDevice.deviceName} отключено
+			   {NetworkDevice.deviceIP} {NetworkDevice.deviceName} disconnected
 			   </p>
 		  {/if}  		  
 	  	  {/each}  
+			
 		</span>
 	</div>
-	<div class="connTupe" style=" position: absolute; width: 10%; z-index: 2; right: 2%; top: 2%" id="layer2"></div>
-			
+	{/if}		
+
+	{#if connectionType == 'MQTT'}
+	<div style=" position: absolute;  z-index: 2; right: 2%; top: 1%" id="layerMQTT" >MQTT</div>
+	{:else}
+	<div on:mouseenter={Shuttervisibil} on:click={Shutterhiddn} class="connTupe" style=" position: absolute;  z-index: 2; right: 2%; top: 1%" id="layerWS">websocket</div>
+	{/if}		
 				
 		<!-- селектор префиксов  -->
 		{#if prefics[2]}
@@ -659,7 +726,15 @@ if (connectionType === 'MQTT'){
 		</span>
 		{/if}
 		</td>
-		<td></td>
+		<td>
+
+<!--Инфо от ноды mysens -->	
+		<lable align='left' style='color: {!widget.nodeInfoColor ? 'gray' : widget.nodeInfoColor}'>
+		{!widget.nodeInfo ? '' : widget.nodeInfo}
+	   </lable>
+	
+
+		</td>
 		<td align="right"> 
 		 <!--Делаем anidata разноцветными если есть кастомизация цвета-->
 		{#if Array.isArray(widget.color) &&  widget.status}
@@ -679,9 +754,9 @@ if (connectionType === 'MQTT'){
 			<lable align="left" style="color: black; font-family: '{widget.font}'" >{widget.status}{!widget.after ? '' : widget.after}</lable> 
 	
 		{:else}
-				<lable align="left" style="color: black; font-family: '{widget.font}'"><b>
+				<lable align="left" style="color: black; font-family: '{widget.font}'">
 				 {!widget.status ? '' : widget.status}{!widget.after ? '' : widget.after}
-				</b></lable>
+				</lable>
 		{/if}
 			 
 	 
@@ -820,11 +895,12 @@ if (connectionType === 'MQTT'){
 		  
     }
 	.Shutter {
-    background: linear-gradient(#E6FFFF,#FFFFFF,#E6FFFF);
+		background: linear-gradient(#E6FFFF,#FFFFFF,#E6FFFF);
     color: blak; 
     padding: 10px; 
     border-radius: 5px; 
    }
+   
 
 	input {
 		width: 100%;

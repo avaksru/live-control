@@ -1,6 +1,9 @@
 <script>
+	
+	import Cookies from 'js-cookie';
 	import Tooltip from './Tooltip.svelte';
 	import Box from './Box.svelte';
+
 
     let devices = [];
     let socket =[];
@@ -11,20 +14,20 @@
     let name;
 	
 	// ==на время разработки==
-	myip = "192.168.36.137";
+	//myip = "192.168.36.137";
 	
 	// подключаемся к локальной машине, получаем карту сети
 	function getNetworkMap() {
 			devices= JSON.parse('[{"deviceID":"","deviceIP":"' + myip + '","deviceName":""}]');
 			devices[0].id=0;
-			devices[0].status="close";
+			devices[0].status=false;
 			console.log("Подключаемся к WS на localhost ",devices);
 			if(connectionType != "MQTT")
 			{
 			socket[0] = new WebSocket('ws://'+myip+'/ws');
 			socket[0].addEventListener('open', function (event) {
 			devices[0].id=0;
-			devices[0].status="connected";
+			devices[0].status=true;
 			devices = devices;
 			console.log("WS CONNECTED! "+myip);
 
@@ -41,12 +44,12 @@
 // Обработка ошибок websocket 
 			socket[0].addEventListener('close', (event) => {
 				  console.log('ws close '+item.deviceIP);
-				  devices[0].status="close"; 
+				  devices[0].status=false; 
 			 	  devices = devices;
 			});
 			socket[0].addEventListener('error', function (event) {
 				  console.log(item.deviceIP+' WebSocket error: ', event);
-				  devices[0].status="close";
+				  devices[0].status=false;
 				  devices = devices;
 			});
 			}
@@ -63,12 +66,11 @@ function addConnection (devices)  {
 	if(devices){ 
 			devices.forEach(function(item, i, arr) {
 			if (item.deviceIP !=myip){
-			//i=i+1;
 			console.log("trying connect", item, i);
 			socket[i] = new WebSocket('ws://'+item.deviceIP+'/ws');
 			socket[i].addEventListener('open', function (event) {
 	devices[i].id=i;
-	devices[i].status="connected";
+	devices[i].status=true;
 	devices = devices;
 			console.log("WS CONNECTED! "+item.deviceIP, i);
 
@@ -84,20 +86,22 @@ function addConnection (devices)  {
 // Обработка ошибок websocket 
 			socket[i].addEventListener('close', (event) => {
 				  console.log('ws close '+item.deviceIP);
-				  devices[i].status="close"; 
+				  devices[i].status=false; 
 			 	  devices = devices;
 				   NetworkMap= NetworkMap;
 				   console.log(devices);
 			});
 			socket[i].addEventListener('error', function (event) {
 				  console.log(item.deviceIP+' WebSocket error: ', event);
-				  devices[i].status="close";
+				  devices[i].status=false;
 				  devices = devices;
 				  NetworkMap=NetworkMap;
 				  console.log(devices);
 			});
 	}
 });
+	devices[0].id=0;
+	devices[0].status=true;
 	
 	}};
 	
@@ -106,7 +110,7 @@ function addConnection (devices)  {
     
 
 	function addMessage(data, socket) {
-		
+		NetworkMap=NetworkMap;
 	try{
 		data = JSON.parse(data);
 		data.socket = socket;
@@ -191,8 +195,15 @@ function removeTodo(id) {
 	
 	
 
-let MQTTsample=[{"mqttServer":"","mqttPort":'',"mqttPortwss":'',"mqttPrefix":"","mqttUser":"","mqttPass":"","mqttPath":""},
-{"mqttServer":"meef.ru","mqttPort":1883,"mqttPortwss":18883,"mqttPrefix":"/IotTest","mqttUser":"IotManager:guest","mqttPass":"guest","mqttPath":"/ws"}
+let MQTTsample=[{"mqttServer":"","mqttPort":'',"mqttPortwss":'',"mqttPrefix":"","mqttUser":"","mqttPass":"","mqttPath":"","placeholder":""},
+{"mqttServer":"meef.ru","mqttPort":1883,"mqttPortwss":18883,"mqttPrefix":"/IotManager","mqttUser":"IotManager:guest","mqttPass":"guest","mqttPath":"/ws","placeholder":""},
+{"mqttServer":"test.mosquitto.org","mqttPort":1883,"mqttPortwss":8081,"mqttPrefix":"/IotManager","mqttUser":"","mqttPass":"","mqttPath":"/ws","placeholder":""},
+{"mqttServer":"broker.hivemq.com","mqttPort":1883,"mqttPortwss":8000,"mqttPrefix":"/IotManager","mqttUser":"","mqttPass":"","mqttPath":"/mqtt","placeholder":""},
+{"mqttServer":"broker.mqttdashboard.com","mqttPort":1883,"mqttPortwss":8000,"mqttPrefix":"/IotManager","mqttUser":"","mqttPass":"","mqttPath":"/mqtt","placeholder":""},
+{"mqttServer":"broker.emqx.io","mqttPort":1883,"mqttPortwss":8083,"mqttPrefix":"/IotManager","mqttUser":"","mqttPass":"","mqttPath":"/mqtt","placeholder":""},
+{"mqttServer":"broker.emqx.io","mqttPort":1883,"mqttPortwss":8083,"mqttPrefix":"/IotManager","mqttUser":"","mqttPass":"","mqttPath":"/mqtt","placeholder":""},
+{"mqttServer":"m3.wqtt.ru","mqttPort":"","mqttPortwss":"","mqttPrefix":"/IotManager","mqttUser":"","mqttPass":"","mqttPath":"","placeholder":"Параметры указаны в личном кабинете насайте wqtt.ru"},
+{"mqttServer":"91.204.228.124","mqttPort":1883,"mqttPortwss":"","mqttPrefix":"/IotManager","mqttUser":"rise","mqttPass":"23ri22se32","mqttPath":"","placeholder":""}
 ]	
 
 	
@@ -211,10 +222,11 @@ let MQTTsample=[{"mqttServer":"","mqttPort":'',"mqttPortwss":'',"mqttPrefix":"",
 		Conf[i]["mqttServer"]=selected.mqttServer;
 		Conf[i]["mqttPort"]=selected.mqttPort;
 		Conf[i]["mqttPortwss"]=selected.mqttPortwss;
-		Conf[i]["mqttPrefix"]=selected.mqttPrefix;
+		Conf[i]["mqttPrefix"]=selected.mqttPrefix + Math.floor(Math.random() * 10000);
 		Conf[i]["mqttUser"]=selected.mqttUser;
 		Conf[i]["mqttPass"]=selected.mqttPass;
 		Conf[i]["mqttPath"]=selected.mqttPath;
+		Conf[i]["placeholder"]=selected.placeholder;
 
 		changeConf(selected.mqttServer, "mqttServer", i);
 		changeConf(selected.mqttPort, "mqttPort", i);
@@ -231,6 +243,7 @@ let MQTTsample=[{"mqttServer":"","mqttPort":'',"mqttPortwss":'',"mqttPrefix":"",
 	{
 console.log(val, name, socet);
 socket[socet].send('{"setconfigsetupjson":"1", "name":"'+name+'", "val":"'+val+'"}'); 
+Cookies.set(name, val, { expires: 365 });
 
 	}
 function reboot(selected){
@@ -245,6 +258,20 @@ function Pastesettings(i){
 		Conf[i]["mqttPass"]=Conf[0]["mqttPass"];
 		Conf[i]["mqttPath"]=Conf[0]["mqttPath"];
 
+		Conf[i]["mqttServer2"]=Conf[0]["mqttServer2"];
+		Conf[i]["mqttPort2"]=Conf[0]["mqttPort2"];
+		Conf[i]["mqttPortwss2"]=Conf[0]["mqttPortwss2"];
+		Conf[i]["mqttPrefix2"]=Conf[0]["mqttPrefix2"];
+		Conf[i]["mqttUser2"]=Conf[0]["mqttUser2"];
+		Conf[i]["mqttPass2"]=Conf[0]["mqttPass2"];
+		Conf[i]["mqttPath2"]=Conf[0]["mqttPath2"];
+
+		Conf[i]["telegramApi"]=Conf[0]["telegramApi"];
+		Conf[i]["telegonof"]=Conf[0]["telegonof"];
+		Conf[i]["teleginput"]=Conf[0]["teleginput"];
+		Conf[i]["autos"]=Conf[0]["autos"];
+		Conf[i]["chatId"]=Conf[0]["chatId"];
+	
 		changeConf(Conf[i]["mqttServer"], "mqttServer", i);
 		changeConf(Conf[i]["mqttPort"], "mqttPort", i);
 		changeConf(Conf[i]["mqttPortwss"], "mqttPortwss", i);
@@ -253,14 +280,25 @@ function Pastesettings(i){
 		changeConf(Conf[i]["mqttPass"], "mqttPass", i);
 		changeConf(Conf[i]["mqttPath"], "mqttPath", i);
 
+		changeConf(Conf[i]["mqttServer2"], "mqttServer2", i);
+		changeConf(Conf[i]["mqttPort2"], "mqttPort2", i);
+		changeConf(Conf[i]["mqttPortwss2"], "mqttPortwss2", i);
+		changeConf(Conf[i]["mqttPrefix2"], "mqttPrefix2", i);
+		changeConf(Conf[i]["mqttUser2"], "mqttUser2", i);
+		changeConf(Conf[i]["mqttPass2"], "mqttPass2", i);
+		changeConf(Conf[i]["mqttPath2"], "mqttPath2", i);
+
+		changeConf(Conf[i]["telegramApi"], "telegramApi", i);
+		changeConf(Conf[i]["telegonof"], "telegonof", i);
+		changeConf(Conf[i]["teleginput"], "teleginput", i);
+		changeConf(Conf[i]["autos"], "autos", i);
+		changeConf(Conf[i]["chatId"], "chatId", i);
 
 }
 </script>
 
 <body>
 	
-
-
 
 <!--
 
@@ -271,7 +309,7 @@ function Pastesettings(i){
 {#if Conf != ""}	
 <Box>
 	
-<b on:click={handleClick}>Network Map</b>	<span on:click={handleClick1} class="letter1">{wiget["Виджет"]}</span>
+<b on:click={handleClick}>Network Map</b>	<span on:click={handleClick1} class="letter1"> </span>
 	{#if NetworkMap == ""}
 	<b>Файл с картой сети еще не создан</b>
 	{/if}
@@ -285,7 +323,7 @@ function Pastesettings(i){
 	{#if NetworkMap != ""}
 	{#each NetworkMap as espconf, m}
 	<tr>
-	<td width="1%" class="letter2">IP</td><td><input type="text" disabled required bind:value='{NetworkMap[m]["deviceIP"]}'  />	</td>		
+	<td width="1%" class="letter2">IP</td><td><input class:red={espconf["status"]==false} type="text" disabled required bind:value='{NetworkMap[m]["deviceIP"]}'  />	</td>		
 	<td width="1%">Name</td><td width="30%"><input type="text" required bind:value='{NetworkMap[m]["deviceName"]}'  /></td>
 	<td><button  on:click={()=> removeTodo(m)} >-</button></td>
 	</tr>
@@ -305,7 +343,7 @@ function Pastesettings(i){
 	
 
 	</table>	<br>
-	<p><a target="_self" href="http://{myip}/setup">Сохранить</a></p>
+	<p>После добавления ESP нажмите "F5" что быобновить страницу</p>
 </Box>
 	
 	
@@ -320,16 +358,17 @@ function Pastesettings(i){
 	
 
 	<!--WIFI-->	
-	<button on:click={Pastesettings(i)}>Paste settings</button>  <button on:click={reboot(Conf[i].socket)}>Reboot</button>
+	<button on:click={Pastesettings(i)}><Tooltip title="Вставить настройки MQTT и Telegram из верхней в списке ESP ">Paste settings</Tooltip></button> 
+ <button on:click={reboot(Conf[i].socket)}>Reboot</button>
 <Box>
-<b on:click={handleClick}>WIFI</b><span on:click={handleClick1} class="letter1">{wiget["Виджет"]}</span>
+<b on:click={handleClick}>WIFI</b><span on:click={handleClick1} class="letter1"> </span>
 	{#if edit == true}
 
 <table border="0" width="100%">
 	<tr>
 	
 		<td width="40%">ESP name</td>
-		<td><input type="text" required bind:value='{Conf[i].name}'on:change={ changeConf(Conf[i].name, 'name', Conf[i].socket)} /></td>
+		<td><input type="text" placeholder="IotManager" required bind:value='{Conf[i].name}'on:change={ changeConf(Conf[i].name, 'name', Conf[i].socket)} /></td>
 		<Tooltip title="Имя устройства должно состоять из английских букв и иметь длинну от 6 до 12 символов"> <td>?</td>	</Tooltip>
 	</tr><hr>
 	<tr>
@@ -354,7 +393,7 @@ function Pastesettings(i){
 
 <!-- Users-->
 <Box>
-<b on:click={handleClick}>Users</b><span on:click={handleClick1} class="letter1">{wiget["Виджет"]}</span>
+<b on:click={handleClick}>Users</b><span on:click={handleClick1} class="letter1"> </span>
 	{#if edit == true}
 
 <table border="0" width="100%">
@@ -375,7 +414,7 @@ function Pastesettings(i){
 	
 <!--Teame-->
 	<Box>
-<b on:click={handleClick}>Time </b><span on:click={handleClick1} class="letter1">{wiget["Виджет"]}</span>
+<b on:click={handleClick}>Time </b><span on:click={handleClick1} class="letter1"> </span>
 	{#if edit == true}
 
 <table border="0" width="100%">
@@ -396,15 +435,18 @@ function Pastesettings(i){
 	
 <!--MQTT-->
 	<Box>
-<select  bind:value={selected} on:change="{chengMQTT(selected)}">
-		{#each MQTTsample as mqtt, n}
-			<option value={mqtt}>
-				<b>{mqtt.mqttServer}</b> 
-			</option>
-		{/each}
-	</select>		
+	
 
-<b on:click={handleClick}>MQTT</b><span on:click={handleClick1} class="letter1">{wiget["Виджет"]} 
+<b on:click={handleClick}>MQTT</b> 
+<select  bind:value={selected} on:change="{chengMQTT(selected)}">
+	{#each MQTTsample as mqtt, n}
+		<option value={mqtt}>
+			<b>{mqtt.mqttServer}</b> 
+		</option>
+	{/each}
+</select>		<span>Готовые шаблоны</span>
+
+<span on:click={handleClick1} class="letter1">  
 		
 		<!--	{@html Conf[i]["warning4"]}-->
 		</span>  
@@ -414,17 +456,17 @@ function Pastesettings(i){
 
 	<tr>
 		<td width="40%">MQTT server</td>
-		<td><input type="text" required bind:value='{Conf[i]["mqttServer"]}' on:change={changeConf(Conf[i].mqttServer, 'mqttServer', Conf[i].socket)} /></td>
+		<td><input type="text"  placeholder={Conf[i]["placeholder"]}  required bind:value='{Conf[i]["mqttServer"]}' on:change={changeConf(Conf[i].mqttServer, 'mqttServer', Conf[i].socket)} /></td>
 		<Tooltip title=""  > <td>?</td>	</Tooltip>
 	</tr>
 	<tr>
-		<td>MQTT port</td>
-		<td><input type="text" required bind:value='{Conf[i]["mqttPort"]}' on:change={changeConf(Conf[i].mqttPort, 'mqttPort', Conf[i].socket)}/></td>
+		<td>MQTT port (TCP)</td>
+		<td><input type="text" required placeholder={Conf[i]["placeholder"]} bind:value='{Conf[i]["mqttPort"]}' on:change={changeConf(Conf[i].mqttPort, 'mqttPort', Conf[i].socket)}/></td>
 		<Tooltip title="" ><td>?</td>	</Tooltip>
 	</tr>
 	<tr>
-		<td>MQTT wss port</td>
-		<td><input type="text"  bind:value='{Conf[i]["mqttPortwss"]}' on:change={changeConf(Conf[i].mqttPortwss, 'mqttPortwss', Conf[i].socket)}/></td>
+		<td>MQTT wss port (TLS)</td>
+		<td><input type="text" placeholder={Conf[i]["placeholder"]}  bind:value='{Conf[i]["mqttPortwss"]}' on:change={changeConf(Conf[i].mqttPortwss, 'mqttPortwss', Conf[i].socket)}/></td>
 		<Tooltip title="" ><td>?</td>	</Tooltip>
 	</tr>
 	<tr>
@@ -434,12 +476,12 @@ function Pastesettings(i){
 	</tr>
 	<tr>
 		<td>mqttUser</td>
-		<td><input type="text" bind:value='{Conf[i]["mqttUser"]}' on:change={changeConf(Conf[i].mqttUser, 'mqttUser', Conf[i].socket)}/></td>
+		<td><input type="text"  placeholder={Conf[i]["placeholder"]}  bind:value='{Conf[i]["mqttUser"]}' on:change={changeConf(Conf[i].mqttUser, 'mqttUser', Conf[i].socket)}/></td>
 			<Tooltip title="" ><td>?</td>	</Tooltip>
 	</tr>
 	<tr>
 		<td>mqttPass</td>
-		<td><input type="text" bind:value='{Conf[i]["mqttPass"]}' on:change={changeConf(Conf[i].mqttPass, 'mqttPass', Conf[i].socket)} /></td>
+		<td><input type="text"  placeholder={Conf[i]["placeholder"]}  bind:value='{Conf[i]["mqttPass"]}' on:change={changeConf(Conf[i].mqttPass, 'mqttPass', Conf[i].socket)} /></td>
 		<Tooltip title="Бла-бла-бла про то как это использовать" ><td>?</td>	</Tooltip>
 	</tr>
 	<tr>
@@ -497,7 +539,7 @@ function Pastesettings(i){
 		
 <!--Telegram-->
 	<Box>
-<b on:click={handleClick}>Telegram </b><span on:click={handleClick1} class="letter1">{wiget["Виджет"]}</span>
+<b on:click={handleClick}>Telegram </b><span on:click={handleClick1} class="letter1"> </span>
 	{#if edit == true}
 
 <table border="0" width="100%"><br>
@@ -536,7 +578,7 @@ function Pastesettings(i){
 		
 <!--UART-->
 	<Box>
-<b on:click={handleClick}>UART </b><span on:click={handleClick1} class="letter1">{wiget["Виджет"]}</span>
+<b on:click={handleClick}>UART </b><span on:click={handleClick1} class="letter1"> </span>
 	{#if edit == true}
 
 <table border="0" width="100%">
@@ -574,13 +616,13 @@ function Pastesettings(i){
 	
 <!-- Developer settings-->
 <Box>
-<b on:click={handleClick}>Developer settings</b><span on:click={handleClick1} class="letter1">{wiget["Виджет"]}</span>
+<b on:click={handleClick}>Developer settings</b><span on:click={handleClick1} class="letter1"> </span>
 	{#if edit == true}
 
 <table border="0" width="100%">
 <tr>
 		<td width="40%">Update server</td>
-		<td><input type="text" bind:value='{Conf[i]["serverip"]}' on:change={changeConf(Conf[i].serverip, 'serverip', Conf[i].socket)}/></td>
+		<td><input type="text" placeholder="http://206.189.49.244" bind:value='{Conf[i]["serverip"]}' on:change={changeConf(Conf[i].serverip, 'serverip', Conf[i].socket)}/></td>
 		<Tooltip title="Бла-бла-бла про то как это использовать" ><td>?</td>	</Tooltip>
 	</tr>
 	<tr>
@@ -650,7 +692,9 @@ input[type=password] {
 input:required:invalid:not(:placeholder-shown) {
   border-color: crimson;
 	}
+
 .red{border-color: crimson;}	
+
 	.tooltip {
 		border: 1px solid #ddd;
 		box-shadow: 1px 1px 1px #ddd;
