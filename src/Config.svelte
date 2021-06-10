@@ -265,7 +265,9 @@
 	{/if}
 </Box>
 	  {/each}  
-<input type="text" placeholder="tmp817" />
+
+
+<div  class="letter" align="center" >developed by avaks@mef.ru</div>
 </body>
 <style>
 	.signup-text-input{

@@ -9,7 +9,7 @@
   "ntp": "pool.ntp.org",
   "mqttServer": "",
   "mqttPort": 0,
-  "mqttPrefix": "/iotManager",
+  "mqttPrefix": "",
   "mqttUser": "",
   "mqttPass": "",
   "mqttServer2": "",

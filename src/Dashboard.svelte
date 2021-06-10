@@ -1,24 +1,22 @@
 	<script>
-	//avaks
 	import { Tabs, Tab, TabList, TabPanel } from 'svelte-tabs';
 	import Toggle from "svelte-toggle";
 	import Chart from 'svelte-frappe-charts';
-	import mqtt from 'mqtt/dist/mqtt.min';
+	//import mqtt from 'mqtt/dist/mqtt.min';
 
-
+	
 
 	let connectionType = 'WS';
 	let client;
 	let topic;
 // MQTT====================================================================
 	
-if (connectionType === 'MQTT'){
+if (connectionType == 'MQTT'){
     let clientId = 'IotManager_';
     let connected = false;
     let topic;
     let temp;
-    var MQTTconnections = [{"user_id" : "1", "connection_name" : "meef.ru", "connection_protocol" : "wss", "mqtt_host" : "meef.ru", "mqtt_port" : "18883", "mqtt_prefix" : "/IotManager", "mqtt_username" : "IotManager:guest", "mqtt_password" : "guest", "mqtt_path" : "/ws", "mqtt_id" : "mqtt_id"},{"user_id" : "1", "connection_name" : "cloudMQTT", "connection_protocol" : "wss", "mqtt_host" : "m20.cloudmqtt.com", "mqtt_port" : "33191", "mqtt_prefix" : "/IoTmanager", "mqtt_username" : "", "mqtt_password" : "", "mqtt_path" : "/", "mqtt_id" : "mqtt_id"}];
-      clientId += '_' + Math.floor(Math.random() * 10000);
+       clientId += '_' + Math.floor(Math.random() * 10000);
       connected = false;
       const mqtt_options = {
         clientId: clientId,
@@ -199,7 +197,7 @@ if (connectionType === 'MQTT'){
 	
 	// ==на время разработки==
 	
-	//	devices = '[{"deviceID":"0000000-0000000","deviceIP":"192.168.36.137","deviceName":"test"},{"deviceID":"0000000-0000000","deviceIP":"192.168.36.145","deviceName":"test2"},{"deviceID":"0000000-0000000","deviceIP":"192.168.36.138","deviceName":"test3"},{"deviceID":"0000000-0000000","deviceIP":"192.168.36.146","deviceName":"test4"}]';  
+	//	devices = '[{"deviceID":"0000000-0000000","deviceIP":"192.168.36.173","deviceName":"test"},{"deviceID":"0000000-0000000","deviceIP":"192.168.36.188","deviceName":"test2"},{"deviceID":"0000000-0000000","deviceIP":"192.168.36.189","deviceName":"test3"}]';  
 	//	devices= JSON.parse(devices);
 	
 	
@@ -225,13 +223,14 @@ if (connectionType === 'MQTT'){
 			});
 	// Listen for messages
 			socket[i].addEventListener('message', function (event) {
-			   
-		//	console.log('получено '+item.deviceIP, event.data);
+			  
+	//Nen добавить вывод отладочных сообщений в консоль			
+			console.log('получено '+item.deviceIP, event.data);
 		
 	
 	
 	// запускаем обработку пришедшего сообщения
-				  let time = new Date().getTime();
+				let time = new Date().getTime();
 				addMessage(event.data, i);
 			});
 	// Обработка ошибок websocket 
@@ -269,7 +268,7 @@ if (connectionType === 'MQTT'){
 	try{
 		tmp = JSON.parse(tmp);
 	tmp.forEach(function(json, i, array) {
-	//	console.log('получено ',deviceIP,json);
+		
 			
 	// собираем виджеты	
 	// если пришедшее сообщение виджет 	
@@ -595,6 +594,7 @@ if (connectionType === 'MQTT'){
 	<div class="Shutter" style="{Shuttervisibl} position: absolute; z-index: 1; right: 4%; top: 3%" id="layer1">
 		<span>
 			<progress value="{elapsed / duration}"></progress>
+			<br><br>
 		  <!--Перечисляем девайсы в сети-->
 		  {#each devices as NetworkDevice , i}
 		  {#if !NetworkDevice.status}
@@ -838,11 +838,18 @@ if (connectionType === 'MQTT'){
 				  {/each}
 				  </Tabs>
 
-				
-			
+			<br><br>	
+			<div  class="letter"  align="center">developed by: avaks@mef.ru</div>
 
 
 <style>
+		 .letter { 
+     color: grey; 
+     font-size: 60%; 
+		 padding-left: 0px; 
+		 opacity: 0.8;
+		
+     }
 	:root{
 		--bg-color: #FFFFFF;
 		--text-color: #000000;
@@ -899,6 +906,9 @@ if (connectionType === 'MQTT'){
     color: blak; 
     padding: 10px; 
     border-radius: 5px; 
+   }
+   progress{
+	   height: 4px;
    }
    
 

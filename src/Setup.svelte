@@ -1,6 +1,6 @@
 <script>
 	
-	import Cookies from 'js-cookie';
+	import Cookies, { get } from 'js-cookie';
 	import Tooltip from './Tooltip.svelte';
 	import Box from './Box.svelte';
 
@@ -12,9 +12,10 @@
 	let NetworkMap=[];  
 	let Conf=[];
     let name;
+	let urlMQTT='';
 	
 	// ==на время разработки==
-	//myip = "192.168.36.137";
+	//myip = "192.168.36.173";
 	
 	// подключаемся к локальной машине, получаем карту сети
 	function getNetworkMap() {
@@ -115,9 +116,11 @@ function addConnection (devices)  {
 		data = JSON.parse(data);
 		data.socket = socket;
     // Если пришел Config
-    if (data.apssid)
-           {
-             Conf =  [
+    if (data.apssid){
+		data.webMQTT=false;
+		data.webMQTT=(Cookies.get('webMQTT') == "true") ? true : false; 
+	
+		Conf =  [
 				 ...Conf,
                         data
                     ]
@@ -246,6 +249,24 @@ socket[socet].send('{"setconfigsetupjson":"1", "name":"'+name+'", "val":"'+val+'
 Cookies.set(name, val, { expires: 365 });
 
 	}
+
+	function	GetMQTThttp(val, name, socet)
+		{
+		console.log(val, name, socet);
+		socket[socet].send('{"setconfigsetupjson":"1", "name":"'+name+'", "val":"'+val+'"}'); 
+		Cookies.set(name, val, { expires: 365 });
+
+		if (val==true){
+			urlMQTT = "https://meef.ru/?id=" + Math.floor(Math.random() * 100000000);
+			//urlMQTT = "https://192.168.0.10/?id=" + Math.floor(Math.random() * 100000000);
+			Cookies.set('urlMQTT', urlMQTT, { expires: 365 });
+			}else
+		{
+			urlMQTT = "";
+			Cookies.set('urlMQTT', urlMQTT, { expires: 365 });
+		}
+	}
+
 function reboot(selected){
 socket[selected].send('{"command":"reboot"}'); 
 }
@@ -365,10 +386,15 @@ function Pastesettings(i){
 	{#if edit == true}
 
 <table border="0" width="100%">
+	
 	<tr>
 	
 		<td width="40%">ESP name</td>
-		<td><input type="text" placeholder="IotManager" required bind:value='{Conf[i].name}'on:change={ changeConf(Conf[i].name, 'name', Conf[i].socket)} /></td>
+	
+		<td>
+			<input type="text" placeholder="IotManager" required bind:value='{Conf[i].name}'on:change={ changeConf(Conf[i].name, 'name', Conf[i].socket)} />
+		</td>
+	
 		<Tooltip title="Имя устройства должно состоять из английских букв и иметь длинну от 6 до 12 символов"> <td>?</td>	</Tooltip>
 	</tr><hr>
 	<tr>
@@ -386,7 +412,9 @@ function Pastesettings(i){
 		<td><input type="text" required bind:value='{Conf[i]["apssid"]}' on:change={changeConf(Conf[i].apssid, 'apssid', Conf[i].socket)} /></td>
 			<Tooltip title="Устройство постоянно сканирует сеть на наличие wifi. Если роутер отключен, то устройство автоматически перейдет в режим точки доступа. Когда wifi появится устройство автоматически подключится к роутеру снова, и выключит точку доступа" ><td>?</td>	</Tooltip>
 	</tr>
+
 </table>	
+
 
 	{/if}
 </Box>
@@ -452,22 +480,21 @@ function Pastesettings(i){
 		</span>  
 	{#if edit == true}
 
-<table border="0" width="100%">
-
+	<table border="0" width="100%">
 	<tr>
 		<td width="40%">MQTT server</td>
 		<td><input type="text"  placeholder={Conf[i]["placeholder"]}  required bind:value='{Conf[i]["mqttServer"]}' on:change={changeConf(Conf[i].mqttServer, 'mqttServer', Conf[i].socket)} /></td>
-		<Tooltip title=""  > <td>?</td>	</Tooltip>
+		<Tooltip title="После изменеения параметров MQTT требуетсяперезагрузка"  > <td>?</td>	</Tooltip>
 	</tr>
 	<tr>
 		<td>MQTT port (TCP)</td>
 		<td><input type="text" required placeholder={Conf[i]["placeholder"]} bind:value='{Conf[i]["mqttPort"]}' on:change={changeConf(Conf[i].mqttPort, 'mqttPort', Conf[i].socket)}/></td>
-		<Tooltip title="" ><td>?</td>	</Tooltip>
+		<Tooltip title="После изменеения параметров MQTT требуетсяперезагрузка" ><td>?</td>	</Tooltip>
 	</tr>
 	<tr>
 		<td>MQTT wss port (TLS)</td>
 		<td><input type="text" placeholder={Conf[i]["placeholder"]}  bind:value='{Conf[i]["mqttPortwss"]}' on:change={changeConf(Conf[i].mqttPortwss, 'mqttPortwss', Conf[i].socket)}/></td>
-		<Tooltip title="" ><td>?</td>	</Tooltip>
+		<Tooltip title="Должен быть указан для подключения IOS устройств и подключения к 'Панели управлени' по MQTT через Internet " ><td>?</td>	</Tooltip>
 	</tr>
 	<tr>
 		<td>mqttPrefix</td>
@@ -477,7 +504,7 @@ function Pastesettings(i){
 	<tr>
 		<td>mqttUser</td>
 		<td><input type="text"  placeholder={Conf[i]["placeholder"]}  bind:value='{Conf[i]["mqttUser"]}' on:change={changeConf(Conf[i].mqttUser, 'mqttUser', Conf[i].socket)}/></td>
-			<Tooltip title="" ><td>?</td>	</Tooltip>
+			<Tooltip title="После изменеения параметров MQTT требуетсяперезагрузка" ><td>?</td>	</Tooltip>
 	</tr>
 	<tr>
 		<td>mqttPass</td>
@@ -489,6 +516,7 @@ function Pastesettings(i){
 		<td><input type="text" bind:value='{Conf[i]["mqttPath"]}'on:change={changeConf(Conf[i].mqttPath, 'mqttPath', Conf[i].socket)} /></td>
 		<Tooltip title="Бла-бла-бла про то как это использовать" ><td>?</td>	</Tooltip>
 	</tr><hr>
+
 	<!--MQTT2-->
 	<b>Rreserve MQTT</b>
 	<br>
@@ -529,10 +557,37 @@ function Pastesettings(i){
 	</tr><br>
 	<tr>
 		<td width="40%">Web dashbord over MQTT</td>
-		<td><input disabled type=checkbox bind:checked={Conf[i]["webMQTT"]} on:change={changeConf(Conf[i].webMQTT, 'webMQTT', Conf[i].socket)}></td>
-			<Tooltip title="" ><td>?</td>	</Tooltip>
+		<td><input type=checkbox bind:checked={Conf[i].webMQTT} on:change={GetMQTThttp(Conf[i].webMQTT, 'webMQTT', Conf[i].socket)}>
+		
+	
+		{#if Conf[i].webMQTT == true }
+		<a href="{Cookies.get('urlMQTT')}" form="mqttform" onclick="document.getElementById('mqttform').submit(); ">перейти на MQTT</a>
+		{urlMQTT = Cookies.get('urlMQTT')}	
+		{/if}</td>
+		<Tooltip title="Позволяет поучить доступ к 'Панели управления' через Internet по протоколу MQTT. Должен быть указан MQTT wss port (TLS) " ><td>?</td>	</Tooltip>
 	</tr>
-	</table>	
+	
+	</table>
+
+
+	
+
+
+
+
+
+<form id="mqttform" hidden method="post" action={urlMQTT} onsubmit="fmSubmit()">
+		<input type="text" id="id_user" name="id_user" value={urlMQTT} >
+		<input type="text" id="mqttServer" name="mqttServer" value={Conf[i]["mqttServer"]} >
+		<input type="text" id="mqttPort" name="mqttPort" value={Conf[i]["mqttPort"]} >
+		<input type="text" id="mqttPortwss" name="mqttPortwss" value={Conf[i]["mqttPortwss"]} >
+		<input type="text" id="mqttPrefix" name="mqttPrefix" value={Conf[i]["mqttPrefix"]} >
+		<input type="text" id="mqttUser" name="mqttUser" value={Conf[i]["mqttUser"]} >
+		<input type="text" id="mqttPass" name="mqttPass" value={Conf[i]["mqttPass"]} >
+		<input type="text" id="mqttPath" name="mqttPath" value={Conf[i]["mqttPath"]} >
+		<input type="submit">
+	</form>
+	
 	{/if}
 </Box>
 
@@ -622,7 +677,7 @@ function Pastesettings(i){
 <table border="0" width="100%">
 <tr>
 		<td width="40%">Update server</td>
-		<td><input type="text" placeholder="http://206.189.49.244" bind:value='{Conf[i]["serverip"]}' on:change={changeConf(Conf[i].serverip, 'serverip', Conf[i].socket)}/></td>
+		<td><input type="text" placeholder="https://206.189.49.244" bind:value='{Conf[i]["serverip"]}' on:change={changeConf(Conf[i].serverip, 'serverip', Conf[i].socket)}/></td>
 		<Tooltip title="Бла-бла-бла про то как это использовать" ><td>?</td>	</Tooltip>
 	</tr>
 	<tr>
@@ -640,10 +695,24 @@ function Pastesettings(i){
 	{/if}
 </Box>
 	{/if}	
+	<br><br>
+	<div  class="letter" align="center">developed by avaks@mef.ru</div>
+
+
+	
+	
 </body>
 
 
 <style>
+
+.letter { 
+		 color: grey; 
+		 font-size: 60%; 
+			 padding-left: 0px; 
+			 opacity: 0.5;
+			
+		 }
 table {
 	margin:0px;
   background-color: #fafafa;
