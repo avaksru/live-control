@@ -15,7 +15,7 @@
 	let urlMQTT='';
 	
 	// ==на время разработки==
-	//myip = "192.168.36.173";
+//	myip = "192.168.36.173";
 	
 	// подключаемся к локальной машине, получаем карту сети
 	function getNetworkMap() {
@@ -32,6 +32,14 @@
 			devices = devices;
 			console.log("WS CONNECTED! "+myip);
 
+			// вывод отладочных сообщений в консоль		
+	
+	if (Cookies.get('consolelog') == "true")
+	{	
+			console.log('NEW data packet '+item.deviceIP, event.data);
+	}
+	
+
 // получаем "карту сети" по websocket       
 			socket[0].send("getNetworkMap");
 // получаем конфигурацию ESP по websocket       			
@@ -40,6 +48,7 @@
 			});
 			socket[0].addEventListener('message', function (event) {
 // запускаем обработку пришедшего сообщения
+
 			addMessage(event.data,0);
 			});
 // Обработка ошибок websocket 
@@ -70,9 +79,9 @@ function addConnection (devices)  {
 			console.log("trying connect", item, i);
 			socket[i] = new WebSocket('ws://'+item.deviceIP+'/ws');
 			socket[i].addEventListener('open', function (event) {
-	devices[i].id=i;
-	devices[i].status=true;
-	devices = devices;
+			devices[i].id=i;
+			devices[i].status=true;
+			devices = devices;
 			console.log("WS CONNECTED! "+item.deviceIP, i);
 
 // получаем конфигурацию ESP по websocket       
@@ -89,7 +98,7 @@ function addConnection (devices)  {
 				  console.log('ws close '+item.deviceIP);
 				  devices[i].status=false; 
 			 	  devices = devices;
-				   NetworkMap= NetworkMap;
+				  NetworkMap= NetworkMap;
 				   console.log(devices);
 			});
 			socket[i].addEventListener('error', function (event) {
@@ -118,7 +127,11 @@ function addConnection (devices)  {
     // Если пришел Config
     if (data.apssid){
 		data.webMQTT=false;
+		data.consolelog=false;
+		data.darktheme=false;
 		data.webMQTT=(Cookies.get('webMQTT') == "true") ? true : false; 
+		data.consolelog=(Cookies.get('consolelog') == "true") ? true : false; 
+		data.darktheme=(Cookies.get('darktheme') == "true") ? true : false; 
 	
 		Conf =  [
 				 ...Conf,
@@ -316,17 +329,80 @@ function Pastesettings(i){
 		changeConf(Conf[i]["chatId"], "chatId", i);
 
 }
+
+// обратный отсчет для 		Shutter
+let frame;	
+			let elapsed = 0;
+			let duration = 5000;
+			let last_time = window.performance.now();
+			(function update() {
+			frame = requestAnimationFrame(update);
+			const time = window.performance.now();
+			elapsed += Math.min(
+			time - last_time,
+			duration - elapsed
+			);
+				last_time = time;
+				if (elapsed==duration){
+					Shutterhiddn();
+				}
+			}());
+
+		let	Shuttervisibl= "visibility: hidden;";
+			 
+		function Shuttervisibil(){
+				Shuttervisibl= "visibility: visible;";
+			//	duration = sec;
+				elapsed = 0;
+				if (elapsed===duration){
+					Shuttervisibl= "visibility: hidden;";
+				}
+
+				};
+				function Shutterhiddn(){
+				Shuttervisibl= "visibility: hidden;";
+				};
+				Shuttervisibil();
 </script>
+	{#if connectionType == 'MQTT'}
 
+	{:else}
+		<div class="Shutter" style="{Shuttervisibl} position: absolute; z-index: 1; right: 4%; top: 3%" id="layer1">
+			<span>
+				<progress value="{elapsed / duration}"></progress>
+				<br><br>
+			  <!--Перечисляем девайсы в сети-->
+			  {#each NetworkMap as NetworkDevice , i}
+			  {#if !NetworkDevice.status}
+				  <p align="left" style=" margin-top: -5px; margin-bottom: -5px">
+				   {NetworkDevice.deviceIP} {NetworkDevice.deviceName} waiting
+				  </p>
+			  {/if}  	
+				 {#if NetworkDevice.status == true}
+				  <p align="left" style="color: green; margin-top: -5px; margin-bottom: -5px">
+				   {NetworkDevice.deviceIP} {NetworkDevice.deviceName} connected
+				  </p>
+			  {/if}  		  
+			  {#if NetworkDevice.status == false}
+				  <p align="left" style="color: red; margin-top: -5px; margin-bottom: -5px" on:click={addConnection(devices)}>
+				   {NetworkDevice.deviceIP} {NetworkDevice.deviceName} disconnected
+				   </p>
+			  {/if}  		  
+				{/each}  
+				
+			</span>
+		</div>
+		{/if}	
+			{#if connectionType == 'MQTT'}
+	<div style=" position: absolute;  z-index: 2; right: 2%; top: 1%" id="layerMQTT" >MQTT</div>
+	{:else}
+	<div on:mouseenter={Shuttervisibil} on:click={Shutterhiddn} class="connTupe" style=" position: absolute;  z-index: 2; right: 2%; top: 1%" id="layerWS">websocket</div>
+	{/if}	
 <body>
+
 	
 
-<!--
 
-<p>	{JSON.stringify(Conf[0])}</p>-->
-	
-	
-	<!-- NetworkMap-->
 {#if Conf != ""}	
 <Box>
 	
@@ -440,7 +516,7 @@ function Pastesettings(i){
 	{/if}
 </Box>
 	
-<!--Teame-->
+<!--Time-->
 	<Box>
 <b on:click={handleClick}>Time </b><span on:click={handleClick1} class="letter1"> </span>
 	{#if edit == true}
@@ -600,19 +676,36 @@ function Pastesettings(i){
 <table border="0" width="100%"><br>
 <tr>
 		<td width="40%">Enable Telegram</td>
-		<td><input disabled type=checkbox bind:checked = {Conf[i]["telegonof"]} on:change={changeConf(Conf[i].telegonof, 'telegonof', Conf[i].socket)}></td>
-			<Tooltip title="" ><td>?</td>	</Tooltip>
+		{#if Conf[i]["telegonof"] == "false"}
+		<td><input  type=checkbox  on:change={changeConf('true', 'telegonof', Conf[i].socket)}></td>
+		{:else}
+		<td><input  type=checkbox bind:checked={Conf[i]["telegonof"]} on:change={changeConf(Conf[i].telegonof, 'telegonof', Conf[i].socket)}></td>
+		{/if}	
+	
+		<Tooltip title="" ><td>?</td>	</Tooltip>
 	</tr>
 <tr>
 <tr>
 		<td>Enable incoming messages</td>
-		<td><input disabled type=checkbox bind:checked={Conf[i]["teleginput"]} on:change={changeConf(Conf[i].teleginput, 'teleginput', Conf[i].socket)}></td>
-			<Tooltip title="" ><td>?</td>	</Tooltip>
+		{#if Conf[i]["teleginput"] == "false"}
+		<td><input  type=checkbox  on:change={changeConf('true', 'teleginput', Conf[i].socket)}></td>
+		{:else}
+		<td><input  type=checkbox bind:checked={Conf[i]["teleginput"]} on:change={changeConf(Conf[i].teleginput, 'teleginput', Conf[i].socket)}></td>
+		{/if}	
+	
+		
+		<Tooltip title="" ><td>?</td>	</Tooltip>
 	</tr>
 <tr>
 <tr>
 		<td>Auto get chat ID </td>
-		<td><input  disabled type=checkbox bind:checked={Conf[i]["autos"]} on:change={changeConf(Conf[i].autos, 'autos', Conf[i].socket)}></td>
+		
+			{#if Conf[i]["autos"] == "false"}
+			<td><input  type=checkbox  on:change={changeConf('true', 'autos', Conf[i].socket)}></td>
+			{:else}
+			<td><input  type=checkbox bind:checked={Conf[i]["autos"]} on:change={changeConf(Conf[i].autos, 'autos', Conf[i].socket)}></td>
+			{/if}	
+		
 			<Tooltip title="" ><td>?</td>	</Tooltip>
 	</tr><br>
 <tr>
@@ -639,7 +732,11 @@ function Pastesettings(i){
 <table border="0" width="100%">
 <tr>
 		<td width="40%">Enable UART</td>
-		<td><input disabled type=checkbox bind:checked={Conf[i]["???"]} ></td>
+		<td>
+		
+			<input disabled type=checkbox bind:checked={Conf[i]["???"]} >
+		
+		</td>
 			<Tooltip title="" ><td>?</td>	</Tooltip>
 	</tr>
 <tr>
@@ -687,14 +784,31 @@ function Pastesettings(i){
 	</tr>
 	<tr>
 		<td width="40%">Use a dark theme</td>
-		<td><input disabled type=checkbox bind:checked={Conf[i]["darktheme"]} on:change={changeConf(Conf[i].darktheme, 'darktheme', Conf[i].socket)}></td>
+		<td>			
+			{#if Conf[i]["darktheme"] == "false"}
+			<td><input disabled type=checkbox  on:change={changeConf('true', 'darktheme', Conf[i].socket)}></td>
+			{:else}
+			<td><input disabled type=checkbox bind:checked={Conf[i]["darktheme"]} on:change={changeConf(Conf[i].darktheme, 'darktheme', Conf[i].socket)}></td>
+			{/if}	
+		</td>
 			<Tooltip title="" ><td>?</td>	</Tooltip>
+	</tr>
+	<tr>
+		<td width="40%">Console LOG</td>
+		<td>			
+			{#if Conf[i]["consolelog"] == "false"}
+			<td><input  type=checkbox  on:change={changeConf('true', 'consolelog', Conf[i].socket)}></td>
+			{:else}
+			<td><input  type=checkbox bind:checked={Conf[i]["consolelog"]} on:change={changeConf(Conf[i].consolelog, 'consolelog', Conf[i].socket)}></td>
+			{/if}	
+		</td>
+			<Tooltip title="Включает вывод в консоль браузера всех полученных пакетов" ><td>?</td>	</Tooltip>
 	</tr>
 	</table>	
 
 	{/if}
 </Box>
-	{/if}	
+		{/if}	
 	<br><br>
 	<div  class="letter" align="center">developed by avaks@mef.ru</div>
 
@@ -772,4 +886,14 @@ input:required:invalid:not(:placeholder-shown) {
 		padding: 4px;
 		position: absolute;
 	}
+	.Shutter {
+		background: linear-gradient(#E6FFFF,#FFFFFF,#E6FFFF);
+    color: blak; 
+    padding: 10px; 
+    border-radius: 5px; 
+   }
+   progress{
+	   height: 4px;
+   }
+   
 </style>

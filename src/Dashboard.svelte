@@ -1,4 +1,5 @@
 	<script>
+	import Cookies, { get } from 'js-cookie';
 	import { Tabs, Tab, TabList, TabPanel } from 'svelte-tabs';
 	import Toggle from "svelte-toggle";
 	import Chart from 'svelte-frappe-charts';
@@ -16,7 +17,11 @@ if (connectionType == 'MQTT'){
     let connected = false;
     let topic;
     let temp;
-       clientId += '_' + Math.floor(Math.random() * 10000);
+ 
+	// ==на время разработки==
+	// MQTTconnections=JSON.parse(MQTTconnections);
+
+	clientId += '_' + Math.floor(Math.random() * 10000);
       connected = false;
       const mqtt_options = {
         clientId: clientId,
@@ -215,7 +220,6 @@ if (connectionType == 'MQTT'){
 			socket[i].addEventListener('open', function (event) {
 			devices[i].id=i;
 			devices[i].status="connected";
-//	console.log(devices);
 			devices = devices;
 			console.log("WS CONNECTED! "+item.deviceIP);
 
@@ -224,10 +228,12 @@ if (connectionType == 'MQTT'){
 	// Listen for messages
 			socket[i].addEventListener('message', function (event) {
 			  
-	//Nen добавить вывод отладочных сообщений в консоль			
-			console.log('получено '+item.deviceIP, event.data);
-		
+	// вывод отладочных сообщений в консоль		
 	
+	if (Cookies.get('consolelog') == "true")
+	{	
+			console.log('NEW data packet '+item.deviceIP, event.data);
+	}
 	
 	// запускаем обработку пришедшего сообщения
 				let time = new Date().getTime();
@@ -308,6 +314,7 @@ if (connectionType == 'MQTT'){
 			// дописываем виджету префикс 
 			json.prefics = getprefics(json.topic)
 			json.closed = true; 
+			
 
 			 wigets = [
 			 ...wigets,
@@ -355,7 +362,7 @@ if (connectionType == 'MQTT'){
 	// ищем виджет к которому относится этот статус
 	wigets.forEach(function (element){
 
-
+		
 		//отличие MQTT и WS========================================================!!!!!!!!!!!!!!
 		let messegetopic;
 		if (connectionType==="MQTT")
@@ -441,6 +448,7 @@ if (connectionType == 'MQTT'){
 		// данные для прочих витжетов	(заменяем статус на новый)
 					else {   
 					element.status = json.status;
+					element.send = false; 
 				
 					}
 
@@ -695,7 +703,7 @@ if (connectionType == 'MQTT'){
 					<Toggle style="float: right" on:toggle={WSpush(widget.socket, widget.topic, 0)}
 					label=""			
 					 toggledColor='blue'
-					 untoggledColor="gray"
+					 untoggledColor="red"
 					 switchColor="#eee"
 					/>
 					</span>
@@ -703,7 +711,7 @@ if (connectionType == 'MQTT'){
 					<span style="float: right">
 						<Toggle on:toggle={WSpush(widget.socket, widget.topic, 1)}
 						label=""			
-						toggledColor='blue'
+						toggledColor='red'
 						untoggledColor="gray"
 						switchColor="#eee"
 						toggled=
@@ -722,16 +730,19 @@ if (connectionType == 'MQTT'){
 			</span>
 		{:else}
 		<span style="float: left; font-family: '{widget.descrfont}'" >
-		{widget.descr}
+		{widget.descr}<br>
+<!--Инфо от ноды mysens отображается под названием виджета -->	
+		<span class=letter style='color: {!widget.nodeInfoColor ? 'gray' : widget.nodeInfoColor}'>{!widget.nodeInfo ? '' : widget.nodeInfo}</span>
+
 		</span>
 		{/if}
 		</td>
 		<td>
 
-<!--Инфо от ноды mysens -->	
+<!--Инфо от ноды mysens отображается по середине
 		<lable align='left' style='color: {!widget.nodeInfoColor ? 'gray' : widget.nodeInfoColor}'>
-		{!widget.nodeInfo ? '' : widget.nodeInfo}
-	   </lable>
+		
+	   </lable>-->	
 	
 
 		</td>
@@ -770,21 +781,21 @@ if (connectionType == 'MQTT'){
 		 {#if widget.type === 'number'}
 		 <td > 
 			<div  style="float: right; display:inline-block">
-			<input type="button" value="-" style="width: 20%" on:click={WSpush(widget.socket, widget.topic, widget.status-1)}>
-			<input style="text-align: right; border: 1px solid #6699FF; width: 50%" type=number neme={widget.topic} bind:value={widget.status} size="20"  on:change={WSpush(widget.socket, widget.topic, widget.status)} min=-1000 max=1000000>
-			<input type="button" value="+" style="width: 20%" on:click={WSpush(widget.socket, widget.topic, widget.status-1+2)}>
+			<input type="button" value="-" style="border: 1px solid black; width: 20% " on:click={WSpush(widget.socket, widget.topic, widget.status-1)}>
+			<input class:red={widget["send"]==true}  style="width: 50% "   type=number neme={widget.topic} bind:value={widget.status} size="20"  on:change={widget["send"]=true, WSpush(widget.socket, widget.topic, widget.status)} min=-1000 max=1000000>
+			<input type="button" value="+" style="border: 1px solid black; width: 20%" on:click={WSpush(widget.socket, widget.topic, widget.status-1+2)}>
 			
 		</div>
 		</td>
 	  	{:else if  widget.type === 'time'}
 		 
 		 <td align='right'>
-			   <div style="float: right; display:inline-block" ><input style="text-align: right; border: 1px solid #6699FF" type="time" bind:value={widget.status}  size="20" on:change={WSpush(widget.socket, widget.topic, widget.status)}  min="00:00" max="23:59" required ></div>
+			   <div  style="float: right; display:inline-block" ><input class:red={widget["send"]==true}   type="time" bind:value={widget.status}  size="20" on:change={widget["send"]=true, WSpush(widget.socket, widget.topic, widget.status)}  min="00:00" max="23:59" required ></div>
 			</td>
 		
 		 {:else}
 		 
-			 <td align='right'><div style="display:inline-block"> <input style="text-align: right; border: 1px solid #6699FF " bind:value={widget.status}  size="20"   on:change={WSpush(widget.socket, widget.topic, widget.status)}  ></div></td>
+			 <td align='right'><div  style="display:inline-block"> <input class:red={widget["send"]==true}  bind:value={widget.status}  size="20"   on:change={widget["send"]=true, WSpush(widget.socket, widget.topic, widget.status)}  ></div></td>
 			
 			 {/if}
 	  {/if}
@@ -913,10 +924,14 @@ if (connectionType == 'MQTT'){
    
 
 	input {
-		width: 100%;
+		
+		text-align: right; 
+		border: 1px solid #6699FF; 
+		width: 100%
 	}
 
 	label {
 		display: flex;
 	}
+	.red{border-color: crimson;}	
 </style>
