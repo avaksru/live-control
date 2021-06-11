@@ -13,9 +13,10 @@
 	let Conf=[];
     let name;
 	let urlMQTT='';
+	let editJSON ='';
 	
-	// ==на время разработки==
-//	myip = "192.168.36.173";
+// ==на время разработки==
+myip = "192.168.36.173";
 	
 	// подключаемся к локальной машине, получаем карту сети
 	function getNetworkMap() {
@@ -32,12 +33,6 @@
 			devices = devices;
 			console.log("WS CONNECTED! "+myip);
 
-			// вывод отладочных сообщений в консоль		
-	
-	if (Cookies.get('consolelog') == "true")
-	{	
-			console.log('NEW data packet '+item.deviceIP, event.data);
-	}
 	
 
 // получаем "карту сети" по websocket       
@@ -91,6 +86,13 @@ function addConnection (devices)  {
 			});
 		socket[i].addEventListener('message', function (event) {
 // запускаем обработку пришедшего сообщения
+		// вывод отладочных сообщений в консоль		
+	
+		if (Cookies.get('consolelog') == "true")
+	{	
+			console.log('NEW data packet '+item.deviceIP, event.data);
+	}
+	
 			addMessage(event.data, i);
 			});
 // Обработка ошибок websocket 
@@ -363,6 +365,58 @@ let frame;
 				Shuttervisibl= "visibility: hidden;";
 				};
 				Shuttervisibil();
+
+
+
+				// Селектор wiget.json для editor
+let fileSelected;
+
+let widgetfiles = [
+		{ id: 0, name: ``},
+		{ id: 1, name: `anydataTemp.json`},
+		{ id: 2, name: `anydataHum.json`},
+		{ id: 3, name: `anydataPress.json`}
+	];
+
+	 editJSON = [{	"Удалить": 0,
+   "Тип элемента": "dht",
+   "Id": "tmp817",
+   "Виджет": "anydataTemp",
+   "Имя вкладки": "Системные",
+   "Имя виджета": "Температура",
+   "Позиция виджета": 1,
+   "FIELD8": "c[1]",
+   "FIELD9": "",
+   "FIELD10": "",
+   "FIELD11": ""
+ }];
+	 const syntaxHighlight = (json) => {
+    try {
+      json = JSON.stringify(JSON.parse(json), null, 4);
+    } catch (e) {
+      return json;
+    }
+    json = json
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+    json = json.replace(
+      /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,
+      function (match) {
+          
+				   return match
+      }
+    );
+    return json;
+  };
+	editJSON=JSON.stringify(editJSON);
+
+	function widgetFileChenged(fileSelected, i){
+		console.log(fileSelected.name);
+		socket[i].send("{getFile : '" + fileSelected.name + "'}");
+	}
+
+
 </script>
 	{#if connectionType == 'MQTT'}
 
@@ -808,6 +862,26 @@ let frame;
 
 	{/if}
 </Box>
+<!-- editor-->
+<Box>
+	<b on:click={handleClick}>Editor</b><span on:click={handleClick1} class="letter1"> </span>
+	{#if edit == true}
+	
+	<select bind:value={fileSelected} on:change="{widgetFileChenged(fileSelected, i)}">
+		{#each widgetfiles as file}
+			<option value={file}>
+				{file.name}
+			</option>
+		{/each}
+	</select>
+
+	<p><textarea rows="15" name="S1" cols="94">{syntaxHighlight(editJSON)}</textarea></p>
+	
+
+	{/if}
+
+</Box>
+
 		{/if}	
 	<br><br>
 	<div  class="letter" align="center">developed by avaks@mef.ru</div>
