@@ -17,95 +17,21 @@
 	import Config from './Config.svelte';
 
 	//обработка событий при загрузки===============================
-	import { onMount } from "svelte";
+	
 	//секция переменных============================================
 	let myip = document.location.hostname;
 	let configSetupJson = "{}";
 	const setMain = "Dashboard";
-	const setConfig = "Configuration";
+	const setConfig = "Config";
 	const setSetup = "Setup";
-	const wifissid = "Название сети:";
-	const wifipasswd = "Пароль:";
-	const mqttserver = "Имя сервера:";
-	const mqttport = "Номер порта:";
-	const mqttprefix = "Префикс:";
-	const mqttuser = "Имя пользователя:";
-	const mqttpasswd = "Пароль:";
-	let routerssid;
-	let routerpass;
-	let mqttServer;
-	let mqttPort;
-	let mqttPrefix;
-	let mqttUser;
-	let mqttPass;
+	
+	
 	//функции=======================================================
-	onMount(async () => {
-		getСonfigSetupJson();
-	});
-	async function getСonfigSetupJson() {
-		let res = await fetch("http://" + myip + "/config.setup.json", {
-			mode: "no-cors",
-			method: "GET",
-		});
-		if (res.ok) {
-			configSetupJson = await res.json();
-		} else {
-			//alert("status " + res.status);
-			console.log("error", res.status);
-		}
-		getValues();
-	}
-	function parseСonfigSetupJson(key) {
-		let result = configSetupJson[key];
-		return result;
-	}
-	function getValues() {
-		routerssid = parseСonfigSetupJson("routerssid");
-		routerpass = parseСonfigSetupJson("routerpass");
-		mqttServer = parseСonfigSetupJson("mqttServer");
-		mqttPort = parseСonfigSetupJson("mqttPort");
-		mqttPrefix = parseСonfigSetupJson("mqttPrefix");
-		mqttUser = parseСonfigSetupJson("mqttUser");
-		mqttPass = parseСonfigSetupJson("mqttPass");
-	}
-	function pushGreen() {
-		toast.push("Saved!", {
-			theme: {
-				"--toastBackground": "#48BB78",
-				"--toastProgressBackground": "#2F855A",
-			},
-		});
-	}
-	function pushRed() {
-		toast.push("Error!", {
-			theme: {
-				"--toastBackground": "#F56565",
-				"--toastProgressBackground": "#C53030",
-			},
-		});
-	}
-	function upgrade() {
-		toast.push("Upgrade in progress...", {
-			duration: 5000,
-			theme: {
-				"--toastBackground": "#48BB78",
-				"--toastProgressBackground": "#2F855A",
-			},
-		});
-	}
-	async function doGetRequest() {
-		let res = await fetch("http://" + myip + "/set?test=" + st, {
-			mode: "no-cors",
-			method: "GET",
-		});
-		if (res.ok) {
-			let text = await res.text();
-			alert("received msg: " + text);
-		} else {
-			alert("status " + res.status);
-		}
-	}
+
+
 </script>
+
+
 
 <div class="hamburger-menu">
 	<input id="menu__toggle" type="checkbox" />
@@ -114,17 +40,17 @@
 	</label>
 	<ul class="menu__box">
 		<li>
-			<a class="menu__item" href="/" on:click={getСonfigSetupJson}
+			<a class="menu__item" href="/" 
 				>{setMain}</a>
 		</li>
-
 		<li>
-			<a class="menu__item" href="/config" on:click={getСonfigSetupJson}
+			<a class="menu__item" href="/config" 
 				>{setConfig}</a>
 		</li>
+	
 
 		<li>
-			<a class="menu__item" href="/setup" on:click={getСonfigSetupJson}
+			<a class="menu__item" href="/setup" 
 				>{setSetup}</a>
 		</li>
 	</ul>
@@ -134,13 +60,11 @@
 			<div class="head">
 				<h2>{setMain}</h2>
 				
-				<Dashboard/>
-
-
-				
-			
 				
 			</div>
+<Dashboard/>
+
+
 		</Route>
 
 		<Route path="/config">
@@ -148,7 +72,7 @@
 				<h2>{setConfig}</h2>
 			</div>
 
-Это демо. Тут ничего не работает
+
 			<Config/>
 
 			
@@ -157,16 +81,20 @@
 		<Route path="/setup">
 			<div class="head">
 				<h2>{setSetup}</h2>
+				
 			</div>
 		
+		<Setup/>
 		
-			<Setup/>
-		
+			
 		</Route>
 	</ul>
 </div>
 
 <style>
+	h2{
+		color: gray;
+	}
 	#menu__toggle {
 		opacity: 0;
 	}
@@ -192,10 +120,10 @@
 		display: flex;
 		align-items: center;
 		position: fixed;
-		top: 20px;
-		left: 20px;
-		width: 26px;
-		height: 26px;
+		top: 10px;
+		left: 10px;
+		width: 13px;
+		height: 13px;
 		cursor: pointer;
 		z-index: 1;
 	}
@@ -223,14 +151,19 @@
 		visibility: hidden;
 		top: 0;
 		left: -100%;
-		width: 150px; /* размер выхода бокового меню */
+		width: 120px; /* размер выхода бокового меню */
 		height: 100%;
 		margin: 0;
 		padding: 80px 0;
 		list-style: none;
 		background-color: #eceff1;
-		box-shadow: 1px 0px 6px rgba(0, 0, 0, 0.2);
+		box-shadow: 1px 0px 26px rgba(0, 0, 0, 0.2);
 		transition-duration: 0.25s;
+	}
+
+	:global(body.dark-mode) .menu__box {
+		background-color: #375874;
+    
 	}
 	.menu__item {
 		display: block;
@@ -242,9 +175,16 @@
 		text-decoration: none;
 		transition-duration: 0.25s;
 	}
+	:global(body.dark-mode) .menu__item {
+		 	color: #bfc2c7;		
+	}
 	.menu__item:hover {
 		background-color: #cfd8dc;
 	}
+	:global(body.dark-mode) .menu__item:hover{
+		 	color: #1e2b42;		
+	}
+
 	.head {
 		text-align: center;
 		color: #000000;
@@ -287,4 +227,6 @@
 	label {
 		display: flex;
 	}
+
+	
 </style>

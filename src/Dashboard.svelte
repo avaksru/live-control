@@ -3,23 +3,36 @@
 	import { Tabs, Tab, TabList, TabPanel } from 'svelte-tabs';
 	import Toggle from "svelte-toggle";
 	import Chart from 'svelte-frappe-charts';
+	import Logo from './Logo.svelte';
+	//import WigetButton from './WidgetButton.svelte';
 	//import mqtt from 'mqtt/dist/mqtt.min';
 
-	
+	// темная тема 
+		let darkMode = false;
+	//	data.darktheme=(Cookies.get('darktheme') == "true") ? true : false; 
+	if (Cookies.get('darktheme') == "true"){window.document.body.classList.value='dark-mode';}
+
+	function toggleTheme() {
+    window.document.body.classList.toggle('dark-mode')
+	if (window.document.body.classList.value == 'dark-mode'){Cookies.set('darktheme', "true", { expires: 365 });}
+	else {Cookies.set('darktheme', "False", { expires: 365 });}
+	}
 
 	let connectionType = 'WS';
 	let client;
 	let topic;
+	let connected = false;
 // MQTT====================================================================
 	
 if (connectionType == 'MQTT'){
     let clientId = 'IotManager_';
-    let connected = false;
+   
     let topic;
     let temp;
  
 	// ==на время разработки==
-	// MQTTconnections=JSON.parse(MQTTconnections);
+	 MQTTconnections=JSON.parse(MQTTconnections);
+	//	var MQTTconnections = [{"user_id" : "1", "connection_name" : "meef.ru", "connection_protocol" : "wss", "mqtt_host" : "meef.ru", "mqtt_port" : "18883", "mqtt_prefix" : "/IotManager", "mqtt_username" : "IotManager:guest", "mqtt_password" : "guest", "mqtt_path" : "/ws", "mqtt_id" : "mqtt_id"},{"user_id" : "1", "connection_name" : "cloudMQTT", "connection_protocol" : "wss", "mqtt_host" : "m20.cloudmqtt.com", "mqtt_port" : "33191", "mqtt_prefix" : "/IoTmanager", "mqtt_username" : "", "mqtt_password" : "", "mqtt_path" : "/", "mqtt_id" : "mqtt_id"}];
 
 	clientId += '_' + Math.floor(Math.random() * 10000);
       connected = false;
@@ -66,7 +79,7 @@ if (connectionType == 'MQTT'){
       (addMessage(msg, topic));
 	  };
    
-
+//try{
     client = mqtt.connect(mqtt_options);
     client.on('connect', onConnect);
     client.on('message', onMessage);
@@ -76,11 +89,15 @@ if (connectionType == 'MQTT'){
       connected = client.connected;
     });
     client.on('close', () => {
-      console.log('MQTT ' + clientId + ' disconnected');
-      connected = client.connected;
+     console.log('MQTT ' + clientId + ' disconnected');
+     connected = client.connected;
     });
+//} catch (e) {
+//}
+console.log(MQTTconnections);
 }
-  // MQTT =============================================================================================
+
+// MQTT =============================================================================================
 
 		//обработка событий при загрузки===============================
 		import { onMount } from "svelte";
@@ -103,15 +120,36 @@ if (connectionType == 'MQTT'){
 		let minutes="";
 		let temp;
 		let selectedprefics; 
-		
+		// декларируем массив для  списка всех ESP в сети 
+		let devices = [];
+		// декларируем массив для списка всех websocket  
+	let socket =[];
+	// декларируем массив для списка всех виджетов  
+	let wigets =[];
+	// декларируем массив для списка всех страниц   
+	let pages =[];
+	// декларируем массив для списка всех префиксов  
+	let prefics =[{'prefics':''}];
+	// выбраный префикс
+	let selected;	
+	// массивы для построения графиков
+	let graf_time=[];
+	let graf_val=[];
+	let dataLine=[];
+	
+// ==на время разработки==
+	
+	//	devices = '[{"deviceID":"0000000-0000000","deviceIP":"192.168.36.127","deviceName":"test"}]';  
+	//	devices= JSON.parse(devices);
+		myip = "192.168.36.127";
 	
 	
-	
-		//функции=======================================================
+//Get(Post)=======================================================
+/*		if (connectionType != 'MQTT'){
 		onMount(async () => {
 			getСonfigSetupJson();
 		});
-	
+		}
 		async function getСonfigSetupJson() {
 			let res = await fetch("http://" + myip + "/config.setup.json", {
 				mode: "no-cors",
@@ -138,32 +176,6 @@ if (connectionType == 'MQTT'){
 		}
 	
 	
-	// декларируем массив для  списка всех ESP в сети 
-	let devices = [];
-	// декларируем массив для списка всех websocket  
-	let socket =[];
-	// декларируем массив для списка всех виджетов  
-	let wigets =[];
-	// декларируем массив для списка всех страниц   
-	let pages =[];
-	// декларируем массив для списка всех префиксов  
-	let prefics =[{'prefics':''}];
-	// выбраный префикс
-	let selected;	
-	// массивы для построения графиков
-	let graf_time=[];
-	let graf_val=[];
-	let dataLine=[];
-	
-	
-	// темная тема 
-	let darkMode = false;
-	function toggle() {
-        darkMode = !darkMode;
-        window.document.body.classList.toggle('dark');
-    }
-  
-
 	 //Получаем из файла NetworkMap.json список ESP к которым надо подключатся
 	 let configNetworkMap = {};
 	 let myhost = document.location.host
@@ -197,13 +209,50 @@ if (connectionType == 'MQTT'){
 			}
 		}
 		
-	
+	*/
 		
-	
-	// ==на время разработки==
-	
-	//	devices = '[{"deviceID":"0000000-0000000","deviceIP":"192.168.36.173","deviceName":"test"},{"deviceID":"0000000-0000000","deviceIP":"192.168.36.188","deviceName":"test2"},{"deviceID":"0000000-0000000","deviceIP":"192.168.36.189","deviceName":"test3"}]';  
-	//	devices= JSON.parse(devices);
+
+		// подключаемся к локальной машине, получаем карту сети
+		function getNetworkMap() {
+			devices= JSON.parse('[{"deviceID":"","deviceIP":"' + myip + '","deviceName":""}]');
+			devices[0].id=0;
+			devices[0].status=false;
+			console.log("Подключаемся к WS на localhost ",devices);
+			if(connectionType != "MQTT")
+			{
+			socket[0] = new WebSocket('ws://'+myip+'/ws');
+			socket[0].addEventListener('open', function (event) {
+			devices[0].id=0;
+			devices[0].status=true;
+			devices = devices;
+			console.log("WS CONNECTED! "+myip);
+// получаем "карту сети" по websocket       
+			socket[0].send("getNetworkMap");
+// получаем конфигурацию ESP по websocket       			
+			socket[0].send("getconfigsetupjson");
+	 					
+			});
+			socket[0].addEventListener('message', function (event) {
+// запускаем обработку пришедшего сообщения
+
+			addMessage(event.data,0);
+			});
+// Обработка ошибок websocket 
+			socket[0].addEventListener('close', (event) => {
+				  console.log('ws close '+item.deviceIP);
+				  devices[0].status=false; 
+			 	  devices = devices;
+			});
+			socket[0].addEventListener('error', function (event) {
+				  console.log(item.deviceIP+' WebSocket error: ', event);
+				  devices[0].status=false;
+				  devices = devices;
+			});
+			}
+		}
+		getNetworkMap();
+
+
 	
 	
 	
@@ -263,18 +312,44 @@ if (connectionType == 'MQTT'){
 	function addMessage(data, socket) {
 		if (connectionType =="MQTT")
 		{
-		
+			console.log('NEW data packet '+socket, data);
 			topic=socket;
 		} 	
 		
 		let json;
 		let tmp;
-		tmp = "["+data+"]";
-	//	tmp = [data];
-	try{
-		tmp = JSON.parse(tmp);
-	tmp.forEach(function(json, i, array) {
+	
+		try{
+		let net = JSON.parse(data);
+
+			// Если пришла карта сети   
+			if (net[0].deviceID)
+           {
+			console.log('пришла карта сети :', net);
+			devices = net;
+			//Conf=[];
+			
+			addConnection(devices);
+			NetworkMap=data;
+
+       }
 		
+	} catch (e) {
+			//	console.log('ERROR parse JSON', tmp);
+			}
+
+
+		
+		tmp = "["+data+"]";
+			
+
+
+
+		//tmp = [data];
+	try{
+	tmp = JSON.parse(tmp);
+	tmp.forEach(function(json, i, array) {
+
 			
 	// собираем виджеты	
 	// если пришедшее сообщение виджет 	
@@ -356,6 +431,7 @@ if (connectionType == 'MQTT'){
 	}  
 	// закончили сбор виджетов
 	
+
 	// если новое сообщение статус 
 	if (json.status){
 
@@ -554,7 +630,7 @@ if (connectionType == 'MQTT'){
 	
 		  if(connectionType != "MQTT")
 			{
-				addConnection(devices);
+			//	addConnection(devices);
 			}
 
 	// обратный отсчет для 		Shutter
@@ -590,11 +666,14 @@ if (connectionType == 'MQTT'){
 				Shuttervisibl= "visibility: hidden;";
 				};
 				Shuttervisibil();
+
+				
 </script>
 
-	
+
 	
 <!---->
+
 
 {#if connectionType == 'MQTT'}
 
@@ -627,7 +706,14 @@ if (connectionType == 'MQTT'){
 	{/if}		
 
 	{#if connectionType == 'MQTT'}
-	<div style=" position: absolute;  z-index: 2; right: 2%; top: 1%" id="layerMQTT" >MQTT</div>
+		{#if connected==false}
+				<div style=" position: absolute;  z-index: 2; right: 2%; top: 1%; color:red" on:click={toggleTheme} id="layerMQTT" >MQTT</div>	
+				<div  align="center">Для подключения MQTT обязателььно должен быть указан порт "MQTT wss port (TLS)"</div>
+			{/if}	
+			{#if connected==true}
+			<div style=" position: absolute;  z-index: 2; right: 2%; top: 1%; color:green"  on:click={toggleTheme} id="layerMQTT" >MQTT</div>
+			{/if}	
+			
 	{:else}
 	<div on:mouseenter={Shuttervisibil} on:click={Shutterhiddn} class="connTupe" style=" position: absolute;  z-index: 2; right: 2%; top: 1%" id="layerWS">websocket</div>
 	{/if}		
@@ -647,278 +733,243 @@ if (connectionType == 'MQTT'){
 	
 	  <!--закончили селектор префиксов -->
 	
+	{#if !pages[0]}
+	<p  align="center"><Logo/></p>
+	{/if}	
 	
-	
-	  <!-- темная тема  
-	
-	  <button on:click={toggle}>
-		{#if darkMode }
-			Go light
-		{:else}
-			Go dark
-		{/if}
-	</button>-->
-	
-
-	  
-				<Tabs> 
-					<table border="0" style="margin-left: 0%" width="99%">
-						<tr><td>
-						
-					<TabList >
-				   {#each pages as pagesName, i}
-
-					  <Tab>{pagesName.page}</Tab>
-					
-					  {/each}  
-				</TabList>
-				
-						</td></tr>
-					</table>
-				
-					{#each pages as pagesName, i}
-					
-				  
-					<TabPanel>
-					
-					<table border="0"  style="margin-left: 0%" width="99%">
-							
-					{#each wigets as widget, i}
-					<!--Отображаем виджеты только для выбранного префикса-->
-					
-					{#if !selectedprefics || selectedprefics === widget.prefics}
-
-					{#if widget.page === pagesName.page}
-					<tr>
-		<!-- Toggle -->
-						{#if widget.widget === 'toggle'}
-					 <td>
-					<span style="float: left">
-					{widget.descr}</span>
-					</td>
-					<td></td>
-		 			<td> 
-					{#if widget.status == '1'}	
-					<span style="float: right" >
-					<Toggle style="float: right" on:toggle={WSpush(widget.socket, widget.topic, 0)}
-					label=""			
-					 toggledColor='blue'
-					 untoggledColor="red"
-					 switchColor="#eee"
-					/>
-					</span>
-					{:else}
-					<span style="float: right">
-						<Toggle on:toggle={WSpush(widget.socket, widget.topic, 1)}
-						label=""			
-						toggledColor='red'
-						untoggledColor="gray"
-						switchColor="#eee"
-						toggled=
-						/>
-		 			</span>
-					{/if}
-
+	  <Tabs> 
+		<table border="0" style="margin-left: 0%" width="99%">
+			<tr><td>
+			
+		<TabList >
+{#each pages as pagesName, i}
+		  <Tab>{pagesName.page}</Tab>
+{/each} 
 		
-					{/if}
-<!-- anydata -->				  
-		{#if widget.widget === 'anydata'}
-		<td>
-		{#if widget.descrColor}
-			<span style="float: left" >
-			<lable align="left" style="color: {widget.descrColor}; font-family: '{widget.descrfont}'">{widget.descr}</lable> 
-			</span>
-		{:else}
-		<span style="float: left; font-family: '{widget.descrfont}'" >
-		{widget.descr}<br>
-<!--Инфо от ноды mysens отображается под названием виджета -->	
-		<span class=letter style='color: {!widget.nodeInfoColor ? 'gray' : widget.nodeInfoColor}'>{!widget.nodeInfo ? '' : widget.nodeInfo}</span>
+	</TabList>
+	
+			</td></tr>
+		</table>
+	
+		{#each pages as pagesName, i}
+		
+	  
+		<TabPanel>
+		
+		<table border="0"  style="margin-left: 0%" width="99%">
+				
+		{#each wigets as widget, i}
+		<!--Отображаем виджеты только для выбранного префикса-->
+		
+		{#if !selectedprefics || selectedprefics === widget.prefics}
 
-		</span>
-		{/if}
+		{#if widget.page === pagesName.page}
+		<tr>
+<!-- Toggle -->
+		{#if widget.widget === 'toggle'}
+		 <td>
+		<span style="float: left">
+		{widget.descr}</span>
 		</td>
-		<td>
+		<td></td>
+		 <td> 
+		{#if widget.status == '1'}	
+		<span style="float: right" >
+		<Toggle style="float: right" on:toggle={WSpush(widget.socket, widget.topic, 0)}
+		label=""			
+		 toggledColor = "#6495ED"
+		 untoggledColor="#FF6347"
+		 switchColor="#eee"
+		/>
+		</span>
+		{:else}
+		<span style="float: right">
+			<Toggle on:toggle={WSpush(widget.socket, widget.topic, 1)}
+			label=""			
+			toggledColor='#FF6347'
+			untoggledColor="gray"
+			switchColor="#eee"
+			toggled=
+			/>
+		 </span>
+		{/if}
+
+
+		{/if}
+<!-- anydata -->				  
+{#if widget.widget === 'anydata'}
+<td>
+{#if widget.descrColor}
+<span style="float: left" >
+<lable align="left" style="color: {widget.descrColor}; font-family: '{widget.descrfont}'">{widget.descr}</lable> 
+</span>
+{:else}
+<span style="float: left; font-family: '{widget.descrfont}'" >
+{widget.descr}
+<!--Инфо от ноды mysens отображается под названием виджета -->	
+<div class=letter align="left" style='color: {!widget.nodeInfoColor ? 'gray' : widget.nodeInfoColor}'>{!widget.nodeInfo ? '' : widget.nodeInfo}</div>
+
+</span>
+{/if}
+</td>
+<td>
 
 <!--Инфо от ноды mysens отображается по середине
-		<lable align='left' style='color: {!widget.nodeInfoColor ? 'gray' : widget.nodeInfoColor}'>
-		
-	   </lable>-->	
-	
+<lable align='left' style='color: {!widget.nodeInfoColor ? 'gray' : widget.nodeInfoColor}'>
 
-		</td>
-		<td align="right"> 
-		 <!--Делаем anidata разноцветными если есть кастомизация цвета-->
-		{#if Array.isArray(widget.color) &&  widget.status}
-			 {#each widget.color as anydataColor, i}
-			 {#if anydataColor.level && widget.status < anydataColor.level && widget.status > widget.color[i-1].level && i>0}
-			 <lable align="left" style="color: {anydataColor.value}; font-family: '{widget.font}' ">{!widget.status ? '' : widget.status}{!widget.after ? '' : widget.after}</lable> 
-			{/if}
-			{/each}
-			<!--если цвет задан значением а не массивом-->
-		{:else if  widget.color &&  widget.status} 
-			<lable align="left" style="color: {widget.color}; font-family: '{widget.font}'">{widget.status}{widget.after}</lable> 
-			<!--если цвет не задан и статус пустой-->
-		{:else if   !widget.status}
-			<lable align="left">...</lable> 
-			<!--если цвет не задан-->
-		{:else if  widget.status}
-			<lable align="left" style="color: black; font-family: '{widget.font}'" >{widget.status}{!widget.after ? '' : widget.after}</lable> 
-	
-		{:else}
-				<lable align="left" style="color: black; font-family: '{widget.font}'">
-				 {!widget.status ? '' : widget.status}{!widget.after ? '' : widget.after}
-				</lable>
-		{/if}
-			 
-	 
-	 </td>
-	  {/if}
+</lable>-->	
+
+
+</td>
+<td align="right"> 
+<!--Делаем anidata разноцветными если есть кастомизация цвета-->
+{#if Array.isArray(widget.color) &&  widget.status}
+ {#each widget.color as anydataColor, i}
+ {#if anydataColor.level && widget.status < anydataColor.level && widget.status > widget.color[i-1].level && i>0}
+ <lable align="left" style="color: {anydataColor.value}; font-family: '{widget.font}' ">{!widget.status ? '' : widget.status}{!widget.after ? '' : widget.after}</lable> 
+{/if}
+{/each}
+<!--если цвет задан значением а не массивом-->
+{:else if  widget.color &&  widget.status} 
+<lable align="left" style="color: {widget.color}; font-family: '{widget.font}'">{widget.status}{widget.after}</lable> 
+<!--если цвет не задан и статус пустой-->
+{:else if   !widget.status}
+<lable align="left">...</lable> 
+<!--если цвет не задан-->
+{:else if  widget.status}
+<lable align="left" style="font-family: '{widget.font}'" >{widget.status}{!widget.after ? '' : widget.after}</lable> 
+
+{:else}
+	<lable align="left" style="font-family: '{widget.font}'">
+	 {!widget.status ? '' : widget.status}{!widget.after ? '' : widget.after}
+	</lable>
+{/if}
+ 
+
+</td>
+{/if}
 <!-- input -->	
-	  {#if widget.widget === 'input'}
-	  <td><span  style="float: left">
-		 {widget.descr}</span></td>
-	  <td></td>
-		 {#if widget.type === 'number'}
-		 <td > 
-			<div  style="float: right; display:inline-block">
-			<input type="button" value="-" style="border: 1px solid black; width: 20% " on:click={WSpush(widget.socket, widget.topic, widget.status-1)}>
-			<input class:red={widget["send"]==true}  style="width: 50% "   type=number neme={widget.topic} bind:value={widget.status} size="20"  on:change={widget["send"]=true, WSpush(widget.socket, widget.topic, widget.status)} min=-1000 max=1000000>
-			<input type="button" value="+" style="border: 1px solid black; width: 20%" on:click={WSpush(widget.socket, widget.topic, widget.status-1+2)}>
-			
-		</div>
-		</td>
-	  	{:else if  widget.type === 'time'}
-		 
-		 <td align='right'>
-			   <div  style="float: right; display:inline-block" ><input class:red={widget["send"]==true}   type="time" bind:value={widget.status}  size="20" on:change={widget["send"]=true, WSpush(widget.socket, widget.topic, widget.status)}  min="00:00" max="23:59" required ></div>
-			</td>
-		
-		 {:else}
-		 
-			 <td align='right'><div  style="display:inline-block"> <input class:red={widget["send"]==true}  bind:value={widget.status}  size="20"   on:change={widget["send"]=true, WSpush(widget.socket, widget.topic, widget.status)}  ></div></td>
-			
-			 {/if}
-	  {/if}
+{#if widget.widget === 'input'}
+<td><span  style="float: left">
+{widget.descr}</span></td>
+<td></td>
+{#if widget.type === 'number'}
+<td align='right'> 
+<div  style="float: right; display:inline-block">
+<input type="button" value="-  " style=" border: 1px solid lightblue; width: 15% " on:click={WSpush(widget.socket, widget.topic, widget.status-1)}>
+<input class:red={widget["send"]==true}  style="width: 30% "   type=tel neme={widget.topic} bind:value={widget.status} size="20"  on:change={widget["send"]=true, WSpush(widget.socket, widget.topic, widget.status)} min=-1000 max=1000000>
+<input type="button"  value="+  " style=" border: 1px solid lightblue; width: 15%" on:click={WSpush(widget.socket, widget.topic, widget.status-1+2)}>
+
+</div>
+</td>
+{:else if  widget.type === 'time'}
+
+<td align='right'>
+   <div  style="float: right; display:inline-block" ><input class:red={widget["send"]==true}   type="time" bind:value={widget.status}  size="20" on:change={widget["send"]=true, WSpush(widget.socket, widget.topic, widget.status)}  min="00:00" max="23:59" required ></div>
+</td>
+
+{:else}
+
+ <td align='right'><div  style="display:inline-block"> <input class:red={widget["send"]==true}  bind:value={widget.status}  size="20"   on:change={widget["send"]=true, WSpush(widget.socket, widget.topic, widget.status)}  ></div></td>
+
+ {/if}
+{/if}
 <!-- btn -->
-	  {#if widget.widget === 'btn'}
-	  <td>><span style="float: left">
-		 {widget.descr}</span></td>>
-	  <td></td>
-	  <td align="right"> </td>
-	 {/if} 
-		<!-- chart -->		
-						{#if widget.widget === 'chart'}
-						<td  colspan="3">
-							
-							{#if widget.status} 
-							{#if widget.topic.includes('_2')} 
-        <Chart data={widget.status} lineOptions={lineOptions} axisOptions={axisOptions} colors={[!widget.color ? 'red' : widget.color]} type= {!widget.type ? 'line' : widget.type} height="300" />
-							
+{#if widget.widget == 'btn'}
 
-							{:else if !widget.topic.includes('_1')} 
-                            {widget.descr}
-		<Chart data={widget.status} lineOptions={lineOptions} axisOptions={axisOptions} colors={[!widget.color ? 'light-blue' : widget.color]} type= {!widget.type ? 'line' : widget.type} height="300" />
-							{/if}
-							{/if}
-						</td>
-						{/if} 
-<!-- range -->
-						{#if widget.widget === 'range'}
-						<td  colspan="3">
-							
-							{widget.descr}  {widget.status / 10} {widget.after}
-						
-							<label>	
-													
-								<input type=range bind:value={widget.status} min={widget.min} max={widget.max * 10}  on:change={WSpush(widget.socket, widget.topic, widget.status)}>
-							</label>
-						
-							
-						</td>
-						{/if} 
-						
-				 </tr>
-					{/if}  
-					{/if}  
-				  
-				 
-				  {/each}
+<td><span style="float: left">{widget.descr}</span></td>
+<td></td>
+<td align="right">
+{#if widget.status !=0 && widget.status !=1 }
+	
+
+		<button class="btn" on:click={widget["send"]=true,  WSpush(widget.socket, widget.topic, 1)}><span>&nbsp;&nbsp;{widget.status}&nbsp;&nbsp;</span></button><br> 
+
+
+{:else}
+
+<button class="btn" on:click={widget["send"]=true, WSpush(widget.socket, widget.topic, 1)}><span>&nbsp;&nbsp; {!widget.text? '' : widget.text}&nbsp;&nbsp;</span></button><br> 
+
+{/if}
+
+</td>
+{/if} 
+<!-- select -->
+{#if widget.widget === 'select'}
+<td><span style="float: left">{widget.descr}</span></td>
+<td></td>
+<td align="right">
+	{#if widget.status == 0 }
+		<button class="btnoff" on:click={widget["send"]=true, this.style.border='1px solid red', WSpush(widget.socket, widget.topic, 1)}><span>{!widget.options[0]? 'OFF' : widget.options[0]}</span></button><br> 
+{:else}
+
+        <button class="btn"  on:click={widget["send"]=true,  this.style.border='1px solid red', WSpush(widget.socket, widget.topic, 0)}><span>{!widget.options[1]? 'ON' : widget.options[1]}</span></button><br> 
+{/if}
+
+</td>
+
+{/if} 
+<!-- chart -->		
+			{#if widget.widget === 'chart'}
+			<td  colspan="3">
 				
-				</table>
-				  </TabPanel>
-				  {/each}
-				  </Tabs>
+				{#if widget.status} 
+				{#if widget.topic.includes('_2')} 
+<Chart data={widget.status} lineOptions={lineOptions} axisOptions={axisOptions} colors={[!widget.color ? 'red' : widget.color]} type= {!widget.type ? 'line' : widget.type} height="300" />
+				
 
+				{:else if !widget.topic.includes('_1')} 
+				{widget.descr}
+<Chart data={widget.status} lineOptions={lineOptions} axisOptions={axisOptions} colors={[!widget.color ? 'light-blue' : widget.color]} type= {!widget.type ? 'line' : widget.type} height="300" />
+				{/if}
+				{/if}
+			</td>
+			{/if} 
+<!-- range -->
+			{#if widget.widget === 'range'}
+			<td  colspan="3">
+				
+			<div>	{widget.descr}  {widget.status / 10} {widget.after} </div>
+			
+				<label>	
+										
+					<input type=range bind:value={widget.status} min={widget.min} max={widget.max * 10}  on:change={WSpush(widget.socket, widget.topic, widget.status)}>
+				</label>
+			
+				
+			</td>
+			{/if} 
+			
+	 </tr>
+		{/if}  
+		{/if}  
+	  
+	 
+	  {/each}
+	
+	</table>
+	  </TabPanel>
+	  {/each}
+	  </Tabs>
+
+		
 			<br><br>	
-			<div  class="letter"  align="center">developed by: avaks@mef.ru</div>
+			<div  class="letter"  align="center">developed by: avaks@meef.ru</div>
 
 
 <style>
-		 .letter { 
+	.red{color: crimson;}	
+	.green{color: rgb(20, 220, 37);}	
+
+	.letter { 
      color: grey; 
      font-size: 60%; 
-		 padding-left: 0px; 
+		 padding-left: 15px; 
 		 opacity: 0.8;
 		
-     }
-	:root{
-		--bg-color: #FFFFFF;
-		--text-color: #000000;
-	}
-
-	:global(body) {
-		background: var(--bg-color);
-		color: var(--text-color);
-	}
-	:global(input) {
-		background: var(--bg-color);
-		color: var(--text-color);
-	}
-	:global(input.dark) {
-		--bg-color: #000000;
-		--text-color: #FFFFFF;
-	}
-
-	:global(select) {
-		background: var(--bg-color);
-		color: var(--text-color);
-	}
-	:global(select.dark) {
-		--bg-color: #000000;
-		--text-color: #FFFFFF;
-	}
-	:global(button) {
-		background: var(--bg-color);
-		color: var(--text-color);
-	}
-	:global(button.dark) {
-		--bg-color: #000000;
-		--text-color: #FFFFFF;
-	}
-	:global(body.dark) {
-		--bg-color: linear-gradient(#002222,#003E3E,#002222);
-		--text-color: #FFFFFF;
-	}
-	:global(.svelte-tabs__tab-list) {
-        display: flex;
-        justify-content: space-evenly;
-        flex-wrap: wrap;
-	}
-	:global(.svelte-tabs li.svelte-tabs__tab){
-		color: gray;
 		
-	}
-    :global(.svelte-tabs li.svelte-tabs__selected) {
-		  color: green;
-		  
-    }
-	.Shutter {
-		background: linear-gradient(#E6FFFF,#FFFFFF,#E6FFFF);
-    color: blak; 
-    padding: 10px; 
-    border-radius: 5px; 
-   }
-   progress{
+     }
+	 progress{
 	   height: 4px;
    }
    
@@ -933,5 +984,121 @@ if (connectionType == 'MQTT'){
 	label {
 		display: flex;
 	}
-	.red{border-color: crimson;}	
-</style>
+
+	
+
+	:global(body.dark-mode) span { 
+		background-color: #1d3040;
+    	color: #bfc2c7;	
+    }
+	
+
+	:global(body.dark-mode) div {
+		background-color: #1d3040;
+    	color: #bfc2c7;		
+	}
+	
+	:global(body.dark-mode) input {
+		background-color: #1d3040;
+    	color: #bfc2c7;		
+	}
+
+	:global(body.dark-mode) select {
+		background-color: #1d3040;
+    	color: #bfc2c7;		
+	}
+	:global(body.dark-mode) lable {
+		background-color: #1d3040;
+    	color: #bfc2c7;		
+	}
+	.Shutter {
+		background-color: hsl(200, 16%, 96%);
+	color: blak; 
+    padding: 10px; 
+    border-radius: 5px; 
+   }
+   :global(body.dark-mode) .Shutter {
+		background-color: #1d3040;
+    	color: #bfc2c7;	
+		padding: 10px; 
+    border-radius: 5px; 	
+	}
+
+    .btn {
+        display: inline-block;
+        box-sizing: border-box;
+        padding: 1px;
+        margin: 0 0px 5px 0;
+        outline: none;
+        border: 1px solid #63B8FF;
+        border-radius: 10px;
+        height: 36px;
+        line-height: 0;
+        font-size: 14px;
+        font-weight: 500;
+        text-decoration: none;
+        color: #fff;
+        background-color: #fff;
+        position: relative;
+        overflow: hidden;
+        vertical-align: top;
+        cursor: pointer;
+        user-select: none;
+        appearance: none;
+        touch-action: manipulation;
+    }
+    .btn span {
+     box-shadow: 7px 7px 5px rgba(0,0,0,0.5);
+        display: block;	
+        box-sizing: border-box;
+        padding: 0 8px;    
+        height: 32px;
+        line-height: 33px;    
+        border: 1px solid #63B8FF;
+        border-radius: 8px;    
+        font-size: 14px;
+        color: black;
+        text-align: center;
+        font-weight: 600;
+    }
+    .btnoff {
+        display: inline-block;
+        box-sizing: border-box;
+        padding: 1px;
+        margin: 0 0px 5px 0;
+        outline: none;
+        border: 1px solid rgb(85, 84, 84);
+        border-radius: 10px;
+        height: 36px;
+        line-height: 0;
+        font-size: 14px;
+        font-weight: 500;
+        text-decoration: none;
+        color: #fff;
+        background-color: #fff;
+        position: relative;
+        overflow: hidden;
+        vertical-align: top;
+        cursor: pointer;
+        user-select: none;
+        appearance: none;
+        touch-action: manipulation;
+    }
+    .btnoff span {
+     box-shadow: 7px 7px 5px rgba(0,0,0,0.5);
+        display: block;	
+        box-sizing: border-box;
+        padding: 0 8px;    
+        height: 32px;
+        line-height: 33px;    
+        border: 1px solid rgb(85, 84, 84);
+        border-radius: 8px;    
+        font-size: 14px;
+        color: black;
+        text-align: center;
+        font-weight: 600;
+    }
+
+
+
+	</style>

@@ -3,7 +3,8 @@
 	import Cookies, { get } from 'js-cookie';
 	import Tooltip from './Tooltip.svelte';
 	import Box from './Box.svelte';
-
+	import Toggle from "svelte-toggle";
+	import Logo from './Logo.svelte';
 
     let devices = [];
     let socket =[];
@@ -13,10 +14,20 @@
 	let Conf=[];
     let name;
 	let urlMQTT='';
-	let editJSON ='';
+	let editJSON;
 	
 // ==на время разработки==
-myip = "192.168.36.173";
+myip = "192.168.36.127";
+// темная тема 
+let darkMode = false;
+//	data.darktheme=(Cookies.get('darktheme') == "true") ? true : false; 
+	if (Cookies.get('darktheme') == "true"){
+		window.document.body.classList.value='dark-mode';
+
+	}
+	function toggleTheme() {
+    window.document.body.classList.toggle('dark-mode')
+}
 	
 	// подключаемся к локальной машине, получаем карту сети
 	function getNetworkMap() {
@@ -123,11 +134,29 @@ function addConnection (devices)  {
 
 	function addMessage(data, socket) {
 		NetworkMap=NetworkMap;
+		devices = devices;
+	
+
+
+
+
 	try{
 		data = JSON.parse(data);
+	//	console.log(data);	
+
+	// editor
+	if (data.getFile){
+		editJSON=data
+		delete editJSON['getFile']; 
+		editJSON=JSON.stringify(editJSON);
+		}
+
+
+
 		data.socket = socket;
     // Если пришел Config
     if (data.apssid){
+	//	console.log(data);
 		data.webMQTT=false;
 		data.consolelog=false;
 		data.darktheme=false;
@@ -163,7 +192,10 @@ function addConnection (devices)  {
 
        }
        }   catch (e) {
-		//	console.log('ERROR parse JSON', data);
+		if (Cookies.get('consolelog') == "true")
+	{	
+				console.log('ERROR parse JSON', data);
+	}
 			}
 
         };
@@ -219,7 +251,6 @@ let MQTTsample=[{"mqttServer":"","mqttPort":'',"mqttPortwss":'',"mqttPrefix":"",
 {"mqttServer":"broker.hivemq.com","mqttPort":1883,"mqttPortwss":8000,"mqttPrefix":"/IotManager","mqttUser":"","mqttPass":"","mqttPath":"/mqtt","placeholder":""},
 {"mqttServer":"broker.mqttdashboard.com","mqttPort":1883,"mqttPortwss":8000,"mqttPrefix":"/IotManager","mqttUser":"","mqttPass":"","mqttPath":"/mqtt","placeholder":""},
 {"mqttServer":"broker.emqx.io","mqttPort":1883,"mqttPortwss":8083,"mqttPrefix":"/IotManager","mqttUser":"","mqttPass":"","mqttPath":"/mqtt","placeholder":""},
-{"mqttServer":"broker.emqx.io","mqttPort":1883,"mqttPortwss":8083,"mqttPrefix":"/IotManager","mqttUser":"","mqttPass":"","mqttPath":"/mqtt","placeholder":""},
 {"mqttServer":"m3.wqtt.ru","mqttPort":"","mqttPortwss":"","mqttPrefix":"/IotManager","mqttUser":"","mqttPass":"","mqttPath":"","placeholder":"Параметры указаны в личном кабинете насайте wqtt.ru"},
 {"mqttServer":"91.204.228.124","mqttPort":1883,"mqttPortwss":"","mqttPrefix":"/IotManager","mqttUser":"rise","mqttPass":"23ri22se32","mqttPath":"","placeholder":""}
 ]	
@@ -272,7 +303,7 @@ Cookies.set(name, val, { expires: 365 });
 		Cookies.set(name, val, { expires: 365 });
 
 		if (val==true){
-			urlMQTT = "https://meef.ru/?id=" + Math.floor(Math.random() * 100000000);
+			urlMQTT = "https://meef.ru/dashboard/?id=" + Math.floor(Math.random() * 100000000);
 			//urlMQTT = "https://192.168.0.10/?id=" + Math.floor(Math.random() * 100000000);
 			Cookies.set('urlMQTT', urlMQTT, { expires: 365 });
 			}else
@@ -368,28 +399,31 @@ let frame;
 
 
 
-				// Селектор wiget.json для editor
+// Селектор wiget.json для editor
 let fileSelected;
 
 let widgetfiles = [
 		{ id: 0, name: ``},
 		{ id: 1, name: `anydataTemp.json`},
 		{ id: 2, name: `anydataHum.json`},
-		{ id: 3, name: `anydataPress.json`}
+		{ id: 3, name: `anydataPress.json`},
+		{ id: 4, name: `alarm.json`},
+		{ id: 5, name: `anydataAlarm.json`},
+		{ id: 6, name: `anydataAmp.json`},
+		{ id: 7, name: `anydataHtz.json`},
+		{ id: 8, name: `anydataPpb.json`},
+		{ id: 9, name: `anydataPpm.json`},
+		{ id: 10, name: `anydataTime.json`},
+		{ id: 11, name: `anydataVlt.json`},
+		{ id: 12, name: `anydataWhr.json`},
+		{ id: 13, name: `anydataWtt.json`},
+		{ id: 13, name: `btn.json`},
+		{ id: 13, name: `select.json`},
+		{ id: 13, name: `NetworkMap.json`},
 	];
 
-	 editJSON = [{	"Удалить": 0,
-   "Тип элемента": "dht",
-   "Id": "tmp817",
-   "Виджет": "anydataTemp",
-   "Имя вкладки": "Системные",
-   "Имя виджета": "Температура",
-   "Позиция виджета": 1,
-   "FIELD8": "c[1]",
-   "FIELD9": "",
-   "FIELD10": "",
-   "FIELD11": ""
- }];
+
+
 	 const syntaxHighlight = (json) => {
     try {
       json = JSON.stringify(JSON.parse(json), null, 4);
@@ -410,11 +444,37 @@ let widgetfiles = [
     return json;
   };
 	editJSON=JSON.stringify(editJSON);
-
+	
+	// получаем файл с esp 
 	function widgetFileChenged(fileSelected, i){
 		console.log(fileSelected.name);
-		socket[i].send("{getFile : '" + fileSelected.name + "'}");
+		if (fileSelected.name=='NetworkMap.json')
+{
+	socket[i].send('{"getFileName" : "' + fileSelected.name + '"}');
+}
+else
+	{	socket[i].send('{"getFileName" : "widgets/' + fileSelected.name + '"}');
+}
 	}
+	// отправляем файл на ESP 
+function handleSubmit(val1, wigetJSON, i){
+let newWigetJSON =  document.getElementById('S1').value ;
+if (newWigetJSON){
+newWigetJSON = JSON.parse(newWigetJSON);
+if (fileSelected.name=='NetworkMap.json')
+{
+	newWigetJSON.setFileName=fileSelected.name;
+}
+else
+{
+newWigetJSON.setFileName="widgets/" + fileSelected.name;
+}
+console.log("newWigetJSON: ", newWigetJSON );
+newWigetJSON = JSON.stringify(newWigetJSON);
+
+socket[i].send(newWigetJSON);
+}
+}
 
 
 </script>
@@ -426,20 +486,22 @@ let widgetfiles = [
 				<progress value="{elapsed / duration}"></progress>
 				<br><br>
 			  <!--Перечисляем девайсы в сети-->
-			  {#each NetworkMap as NetworkDevice , i}
-			  {#if !NetworkDevice.status}
+			  {#each devices as NetworkDevice , i}
+			  {#if !NetworkDevice.status && NetworkDevice.status!=false }
 				  <p align="left" style=" margin-top: -5px; margin-bottom: -5px">
-				   {NetworkDevice.deviceIP} {NetworkDevice.deviceName} waiting
+				   {NetworkDevice.deviceIP} {NetworkDevice.deviceName} waiting 
 				  </p>
 			  {/if}  	
 				 {#if NetworkDevice.status == true}
 				  <p align="left" style="color: green; margin-top: -5px; margin-bottom: -5px">
 				   {NetworkDevice.deviceIP} {NetworkDevice.deviceName} connected
+				  
 				  </p>
 			  {/if}  		  
 			  {#if NetworkDevice.status == false}
 				  <p align="left" style="color: red; margin-top: -5px; margin-bottom: -5px" on:click={addConnection(devices)}>
 				   {NetworkDevice.deviceIP} {NetworkDevice.deviceName} disconnected
+				   
 				   </p>
 			  {/if}  		  
 				{/each}  
@@ -450,7 +512,7 @@ let widgetfiles = [
 			{#if connectionType == 'MQTT'}
 	<div style=" position: absolute;  z-index: 2; right: 2%; top: 1%" id="layerMQTT" >MQTT</div>
 	{:else}
-	<div on:mouseenter={Shuttervisibil} on:click={Shutterhiddn} class="connTupe" style=" position: absolute;  z-index: 2; right: 2%; top: 1%" id="layerWS">websocket</div>
+	<div on:mouseenter={Shuttervisibil} on:click={Shutterhiddn} style=" position: absolute;  z-index: 2; right: 3.5%; top: 1%" id="layerWS">websocket</div>
 	{/if}	
 <body>
 
@@ -494,7 +556,7 @@ let widgetfiles = [
 	
 
 	</table>	<br>
-	<p>После добавления ESP нажмите "F5" что быобновить страницу</p>
+	<div>После добавления ESP нажмите "F5" что обновить страницу</div>
 </Box>
 	
 	
@@ -687,13 +749,27 @@ let widgetfiles = [
 	</tr><br>
 	<tr>
 		<td width="40%">Web dashbord over MQTT</td>
-		<td><input type=checkbox bind:checked={Conf[i].webMQTT} on:change={GetMQTThttp(Conf[i].webMQTT, 'webMQTT', Conf[i].socket)}>
+		<td>
 		
-	
-		{#if Conf[i].webMQTT == true }
-		<a href="{Cookies.get('urlMQTT')}" form="mqttform" onclick="document.getElementById('mqttform').submit(); ">перейти на MQTT</a>
+			<form id="mqttform"  method="post" action={urlMQTT} onsubmit="fmSubmit()">
+				<input type=checkbox bind:checked={Conf[i].webMQTT} on:change={GetMQTThttp(Conf[i].webMQTT, 'webMQTT', Conf[i].socket)}>
+				<input hidden type="text" id="id_user" name="id_user" value={urlMQTT} >
+				<input hidden type="text" id="mqttServer" name="mqttServer" value={Conf[i]["mqttServer"]} >
+				<input hidden type="text" id="mqttPort" name="mqttPort" value={Conf[i]["mqttPort"]} >
+				<input hidden type="text" id="mqttPortwss" name="mqttPortwss" value={Conf[i]["mqttPortwss"]} >
+				<input hidden type="text" id="mqttPrefix" name="mqttPrefix" value={Conf[i]["mqttPrefix"]} >
+				<input hidden type="text" id="mqttUser" name="mqttUser" value={Conf[i]["mqttUser"]} >
+				<input hidden type="text" id="mqttPass" name="mqttPass" value={Conf[i]["mqttPass"]} >
+				<input hidden type="text" id="mqttPath" name="mqttPath" value={Conf[i]["mqttPath"]} >
+			
+
+					{#if Conf[i].webMQTT == true }
+					<input type="submit" value="перейти на MQTT">
+		<!--<a href="{Cookies.get('urlMQTT')}" onclick="document.getElementById('mqttform').submit(); ">перейти на MQTT</a>-->
 		{urlMQTT = Cookies.get('urlMQTT')}	
-		{/if}</td>
+		{/if}
+		</form>
+	</td>
 		<Tooltip title="Позволяет поучить доступ к 'Панели управления' через Internet по протоколу MQTT. Должен быть указан MQTT wss port (TLS) " ><td>?</td>	</Tooltip>
 	</tr>
 	
@@ -706,19 +782,8 @@ let widgetfiles = [
 
 
 
-<form id="mqttform" hidden method="post" action={urlMQTT} onsubmit="fmSubmit()">
-		<input type="text" id="id_user" name="id_user" value={urlMQTT} >
-		<input type="text" id="mqttServer" name="mqttServer" value={Conf[i]["mqttServer"]} >
-		<input type="text" id="mqttPort" name="mqttPort" value={Conf[i]["mqttPort"]} >
-		<input type="text" id="mqttPortwss" name="mqttPortwss" value={Conf[i]["mqttPortwss"]} >
-		<input type="text" id="mqttPrefix" name="mqttPrefix" value={Conf[i]["mqttPrefix"]} >
-		<input type="text" id="mqttUser" name="mqttUser" value={Conf[i]["mqttUser"]} >
-		<input type="text" id="mqttPass" name="mqttPass" value={Conf[i]["mqttPass"]} >
-		<input type="text" id="mqttPath" name="mqttPath" value={Conf[i]["mqttPath"]} >
-		<input type="submit">
-	</form>
-	
 	{/if}
+	
 </Box>
 
 		
@@ -730,37 +795,53 @@ let widgetfiles = [
 <table border="0" width="100%"><br>
 <tr>
 		<td width="40%">Enable Telegram</td>
-		{#if Conf[i]["telegonof"] == "false"}
-		<td><input  type=checkbox  on:change={changeConf('true', 'telegonof', Conf[i].socket)}></td>
-		{:else}
-		<td><input  type=checkbox bind:checked={Conf[i]["telegonof"]} on:change={changeConf(Conf[i].telegonof, 'telegonof', Conf[i].socket)}></td>
-		{/if}	
+
+
+		
+	
+		<td>
+	
+			<input  type=checkbox bind:checked='{Conf[i]["telegonof"]}' on:change={changeConf((Conf[i]["telegonof"]==true) ? 1 : 0 , 'telegonof', Conf[i].socket)}>
+					
+{#if Conf[i]["telegonof"]==0 }
+	{Conf[i]["telegonof"]=false}
+	{:else}
+	{Conf[i]["telegonof"]=true}
+{/if}
+		</td>
 	
 		<Tooltip title="" ><td>?</td>	</Tooltip>
 	</tr>
 <tr>
 <tr>
 		<td>Enable incoming messages</td>
-		{#if Conf[i]["teleginput"] == "false"}
-		<td><input  type=checkbox  on:change={changeConf('true', 'teleginput', Conf[i].socket)}></td>
-		{:else}
-		<td><input  type=checkbox bind:checked={Conf[i]["teleginput"]} on:change={changeConf(Conf[i].teleginput, 'teleginput', Conf[i].socket)}></td>
-		{/if}	
 	
+		<td>
+			<input  type=checkbox bind:checked='{Conf[i]["teleginput"]}' on:change={changeConf((Conf[i]["teleginput"]==true) ? 1 : 0 , 'teleginput', Conf[i].socket)}>
 		
+				{#if Conf[i]["teleginput"]==0 }
+	{Conf[i]["teleginput"]=false}
+	{:else}
+	{Conf[i]["teleginput"]=true}
+{/if}
+		</td>
 		<Tooltip title="" ><td>?</td>	</Tooltip>
 	</tr>
 <tr>
 <tr>
 		<td>Auto get chat ID </td>
+	
+		<td>	
 		
-			{#if Conf[i]["autos"] == "false"}
-			<td><input  type=checkbox  on:change={changeConf('true', 'autos', Conf[i].socket)}></td>
-			{:else}
-			<td><input  type=checkbox bind:checked={Conf[i]["autos"]} on:change={changeConf(Conf[i].autos, 'autos', Conf[i].socket)}></td>
-			{/if}	
-		
-			<Tooltip title="" ><td>?</td>	</Tooltip>
+			
+			<input  type=checkbox bind:checked='{Conf[i]["autos"]}' on:change={changeConf((Conf[i]["autos"]==true) ? 1 : 0 , 'autos', Conf[i].socket)}>
+			{#if Conf[i]["autos"]==0 }
+		{Conf[i]["autos"]=false}
+		{:else}
+		{Conf[i]["autos"]=true}
+	{/if}
+		</td>
+		<Tooltip title="" ><td>?</td>	</Tooltip>
 	</tr><br>
 <tr>
 
@@ -828,7 +909,7 @@ let widgetfiles = [
 <table border="0" width="100%">
 <tr>
 		<td width="40%">Update server</td>
-		<td><input type="text" placeholder="https://206.189.49.244" bind:value='{Conf[i]["serverip"]}' on:change={changeConf(Conf[i].serverip, 'serverip', Conf[i].socket)}/></td>
+		<td><input type="text" placeholder="http://206.189.49.244" bind:value='{Conf[i]["serverip"]}' on:change={changeConf(Conf[i].serverip, 'serverip', Conf[i].socket)}/></td>
 		<Tooltip title="Бла-бла-бла про то как это использовать" ><td>?</td>	</Tooltip>
 	</tr>
 	<tr>
@@ -840,9 +921,9 @@ let widgetfiles = [
 		<td width="40%">Use a dark theme</td>
 		<td>			
 			{#if Conf[i]["darktheme"] == "false"}
-			<td><input disabled type=checkbox  on:change={changeConf('true', 'darktheme', Conf[i].socket)}></td>
+			<td><input type=checkbox  on:change={changeConf('true', 'darktheme', Conf[i].socket), toggleTheme()}></td>
 			{:else}
-			<td><input disabled type=checkbox bind:checked={Conf[i]["darktheme"]} on:change={changeConf(Conf[i].darktheme, 'darktheme', Conf[i].socket)}></td>
+			<td><input type=checkbox bind:checked={Conf[i]["darktheme"]} on:change={changeConf(Conf[i].darktheme, 'darktheme', Conf[i].socket), toggleTheme()}></td>
 			{/if}	
 		</td>
 			<Tooltip title="" ><td>?</td>	</Tooltip>
@@ -865,8 +946,9 @@ let widgetfiles = [
 <!-- editor-->
 <Box>
 	<b on:click={handleClick}>Editor</b><span on:click={handleClick1} class="letter1"> </span>
-	{#if edit == true}
+	{#if edit == true} 
 	
+	<form  >
 	<select bind:value={fileSelected} on:change="{widgetFileChenged(fileSelected, i)}">
 		{#each widgetfiles as file}
 			<option value={file}>
@@ -874,17 +956,21 @@ let widgetfiles = [
 			</option>
 		{/each}
 	</select>
+	<button on:click={handleSubmit( fileSelected, editJSON, Conf[i].socket)}>Save</button>
+	<p><textarea rows="15" id="S1">{syntaxHighlight(editJSON)}</textarea></p>
 
-	<p><textarea rows="15" name="S1" cols="94">{syntaxHighlight(editJSON)}</textarea></p>
-	
+</form>
 
 	{/if}
 
 </Box>
 
+{:else}
+	
+<p  align="center"><Logo/></p>
 		{/if}	
 	<br><br>
-	<div  class="letter" align="center">developed by avaks@mef.ru</div>
+	<div  class="letter" align="center">developed by avaks@meef.ru</div>
 
 
 	
@@ -902,37 +988,37 @@ let widgetfiles = [
 			
 		 }
 table {
+	
 	margin:0px;
   background-color: #fafafa;
 	line-height:1;
 	}
 td { 
 	text-align: left; 
-	padding-left: 5px 
+	padding-left: 1px 
 	}
 input[type=text] {
 	width: 100%;
   padding:10px;
   border:1;
   box-shadow:0 0 15px 10px rgba(0,0,0,0.06);
-	border-radius:5px;
-	
+	border-radius:1px;
+
 }	
 
 	
-		 .letter1 { 
+.letter1 { 
      color: grey; 
      font-size: 80%; 
 		 padding-left: 20px 
 		
      }
-			 .letter2 { 
+.letter2 { 
 	text-align: left; 
 	padding-left: 0px 
 		
      }
 select {
-  width: 70%;
   padding:10px;
   border-radius:10px;
 	padding-left: 20px 
@@ -951,8 +1037,9 @@ input:required:invalid:not(:placeholder-shown) {
 	}
 
 .red{border-color: crimson;}	
+.green{border-color: greenyellow;}	
 
-	.tooltip {
+.tooltip {
 		border: 1px solid #ddd;
 		box-shadow: 1px 1px 1px #ddd;
 		background: white;
@@ -960,14 +1047,92 @@ input:required:invalid:not(:placeholder-shown) {
 		padding: 4px;
 		position: absolute;
 	}
+progress{
+	   height: 4px;
+   }
+   textarea{
+	width: 100%;
+   }
+
+    :global(body.dark-mode) {
+        background-color: #1d3040;
+        color: #bfc2c7;
+    }
+	:global(body.dark-mode) textarea {
+		background-color: #1d3040;
+    	color: #bfc2c7;
+	}
+	:global(body.dark-mode) input {
+		background-color: #1d3040;
+    	color: #bfc2c7;
+	}
+	:global(body.dark-mode) select {
+		background-color: #1d3040;
+    	color: #bfc2c7;		
+	}
+	:global(body.dark-mode) button {
+		background-color: #1d3040;
+    	color: #bfc2c7;		
+	}
+
+	:global(.svelte-tabs__tab-list) {
+        display: flex;
+        justify-content: space-evenly;
+        flex-wrap: wrap;
+		
+	}
+	:global(.svelte-tabs li.svelte-tabs__tab){
+		color: gray;
+		
+	}
+    :global(.svelte-tabs li.svelte-tabs__selected) {
+		  color: green;
+		  
+    }
+
+
+	:global(body.dark-mode) div {
+		background-color: #1d3040;
+    	color: #bfc2c7;		
+	}
+	:global(body.dark-mode) span {
+		background-color: #1d3040;
+    	color: #bfc2c7;		
+	}
+	:global(body.dark-mode) lable {
+		background-color: #1d3040;
+    	color: #bfc2c7;		
+	}
 	.Shutter {
-		background: linear-gradient(#E6FFFF,#FFFFFF,#E6FFFF);
-    color: blak; 
+		background-color: hsl(200, 16%, 96%);
+	color: blak; 
     padding: 10px; 
     border-radius: 5px; 
    }
-   progress{
-	   height: 4px;
-   }
-   
+   :global(body.dark-mode) .Shutter {
+		background-color: #1d3040;
+    	color: #bfc2c7;	
+		padding: 10px; 
+    border-radius: 5px; 	
+	}
+
+ 	:global(body.dark-mode) table {
+		background-color: #1d3040;
+    	color: #bfc2c7;		
+	}
+	:global(body.dark-mode) .letter1 {
+	    	color: #bfc2c7;		
+	}
+	:global(body.dark-mode) .letter2 {
+	    	color: #bfc2c7;		
+	}
+	:global(body.dark-mode) b {
+	    	color: #bfc2c7;		
+	}
+
+      :global(body.dark-mode) button { 
+		background-color: #1d3040;
+    	color: #bfc2c7;	
+    }
+	
 </style>
