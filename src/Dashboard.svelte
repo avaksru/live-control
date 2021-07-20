@@ -4,7 +4,7 @@
 	import Toggle from "svelte-toggle";
 	import Chart from 'svelte-frappe-charts';
 	import Logo from './Logo.svelte';
-	import mqtt from 'mqtt/dist/mqtt.min';
+	//import mqtt from 'mqtt/dist/mqtt.min';
 
 	// темная тема 
 		let darkMode = false;
@@ -52,10 +52,7 @@
 	let dataLine=[];
 	
 // ==на время разработки==
-	
-	//	devices = '[{"deviceID":"0000000-0000000","deviceIP":"192.168.36.127","deviceName":"test"}]';  
-	//	devices= JSON.parse(devices);
-	//myip = "192.168.36.127";
+//myip = "192.168.36.127";
 
 	let connectionType = 'MQTT';
 	let client;
@@ -136,8 +133,8 @@ if (connectionType == 'MQTT'){
 
  
 	// ==на время разработки==
-	// MQTTconnections=JSON.parse(MQTTconnections);
-		var MQTTconnections = [{"user_id" : "1", "connection_name" : "meef.ru", "connection_protocol" : "wss", "mqtt_host" : "meef.ru", "mqtt_port" : "18883", "mqtt_prefix" : "/IotManager", "mqtt_username" : "IotManager:guest", "mqtt_password" : "guest", "mqtt_path" : "/ws", "mqtt_id" : "mqtt_id"},{"user_id" : "1", "connection_name" : "meef.ru", "connection_protocol" : "wss", "mqtt_host" : "meef.ru", "mqtt_port" : "18883", "mqtt_prefix" : "/demo", "mqtt_username" : "IotManager:guest", "mqtt_password" : "guest", "mqtt_path" : "/ws", "mqtt_id" : "mqtt_id"}];
+	 MQTTconnections=JSON.parse(MQTTconnections);
+	
 
 
 	clientId += '_' + Math.floor(Math.random() * 10000);

@@ -2,7 +2,7 @@
 	let mode ="Dashboard";
 	
 	import Dashboard from './Dashboard.svelte';
-	import Setup from './Setup.svelte';
+	//import Setup from './Setup.svelte';
 	//import Config from './Config.svelte';
 </script>
 
