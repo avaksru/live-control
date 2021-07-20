@@ -3,7 +3,7 @@
 	import Cookies, { get } from 'js-cookie';
 	import Tooltip from './Tooltip.svelte';
 	import Box from './Box.svelte';
-	import Toggle from "svelte-toggle";
+	//import Toggle from "svelte-toggle";
 	import Logo from './Logo.svelte';
 
     let devices = [];
@@ -17,7 +17,51 @@
 	let editJSON;
 	
 // ==на время разработки==
-myip = "192.168.36.127";
+ //myip = "192.168.36.127";
+/*	if (Conf==""){
+		Conf = [{
+ "ip": myip,		
+  "name": "IoT",
+  "chipID": "",
+  "apssid": "IoT",
+  "appass": "",
+  "routerssid": "EURECA",
+  "routerpass": "4455667788",
+  "timezone": 3,
+  "ntp": "pool.ntp.org",
+  "mqttServer": "",
+  "mqttPort": 0,
+  "mqttPortwss":"",
+  "mqttPath":"",
+  "mqttPrefix": "",
+  "mqttUser": "",
+  "mqttPass": "",
+  "mqttServer2": "",
+  "mqttPort2": 0,
+  "mqttPrefix2": "",
+  "mqttUser2": "",
+  "mqttPass2": "",
+  "scen": "1",
+  "telegramApi": "",
+  "telegonof": "0",
+  "teleginput": "0",
+  "autos": "1",
+  "weblogin": "admin",
+  "webpass": "admin",
+  "MqttIn": "0",
+  "MqttOut": "0",
+  "blink": "0",
+  "oneWirePin": "2",
+  "serverip": "http://meef.ru",
+  "uart": "0",
+  "uartS": "9600",
+  "uartTX": "12",
+  "uartRX": "13",
+  "grafmax": "0",
+  "socket": "0"
+}]; 
+}*/
+
 // темная тема 
 let darkMode = false;
 //	data.darktheme=(Cookies.get('darktheme') == "true") ? true : false; 
@@ -54,7 +98,7 @@ let darkMode = false;
 			});
 			socket[0].addEventListener('message', function (event) {
 // запускаем обработку пришедшего сообщения
-
+			//console.log(event.data);
 			addMessage(event.data,0);
 			});
 // Обработка ошибок websocket 
@@ -192,6 +236,7 @@ function addConnection (devices)  {
 
        }
        }   catch (e) {
+
 		if (Cookies.get('consolelog') == "true")
 	{	
 				console.log('ERROR parse JSON', data);
@@ -478,10 +523,11 @@ socket[i].send(newWigetJSON);
 
 
 </script>
+<body>
 	{#if connectionType == 'MQTT'}
 
 	{:else}
-		<div class="Shutter" style="{Shuttervisibl} position: absolute; z-index: 1; right: 4%; top: 3%" id="layer1">
+		<div class="Shutter" style="{Shuttervisibl} position: absolute; z-index: 1; right: 4%; top: 0%" id="layer1">
 			<span>
 				<progress value="{elapsed / duration}"></progress>
 				<br><br>
@@ -514,7 +560,7 @@ socket[i].send(newWigetJSON);
 	{:else}
 	<div on:mouseenter={Shuttervisibil} on:click={Shutterhiddn} style=" position: absolute;  z-index: 2; right: 3.5%; top: 1%" id="layerWS">websocket</div>
 	{/if}	
-<body>
+
 
 	
 
@@ -707,10 +753,39 @@ socket[i].send(newWigetJSON);
 		<td>mqttPath</td>
 		<td><input type="text" bind:value='{Conf[i]["mqttPath"]}'on:change={changeConf(Conf[i].mqttPath, 'mqttPath', Conf[i].socket)} /></td>
 		<Tooltip title="Бла-бла-бла про то как это использовать" ><td>?</td>	</Tooltip>
-	</tr><hr>
+	</tr>
+	<br>
+	<tr>
+		<td width="40%">Web dashbord over MQTT</td>
+		<td>
+		
+			<form id="mqttform"  method="post" action={urlMQTT} onsubmit="fmSubmit()">
+				<input type=checkbox bind:checked={Conf[i].webMQTT} on:change={GetMQTThttp(Conf[i].webMQTT, 'webMQTT', Conf[i].socket)}>
+				<input hidden type="text" id="id_user" name="id_user" value={urlMQTT} >
+				<input hidden type="text" id="mqttServer" name="mqttServer" value={Conf[i]["mqttServer"]} >
+				<input hidden type="text" id="mqttPort" name="mqttPort" value={Conf[i]["mqttPort"]} >
+				<input hidden type="text" id="mqttPortwss" name="mqttPortwss" value={Conf[i]["mqttPortwss"]} >
+				<input hidden type="text" id="mqttPrefix" name="mqttPrefix" value={Conf[i]["mqttPrefix"]} >
+				<input hidden type="text" id="mqttUser" name="mqttUser" value={Conf[i]["mqttUser"]} >
+				<input hidden type="text" id="mqttPass" name="mqttPass" value={Conf[i]["mqttPass"]} >
+				<input hidden type="text" id="mqttPath" name="mqttPath" value={Conf[i]["mqttPath"]} >
+			
+
+					{#if Conf[i].webMQTT == true }
+					<input type="submit" value="перейти на MQTT">
+		<!--<a href="{Cookies.get('urlMQTT')}" onclick="document.getElementById('mqttform').submit(); ">перейти на MQTT</a>-->
+		{urlMQTT = Cookies.get('urlMQTT')}	
+		{/if}
+		</form>
+	</td>
+		<Tooltip title="Позволяет поучить доступ к 'Панели управления' через Internet по протоколу MQTT. Должен быть указан MQTT wss port (TLS) " ><td>?</td>	</Tooltip>
+	</tr>
+	
+	
+	<br><br><br><br><br>
 
 	<!--MQTT2-->
-	<b>Rreserve MQTT</b>
+	<b>Rreserve MQTT</b><hr>
 	<br>
 		<tr>
 		<td>MQTT server </td>
@@ -747,31 +822,7 @@ socket[i].send(newWigetJSON);
 		<td><input type="text" bind:value='{Conf[i]["mqttPath2"]}' on:change={changeConf(Conf[i].mqttPath2, 'mqttPath2', Conf[i].socket)}/></td>
 		<Tooltip title="Бла-бла-бла про то как это использовать" ><td>?</td>	</Tooltip>
 	</tr><br>
-	<tr>
-		<td width="40%">Web dashbord over MQTT</td>
-		<td>
-		
-			<form id="mqttform"  method="post" action={urlMQTT} onsubmit="fmSubmit()">
-				<input type=checkbox bind:checked={Conf[i].webMQTT} on:change={GetMQTThttp(Conf[i].webMQTT, 'webMQTT', Conf[i].socket)}>
-				<input hidden type="text" id="id_user" name="id_user" value={urlMQTT} >
-				<input hidden type="text" id="mqttServer" name="mqttServer" value={Conf[i]["mqttServer"]} >
-				<input hidden type="text" id="mqttPort" name="mqttPort" value={Conf[i]["mqttPort"]} >
-				<input hidden type="text" id="mqttPortwss" name="mqttPortwss" value={Conf[i]["mqttPortwss"]} >
-				<input hidden type="text" id="mqttPrefix" name="mqttPrefix" value={Conf[i]["mqttPrefix"]} >
-				<input hidden type="text" id="mqttUser" name="mqttUser" value={Conf[i]["mqttUser"]} >
-				<input hidden type="text" id="mqttPass" name="mqttPass" value={Conf[i]["mqttPass"]} >
-				<input hidden type="text" id="mqttPath" name="mqttPath" value={Conf[i]["mqttPath"]} >
-			
-
-					{#if Conf[i].webMQTT == true }
-					<input type="submit" value="перейти на MQTT">
-		<!--<a href="{Cookies.get('urlMQTT')}" onclick="document.getElementById('mqttform').submit(); ">перейти на MQTT</a>-->
-		{urlMQTT = Cookies.get('urlMQTT')}	
-		{/if}
-		</form>
-	</td>
-		<Tooltip title="Позволяет поучить доступ к 'Панели управления' через Internet по протоколу MQTT. Должен быть указан MQTT wss port (TLS) " ><td>?</td>	</Tooltip>
-	</tr>
+	
 	
 	</table>
 
@@ -965,9 +1016,9 @@ socket[i].send(newWigetJSON);
 
 </Box>
 
-{:else}
+	{:else}
 	
-<p  align="center"><Logo/></p>
+	<p  align="center"><Logo/></p>
 		{/if}	
 	<br><br>
 	<div  class="letter" align="center">developed by avaks@meef.ru</div>
@@ -1025,11 +1076,11 @@ select {
 
 }	
 input[type=password] {
- 	width: 100%;
-	padding:10px;
-  border:0;
+	width: 100%;
+  padding:10px;
+  border:1;
   box-shadow:0 0 15px 10px rgba(0,0,0,0.06);
-	border-radius:5px;
+	border-radius:1px;
 }
 
 input:required:invalid:not(:placeholder-shown) {
@@ -1054,6 +1105,8 @@ progress{
 	width: 100%;
    }
 
+   
+		
     :global(body.dark-mode) {
         background-color: #1d3040;
         color: #bfc2c7;
@@ -1075,20 +1128,7 @@ progress{
     	color: #bfc2c7;		
 	}
 
-	:global(.svelte-tabs__tab-list) {
-        display: flex;
-        justify-content: space-evenly;
-        flex-wrap: wrap;
-		
-	}
-	:global(.svelte-tabs li.svelte-tabs__tab){
-		color: gray;
-		
-	}
-    :global(.svelte-tabs li.svelte-tabs__selected) {
-		  color: green;
-		  
-    }
+	
 
 
 	:global(body.dark-mode) div {

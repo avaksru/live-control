@@ -4,8 +4,7 @@
 	import Toggle from "svelte-toggle";
 	import Chart from 'svelte-frappe-charts';
 	import Logo from './Logo.svelte';
-	//import WigetButton from './WidgetButton.svelte';
-	//import mqtt from 'mqtt/dist/mqtt.min';
+	import mqtt from 'mqtt/dist/mqtt.min';
 
 	// темная тема 
 		let darkMode = false;
@@ -17,22 +16,129 @@
 	if (window.document.body.classList.value == 'dark-mode'){Cookies.set('darktheme', "true", { expires: 365 });}
 	else {Cookies.set('darktheme', "False", { expires: 365 });}
 	}
+		//секция переменных============================================
+		let myip = document.location.hostname;
+		let configSetupJson = "{}";
+		let espName = "IotManager";
+		let chipID = "";
+		let colors;
+		let	lineOptions;
+		let axisOptions;
+		let graf_1=[];
+		let graf_2=[];
+		let NewWiget="";
+		let NewPage="";
+		let NewPrefics="";
+		let date="";
+		let hours ="";
+		let minutes="";
+		let temp;
+		let selectedprefics; 
+	// декларируем массив для  списка всех ESP в сети 
+	let devices = [];
+	// декларируем массив для списка всех websocket  
+	let socket =[];
+	// декларируем массив для списка всех виджетов  
+	let wigets =[];
+	// декларируем массив для списка всех страниц   
+	let pages =[];
+	// декларируем массив для списка всех префиксов  
+	let prefics =[{'prefics':''}];
+	// выбраный префикс
+	let selected;	
+	// массивы для построения графиков
+	let graf_time=[];
+	let graf_val=[];
+	let dataLine=[];
+	
+// ==на время разработки==
+	
+	//	devices = '[{"deviceID":"0000000-0000000","deviceIP":"192.168.36.127","deviceName":"test"}]';  
+	//	devices= JSON.parse(devices);
+	//myip = "192.168.36.127";
 
-	let connectionType = 'WS';
+	let connectionType = 'MQTT';
 	let client;
 	let topic;
 	let connected = false;
-// MQTT====================================================================
-	
-if (connectionType == 'MQTT'){
-    let clientId = 'IotManager_';
+
+	let clientId = 'IotManager_';
    
-    let topic;
-    let temp;
+   
+   
+// MQTT====================================================================
+function MQTTChange(){
+	console.log("The selected option is " + JSON.stringify(selected));
+	wigets=[];
+	prefics=[];
+	pages=[];
+	clientId += '_' + Math.floor(Math.random() * 10000);
+      connected = false;
+      const mqtt_options = {
+        clientId: clientId,
+        servers: [
+          {
+            host: selected.mqtt_host,
+            port: Number(selected.mqtt_port),
+            protocol: selected.connection_protocol,
+          },
+        ],
+        path: '' + selected.mqtt_path,
+        protocolId: 'MQTT',
+        protocolVersion: 4,
+        keepalive: 30, 
+        clean: true,
+        reconnectPeriod: 100000,
+        connectTimeout: 30 * 1000,
+        rejectUnauthorized: false,
+      };
+        mqtt_options.username = selected.mqtt_username;
+        mqtt_options.password = selected.mqtt_password;
+	    topic = selected.mqtt_prefix;
+      	const url = `${mqtt_options.servers[0].protocol}://${mqtt_options.servers[0].host}:${mqtt_options.servers[0].port}${mqtt_options.path}`;
+    
+    const onConnect = () => {
+      console.log(`MQTT connected ${url}`);
+      connected = client.connected;
+      const topic = selected.mqtt_prefix;
+      client.subscribe(topic+'/#', function (err) {
+        if (err) {
+          console.error(err);
+          } else {
+          console.log(`MQTT subscribed on topic '${topic}'`);
+          client.publish(topic, 'HELLO')
+        }
+      });
+    };
+  
+    const onMessage = (topic, message) => {
+      const msg = message.toString();
+      const time = new Date().getTime();
+      (addMessage(msg, topic));
+	  };
+   
+//try{
+    client = mqtt.connect(mqtt_options);
+    client.on('connect', onConnect);
+    client.on('message', onMessage);
+    client.on('error', (err) => {
+      console.log('MQTT', err);
+      client.end();
+      connected = client.connected;
+    });
+    client.on('close', () => {
+     console.log('MQTT ' + clientId + ' disconnected');
+     connected = client.connected;
+    });
+	
+}
+if (connectionType == 'MQTT'){
+
  
 	// ==на время разработки==
-	 MQTTconnections=JSON.parse(MQTTconnections);
-	//	var MQTTconnections = [{"user_id" : "1", "connection_name" : "meef.ru", "connection_protocol" : "wss", "mqtt_host" : "meef.ru", "mqtt_port" : "18883", "mqtt_prefix" : "/IotManager", "mqtt_username" : "IotManager:guest", "mqtt_password" : "guest", "mqtt_path" : "/ws", "mqtt_id" : "mqtt_id"},{"user_id" : "1", "connection_name" : "cloudMQTT", "connection_protocol" : "wss", "mqtt_host" : "m20.cloudmqtt.com", "mqtt_port" : "33191", "mqtt_prefix" : "/IoTmanager", "mqtt_username" : "", "mqtt_password" : "", "mqtt_path" : "/", "mqtt_id" : "mqtt_id"}];
+	// MQTTconnections=JSON.parse(MQTTconnections);
+		var MQTTconnections = [{"user_id" : "1", "connection_name" : "meef.ru", "connection_protocol" : "wss", "mqtt_host" : "meef.ru", "mqtt_port" : "18883", "mqtt_prefix" : "/IotManager", "mqtt_username" : "IotManager:guest", "mqtt_password" : "guest", "mqtt_path" : "/ws", "mqtt_id" : "mqtt_id"},{"user_id" : "1", "connection_name" : "meef.ru", "connection_protocol" : "wss", "mqtt_host" : "meef.ru", "mqtt_port" : "18883", "mqtt_prefix" : "/demo", "mqtt_username" : "IotManager:guest", "mqtt_password" : "guest", "mqtt_path" : "/ws", "mqtt_id" : "mqtt_id"}];
+
 
 	clientId += '_' + Math.floor(Math.random() * 10000);
       connected = false;
@@ -94,54 +200,14 @@ if (connectionType == 'MQTT'){
     });
 //} catch (e) {
 //}
-console.log(MQTTconnections);
+//console.log(MQTTconnections);
 }
 
 // MQTT =============================================================================================
 
-		//обработка событий при загрузки===============================
-		import { onMount } from "svelte";
 	
-		//секция переменных============================================
-		let myip = document.location.hostname;
-		let configSetupJson = "{}";
-		let espName = "IotManager";
-		let chipID = "";
-		let colors;
-		let	lineOptions;
-		let axisOptions;
-		let graf_1=[];
-		let graf_2=[];
-		let NewWiget="";
-		let NewPage="";
-		let NewPrefics="";
-		let date="";
-		let hours ="";
-		let minutes="";
-		let temp;
-		let selectedprefics; 
-		// декларируем массив для  списка всех ESP в сети 
-		let devices = [];
-		// декларируем массив для списка всех websocket  
-	let socket =[];
-	// декларируем массив для списка всех виджетов  
-	let wigets =[];
-	// декларируем массив для списка всех страниц   
-	let pages =[];
-	// декларируем массив для списка всех префиксов  
-	let prefics =[{'prefics':''}];
-	// выбраный префикс
-	let selected;	
-	// массивы для построения графиков
-	let graf_time=[];
-	let graf_val=[];
-	let dataLine=[];
 	
-// ==на время разработки==
-	
-	//	devices = '[{"deviceID":"0000000-0000000","deviceIP":"192.168.36.127","deviceName":"test"}]';  
-	//	devices= JSON.parse(devices);
-		myip = "192.168.36.127";
+
 	
 	
 //Get(Post)=======================================================
@@ -229,7 +295,7 @@ console.log(MQTTconnections);
 // получаем "карту сети" по websocket       
 			socket[0].send("getNetworkMap");
 // получаем конфигурацию ESP по websocket       			
-			socket[0].send("getconfigsetupjson");
+			socket[0].send("HELLO");
 	 					
 			});
 			socket[0].addEventListener('message', function (event) {
@@ -250,7 +316,9 @@ console.log(MQTTconnections);
 			});
 			}
 		}
+		if (connectionType != 'MQTT'){
 		getNetworkMap();
+		}
 
 
 	
@@ -268,10 +336,10 @@ console.log(MQTTconnections);
 	// Connection opened
 			socket[i].addEventListener('open', function (event) {
 			devices[i].id=i;
-			devices[i].status="connected";
+			devices[i].status=true;
 			devices = devices;
 			console.log("WS CONNECTED! "+item.deviceIP);
-
+			socket[i].send("HELLO");
 	
 			});
 	// Listen for messages
@@ -291,13 +359,13 @@ console.log(MQTTconnections);
 	// Обработка ошибок websocket 
 			socket[i].addEventListener('close', (event) => {
 				  console.log('ws close '+item.deviceIP);
-				  devices[i].status="close"; 
+				  devices[i].status=false; 
 			 	  devices = devices;
 				  Shuttervisibil();
 			});
 			socket[i].addEventListener('error', function (event) {
 				console.log(item.deviceIP+' WebSocket error: ', event);
-				devices[i].status="close";
+				devices[i].status=false;
 				devices = devices;
 				Shuttervisibil();
 			});
@@ -676,9 +744,20 @@ console.log(MQTTconnections);
 
 
 {#if connectionType == 'MQTT'}
-
+{#if MQTTconnections[1]}
+<form on:submit|preventDefault={MQTTChange}>
+  <select bind:value={selected}  on:change="{MQTTChange}">
+	  {#each MQTTconnections as MQTTconnection}
+		  <option value={MQTTconnection}>
+			  {MQTTconnection.connection_name}
+		  </option>
+	  {/each}
+  </select>
+ 
+</form>
+{/if}
 {:else}
-	<div class="Shutter" style="{Shuttervisibl} position: absolute; z-index: 1; right: 4%; top: 3%" id="layer1">
+	<div class="Shutter" style="{Shuttervisibl} position: absolute; z-index: 1; right: 4%; top: 0%" id="layer1">
 		<span>
 			<progress value="{elapsed / duration}"></progress>
 			<br><br>
@@ -689,12 +768,12 @@ console.log(MQTTconnections);
 			   {NetworkDevice.deviceIP} {NetworkDevice.deviceName} waiting
 			  </p>
 		  {/if}  	
-			 {#if NetworkDevice.status === 'connected'}
+			 {#if NetworkDevice.status == 'true'}
 			  <p align="left" style="color: green; margin-top: -5px; margin-bottom: -5px">
 			   {NetworkDevice.deviceIP} {NetworkDevice.deviceName} connected
 			  </p>
 		  {/if}  		  
-		  {#if NetworkDevice.status === 'close'}
+		  {#if NetworkDevice.status === 'false'}
 			  <p align="left" style="color: red; margin-top: -5px; margin-bottom: -5px" on:click={addConnection(devices)}>
 			   {NetworkDevice.deviceIP} {NetworkDevice.deviceName} disconnected
 			   </p>
@@ -707,8 +786,10 @@ console.log(MQTTconnections);
 
 	{#if connectionType == 'MQTT'}
 		{#if connected==false}
-				<div style=" position: absolute;  z-index: 2; right: 2%; top: 1%; color:red" on:click={toggleTheme} id="layerMQTT" >MQTT</div>	
+				<div style=" position: absolute;  z-index: 2; right: 2%; top: 1%; color:red" on:click={toggleTheme} id="layerMQTT" >MQTT</div>
+				{#if MQTTconnections[0].mqtt_port==""}
 				<div  align="center">Для подключения MQTT обязателььно должен быть указан порт "MQTT wss port (TLS)"</div>
+				{/if}
 			{/if}	
 			{#if connected==true}
 			<div style=" position: absolute;  z-index: 2; right: 2%; top: 1%; color:green"  on:click={toggleTheme} id="layerMQTT" >MQTT</div>
@@ -736,7 +817,7 @@ console.log(MQTTconnections);
 	{#if !pages[0]}
 	<p  align="center"><Logo/></p>
 	{/if}	
-	
+
 	  <Tabs> 
 		<table border="0" style="margin-left: 0%" width="99%">
 			<tr><td>
@@ -883,12 +964,12 @@ console.log(MQTTconnections);
 {#if widget.status !=0 && widget.status !=1 }
 	
 
-		<button class="btn" on:click={widget["send"]=true,  WSpush(widget.socket, widget.topic, 1)}><span>&nbsp;&nbsp;{widget.status}&nbsp;&nbsp;</span></button><br> 
+		<button class="btn" on:click={widget["send"]=true,  WSpush(widget.socket, widget.topic, 1)}><span>&nbsp;&nbsp;{!widget.status? '' : widget.status }&nbsp;&nbsp;</span></button><br> 
 
 
 {:else}
 
-<button class="btn" on:click={widget["send"]=true, WSpush(widget.socket, widget.topic, 1)}><span>&nbsp;&nbsp; {!widget.text? '' : widget.text}&nbsp;&nbsp;</span></button><br> 
+<button class="btn" on:click={widget["send"]=true, WSpush(widget.socket, widget.topic, 1)}><span>&nbsp;&nbsp; {!widget.text? '' : widget.text }&nbsp;&nbsp;</span></button><br> 
 
 {/if}
 
@@ -958,6 +1039,20 @@ console.log(MQTTconnections);
 
 
 <style>
+	:global(.svelte-tabs__tab-list) {
+        display: flex;
+        justify-content: space-evenly;
+        flex-wrap: wrap;
+		
+	}
+	:global(.svelte-tabs li.svelte-tabs__tab){
+		color: gray;
+		
+	}
+    :global(.svelte-tabs li.svelte-tabs__selected) {
+		  color: green;
+		  
+    }
 	.red{color: crimson;}	
 	.green{color: rgb(20, 220, 37);}	
 
@@ -1005,11 +1100,20 @@ console.log(MQTTconnections);
 
 	:global(body.dark-mode) select {
 		background-color: #1d3040;
-    	color: #bfc2c7;		
+    	color: #bfc2c7;	
+		padding:10px;
+  border-radius:10px;
+	padding-left: 20px 	
 	}
 	:global(body.dark-mode) lable {
 		background-color: #1d3040;
     	color: #bfc2c7;		
+	}
+	select {
+	
+		padding:10px;
+  border-radius:10px;
+	padding-left: 20px 	
 	}
 	.Shutter {
 		background-color: hsl(200, 16%, 96%);
