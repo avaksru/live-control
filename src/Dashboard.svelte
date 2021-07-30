@@ -54,7 +54,7 @@
 // ==на время разработки==
 //myip = "192.168.36.127";
 
-	let connectionType = 'MQTT';
+	let connectionType = 'WS';
 	let client;
 	let topic;
 	let connected = false;
@@ -134,7 +134,7 @@ if (connectionType == 'MQTT'){
  
 	// ==на время разработки==
 	 MQTTconnections=JSON.parse(MQTTconnections);
-	
+	//	var MQTTconnections = [{"user_id" : "1", "connection_name" : "IotManager", "connection_protocol" : "wss", "mqtt_host" : "meef.ru", "mqtt_port" : "18883", "mqtt_prefix" : "/IotManager", "mqtt_username" : "IotManager:guest", "mqtt_password" : "guest", "mqtt_path" : "/ws", "mqtt_id" : "mqtt_id"},{"user_id" : "1", "connection_name" : "meef.ru", "connection_protocol" : "wss", "mqtt_host" : "meef.ru", "mqtt_port" : "18883", "mqtt_prefix" : "/demo", "mqtt_username" : "IotManager:guest", "mqtt_password" : "guest", "mqtt_path" : "/ws", "mqtt_id" : "mqtt_id"}];
 
 
 	clientId += '_' + Math.floor(Math.random() * 10000);
@@ -296,18 +296,32 @@ if (connectionType == 'MQTT'){
 	 					
 			});
 			socket[0].addEventListener('message', function (event) {
+				if (Cookies.get('consolelog') == "true")
+	{	
+			console.log('NEW data packet '+item.deviceIP, event.data);
+	}
 // запускаем обработку пришедшего сообщения
 
 			addMessage(event.data,0);
 			});
 // Обработка ошибок websocket 
 			socket[0].addEventListener('close', (event) => {
+				if (item){
 				  console.log('ws close '+item.deviceIP);
+				}else
+				{
+					console.log('ws close '+myip);
+				}
 				  devices[0].status=false; 
 			 	  devices = devices;
 			});
 			socket[0].addEventListener('error', function (event) {
+				if (item){
 				  console.log(item.deviceIP+' WebSocket error: ', event);
+				}else
+				{
+					console.log(myip+' WebSocket error: ', event);
+				}
 				  devices[0].status=false;
 				  devices = devices;
 			});
@@ -903,19 +917,20 @@ if (connectionType == 'MQTT'){
 <!--Делаем anidata разноцветными если есть кастомизация цвета-->
 {#if Array.isArray(widget.color) &&  widget.status}
  {#each widget.color as anydataColor, i}
+ <!--// убираем знаки после запятой 	-->
  {#if anydataColor.level && widget.status < anydataColor.level && widget.status > widget.color[i-1].level && i>0}
- <lable align="left" style="color: {anydataColor.value}; font-family: '{widget.font}' ">{!widget.status ? '' : widget.status}{!widget.after ? '' : widget.after}</lable> 
+ <lable align="left" style="color: {anydataColor.value}; font-family: '{widget.font}' ">{Math.round(widget.status*10)/10 ? Math.round(widget.status*10)/10 : widget.status}{!widget.after ? '' : widget.after}</lable> 
 {/if}
 {/each}
 <!--если цвет задан значением а не массивом-->
 {:else if  widget.color &&  widget.status} 
-<lable align="left" style="color: {widget.color}; font-family: '{widget.font}'">{widget.status}{widget.after}</lable> 
+<lable align="left" style="color: {widget.color}; font-family: '{widget.font}'">{Math.round(widget.status*10)/10 ? Math.round(widget.status*10)/10 : widget.status}{widget.after}</lable> 
 <!--если цвет не задан и статус пустой-->
 {:else if   !widget.status}
 <lable align="left">...</lable> 
 <!--если цвет не задан-->
 {:else if  widget.status}
-<lable align="left" style="font-family: '{widget.font}'" >{widget.status}{!widget.after ? '' : widget.after}</lable> 
+<lable align="left" style="font-family: '{widget.font}'" >{Math.round(widget.status*10)/10 ? Math.round(widget.status*10)/10 : widget.status}{!widget.after ? '' : widget.after}</lable> 
 
 {:else}
 	<lable align="left" style="font-family: '{widget.font}'">

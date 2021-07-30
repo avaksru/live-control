@@ -97,18 +97,33 @@ let darkMode = false;
 			 					
 			});
 			socket[0].addEventListener('message', function (event) {
+				if (Cookies.get('consolelog') == "true")
+	{	
+			console.log('NEW data packet '+item.deviceIP, event.data);
+	}
 // запускаем обработку пришедшего сообщения
 			//console.log(event.data);
 			addMessage(event.data,0);
 			});
 // Обработка ошибок websocket 
 			socket[0].addEventListener('close', (event) => {
+				if (item){
 				  console.log('ws close '+item.deviceIP);
+				}else
+				{
+					console.log('ws close '+myip);
+				}
 				  devices[0].status=false; 
 			 	  devices = devices;
 			});
 			socket[0].addEventListener('error', function (event) {
+				if (item){
 				  console.log(item.deviceIP+' WebSocket error: ', event);
+				}else
+				{
+					console.log(myip+' WebSocket error: ', event);
+				}
+				
 				  devices[0].status=false;
 				  devices = devices;
 			});
