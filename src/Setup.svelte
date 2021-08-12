@@ -17,7 +17,7 @@
 	let editJSON;
 	
 // ==на время разработки==
- //myip = "192.168.36.127";
+ myip = "192.168.36.139";
 /*	if (Conf==""){
 		Conf = [{
  "ip": myip,		
@@ -99,7 +99,7 @@ let darkMode = false;
 			socket[0].addEventListener('message', function (event) {
 				if (Cookies.get('consolelog') == "true")
 	{	
-			console.log('NEW data packet '+item.deviceIP, event.data);
+			console.log('NEW data packet '+myip, event.data);
 	}
 // запускаем обработку пришедшего сообщения
 			//console.log(event.data);
@@ -197,20 +197,21 @@ function addConnection (devices)  {
 	
 
 
-
-
 	try{
 		data = JSON.parse(data);
-	//	console.log(data);	
+		
 
 	// editor
-	if (data.getFile){
+	if (data.widget){
 		editJSON=data
-		delete editJSON['getFile']; 
 		editJSON=JSON.stringify(editJSON);
 		}
-
-
+	// Если пришла карта сети   
+	if (data.deviceID)
+         {
+		editJSON=data
+		editJSON=JSON.stringify(editJSON);
+		}
 
 		data.socket = socket;
     // Если пришел Config
@@ -244,6 +245,8 @@ function addConnection (devices)  {
            {
 			console.log('пришла карта сети :', data);
 			devices = data;
+			editJSON=data
+			editJSON=JSON.stringify(editJSON);
 			//Conf=[];
 			
 			addConnection(devices);
@@ -477,9 +480,12 @@ let widgetfiles = [
 		{ id: 11, name: `anydataVlt.json`},
 		{ id: 12, name: `anydataWhr.json`},
 		{ id: 13, name: `anydataWtt.json`},
-		{ id: 13, name: `btn.json`},
-		{ id: 13, name: `select.json`},
-		{ id: 13, name: `NetworkMap.json`},
+		{ id: 14, name: `btn.json`},
+		{ id: 15, name: `select.json`},
+		{ id: 16, name: `chart.json`},
+		{ id: 17, name: `chart3.json`},
+		{ id: 18, name: `NetworkMap.json`},
+		
 	];
 
 
@@ -503,12 +509,12 @@ let widgetfiles = [
     );
     return json;
   };
-	editJSON=JSON.stringify(editJSON);
+//	editJSON=JSON.stringify(editJSON);
 	
 	// получаем файл с esp 
 	function widgetFileChenged(fileSelected, i){
 		console.log(fileSelected.name);
-		if (fileSelected.name=='NetworkMap.json')
+		if (fileSelected.name=='NetworkMap.json' || fileSelected.name=='config.json')
 {
 	socket[i].send('{"getFileName" : "' + fileSelected.name + '"}');
 }
@@ -542,7 +548,7 @@ socket[i].send(newWigetJSON);
 	{#if connectionType == 'MQTT'}
 
 	{:else}
-		<div class="Shutter" style="{Shuttervisibl} position: absolute; z-index: 1; right: 4%; top: 0%" id="layer1">
+		<div class="Shutter" style="{Shuttervisibl} position: absolute; z-index: 1; right: 1%; top: -45px" id="layer1">
 			<span>
 				<progress value="{elapsed / duration}"></progress>
 				<br><br>
@@ -573,10 +579,14 @@ socket[i].send(newWigetJSON);
 			{#if connectionType == 'MQTT'}
 	<div style=" position: absolute;  z-index: 2; right: 2%; top: 1%" id="layerMQTT" >MQTT</div>
 	{:else}
-	<div on:mouseenter={Shuttervisibil} on:click={Shutterhiddn} style=" position: absolute;  z-index: 2; right: 3.5%; top: 1%" id="layerWS">websocket</div>
+	<div on:mouseenter={Shuttervisibil} on:click={Shutterhiddn} style=" position: absolute;  z-index: 2; right: 1.5%; top: -45px" id="layerWS">localNET</div>
 	{/if}	
 
 
+    <div
+    style=" position: absolute;  z-index: 2; right: 90px; top: -45px; color:red"
+    on:click={toggleTheme}
+    id="toggleTheme">🔆</div>
 	
 
 
@@ -1022,7 +1032,9 @@ socket[i].send(newWigetJSON);
 			</option>
 		{/each}
 	</select>
-	<button on:click={handleSubmit( fileSelected, editJSON, Conf[i].socket)}>Save</button>
+
+	
+	<button on:click={handleSubmit(fileSelected, editJSON, Conf[i].socket)}>Save</button>
 	<p><textarea rows="15" id="S1">{syntaxHighlight(editJSON)}</textarea></p>
 
 </form>
@@ -1085,10 +1097,11 @@ input[type=text] {
 		
      }
 select {
-  padding:10px;
-  border-radius:10px;
-	padding-left: 20px 
-
+padding:10px;
+border-radius:10px;
+padding-left: 20px; 
+height: 40px;
+font-size: 13px;
 }	
 input[type=password] {
 	width: 100%;
@@ -1120,7 +1133,11 @@ progress{
 	width: 100%;
    }
 
-   
+   button {
+	   height: 30px;
+	   border-radius: 4px;
+	   line-height: 0;
+}
 		
     :global(body.dark-mode) {
         background-color: #1d3040;

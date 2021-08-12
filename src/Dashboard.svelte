@@ -57,7 +57,8 @@
   let dataLine = [];
 
   // ==на время разработки==
-  //myip = "192.168.36.127";
+  myip = "192.168.36.127";
+
 
   let connectionType = "WS";
   let client;
@@ -281,6 +282,7 @@
       socket[0].addEventListener("open", function (event) {
         devices[0].id = 0;
         devices[0].status = true;
+        connected = true;
         devices = devices;
         console.log("WS CONNECTED! " + myip);
         // получаем "карту сети" по websocket
@@ -290,7 +292,7 @@
       });
       socket[0].addEventListener("message", function (event) {
         if (Cookies.get("consolelog") == "true") {
-          console.log("NEW data packet " + item.deviceIP, event.data);
+          console.log("NEW data packet " + myip, event.data);
         }
         // запускаем обработку пришедшего сообщения
 
@@ -304,6 +306,7 @@
           console.log("ws close " + myip);
         }
         devices[0].status = false;
+        connected = false;
         devices = devices;
       });
       socket[0].addEventListener("error", function (event) {
@@ -313,6 +316,7 @@
           console.log(myip + " WebSocket error: ", event);
         }
         devices[0].status = false;
+        connected = false;
         devices = devices;
       });
     }
@@ -332,6 +336,7 @@
         socket[i].addEventListener("open", function (event) {
           devices[i].id = i;
           devices[i].status = true;
+          connected = true;
           devices = devices;
           console.log("WS CONNECTED! " + item.deviceIP);
           socket[i].send("HELLO");
@@ -352,12 +357,14 @@
         socket[i].addEventListener("close", (event) => {
           console.log("ws close " + item.deviceIP);
           devices[i].status = false;
+          connected = false;
           devices = devices;
           Shuttervisibil();
         });
         socket[i].addEventListener("error", function (event) {
           console.log(item.deviceIP + " WebSocket error: ", event);
           devices[i].status = false;
+          connected = false;
           devices = devices;
           Shuttervisibil();
         });
@@ -635,13 +642,20 @@
 
   // шлем данные в websocket
   function WSpush(ws, uri, val) {
-    //    console.log(ws, uri, val);
+        console.log(ws, uri, val);
     if (connectionType == "MQTT") {
       client.publish(uri + "/control", val.toString());
     } else {
-      socket[ws].send(
-        '{"path":"' + uri + '/control", "status":"' + val.toString() + '"}'
-      );
+      
+      socket[ws].send('{"path":"' + uri + '/control", "status":"' + val.toString() + '"}');
+    
+
+      if (socket[ws].readyState !=1){
+      addConnection(devices);
+
+     // добавить GET запрос
+
+    }
     }
   }
 
@@ -694,46 +708,40 @@
       </select>
     </form>
   {/if}
-{:else}
-  <div
-    class="Shutter"
-    style="{Shuttervisibl} position: absolute; z-index: 1; right: 4%; top: 0%"
-    id="layer1"
-  >
-    <span>
-      <progress value={elapsed / duration} />
-      <br /><br />
-      <!--Перечисляем девайсы в сети-->
-      {#each devices as NetworkDevice, i}
-        {#if !NetworkDevice.status}
-          <p align="left" style=" margin-top: -5px; margin-bottom: -5px">
-            {NetworkDevice.deviceIP}
-            {NetworkDevice.deviceName} waiting
-          </p>
-        {/if}
-        {#if NetworkDevice.status == "true"}
-          <p
-            align="left"
-            style="color: green; margin-top: -5px; margin-bottom: -5px"
-          >
-            {NetworkDevice.deviceIP}
-            {NetworkDevice.deviceName} connected
-          </p>
-        {/if}
-        {#if NetworkDevice.status === "false"}
-          <p
-            align="left"
-            style="color: red; margin-top: -5px; margin-bottom: -5px"
-            on:click={addConnection(devices)}
-          >
-            {NetworkDevice.deviceIP}
-            {NetworkDevice.deviceName} disconnected
-          </p>
-        {/if}
-      {/each}
-    </span>
-  </div>
-{/if}
+	{:else}
+		<div class="Shutter" style="{Shuttervisibl} position: absolute; z-index: 1; right: 1%; top: 0px" id="layer1">
+			<span>
+				<progress value="{elapsed / duration}"></progress>
+				<br><br>
+			  <!--Перечисляем девайсы в сети-->
+			  {#each devices as NetworkDevice , i}
+			  {#if !NetworkDevice.status && NetworkDevice.status!=false }
+				  <p align="left" style=" margin-top: -5px; margin-bottom: -5px">
+				   {NetworkDevice.deviceIP} {NetworkDevice.deviceName} waiting 
+				  </p>
+			  {/if}  	
+				 {#if NetworkDevice.status == true}
+				  <p align="left" style="color: green; margin-top: -5px; margin-bottom: -5px">
+				   {NetworkDevice.deviceIP} {NetworkDevice.deviceName} connected
+				  
+				  </p>
+			  {/if}  		  
+			  {#if NetworkDevice.status == false}
+				  <p align="left" style="color: red; margin-top: -5px; margin-bottom: -5px" on:click={addConnection(devices)}>
+				   {NetworkDevice.deviceIP} {NetworkDevice.deviceName} disconnected
+				   
+				   </p>
+			  {/if}  		  
+				{/each}  
+				
+			</span>
+		</div>
+		{/if}	
+    
+    <div
+    style=" position: absolute;  z-index: 2; right: 7%; top: 0%; color:red"
+    on:click={toggleTheme}
+    id="toggleTheme">🔆</div>
 
 {#if connectionType == "MQTT"}
   {#if connected == false}
@@ -761,16 +769,13 @@
     </div>
   {/if}
 {:else}
-  <div
-    on:mouseenter={Shuttervisibil}
-    on:click={Shutterhiddn}
-    class="connTupe"
-    style=" position: absolute;  z-index: 2; right: 2%; top: 1%"
-    id="layerWS"
-  >
-    websocket
-  </div>
-{/if}
+{#if connected == true}
+<div on:mouseenter={Shuttervisibil} on:click={Shutterhiddn} style="color:green; position: absolute;  z-index: 2; right: 1.5%; top: 0px" id="layerWS;  ">localNET</div>
+{:else}
+<div on:mouseenter={Shuttervisibil} on:click={Shutterhiddn} style="color:red;  position: absolute;  z-index: 2; right: 1.5%; top: 0px" id="layerWS; ">localNET</div>
+{/if}	
+{/if}	
+
 
 <!-- селектор префиксов  -->
 {#if prefics[2]}
@@ -815,10 +820,12 @@
               <tr>
                 <!-- Toggle -->
                 {#if widget.widget === "toggle"}
-                  <td>
+                  <td style="width: 100%;">
                     <span style="float: left"> {widget.descr}</span>
                   </td>
+                  
                   <td />
+
                   <td>
                     {#if widget.status == "1"}
                       <span style="float: right">
@@ -879,7 +886,7 @@
 
 </lable>-->
                   </td>
-                  <td align="right">
+                  <td align="right"  style="white-space: nowrap;">
                     <!--Делаем anidata разноцветными если есть кастомизация цвета-->
                     {#if Array.isArray(widget.color) && widget.status}
                       {#each widget.color as anydataColor, i}
@@ -930,13 +937,15 @@
                 {#if widget.widget === "input"}
                   <td><span style="float: left"> {widget.descr}</span></td>
                   <td />
+                 
                   {#if widget.type === "number"}
                     <td align="right">
-                      <div style="float: right; display:inline-block">
+                      <div style="float: right; display:inline;  width: 120px  ">
                         <input
+                          
                           type="button"
                           value="-  "
-                          style=" border: 1px solid lightblue; width: 15% "
+                          style=" border: 1px solid lightblue; width: 25px"
                           on:click={WSpush(
                             widget.socket,
                             widget.topic,
@@ -944,8 +953,9 @@
                           )}
                         />
                         <input
+                        
                           class:red={widget["send"] == true}
-                          style="width: 30% "
+                          style="width: 45px "
                           type="tel"
                           neme={widget.topic}
                           bind:value={widget.status}
@@ -956,9 +966,10 @@
                           max="1000000"
                         />
                         <input
+                        
                           type="button"
                           value="+  "
-                          style=" border: 1px solid lightblue; width: 15%"
+                          style="border: 1px solid lightblue; width: 25px"
                           on:click={WSpush(
                             widget.socket,
                             widget.topic,
@@ -993,8 +1004,7 @@
                           on:change={((widget["send"] = true),
                           WSpush(widget.socket, widget.topic, widget.status))}
                         />
-                      </div></td
-                    >
+                      </div></td>
                   {/if}
                 {/if}
                 <!-- btn -->
@@ -1204,6 +1214,7 @@
   }
 
   .btn {
+    
     display: inline-block;
     box-sizing: border-box;
     padding: 1px;
