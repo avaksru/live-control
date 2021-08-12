@@ -1176,7 +1176,7 @@ progress{
     	color: #bfc2c7;		
 	}
 	.Shutter {
-		background-color: hsl(200, 16%, 96%);
+	background-color: hsl(200, 16%, 96%);
 	color: blak; 
     padding: 10px; 
     border-radius: 5px; 

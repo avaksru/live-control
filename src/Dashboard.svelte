@@ -1,24 +1,32 @@
 <script>
+  	import { onMount } from "svelte";
   import Cookies, { get } from "js-cookie";
   import { Tabs, Tab, TabList, TabPanel } from "svelte-tabs";
   import Toggle from "svelte-toggle";
   import Chart from "svelte-frappe-charts";
   import Logo from "./Logo.svelte";
-  //import mqtt from 'mqtt/dist/mqtt.min';
+ // import mqtt from 'mqtt/dist/mqtt.min';
 
   // темная тема
-  let darkMode = false;
-  //	data.darktheme=(Cookies.get('darktheme') == "true") ? true : false;
-  if (Cookies.get("darktheme") == "true") {
+  onMount(async () => {
+    if (Cookies.get("darktheme") == "true") {
     window.document.body.classList.value = "dark-mode";
+    //window.document.body.classList.toggle("dark-mode");
   }
+  
 
+});
+  
   function toggleTheme() {
-    window.document.body.classList.toggle("dark-mode");
+  //  window.document.body.classList.toggle("dark-mode");
     if (window.document.body.classList.value == "dark-mode") {
-      Cookies.set("darktheme", "true", { expires: 365 });
-    } else {
+     // Cookies.set("darktheme", "true", { expires: 365 });
+      window.document.body.classList.value = "light-mode";
       Cookies.set("darktheme", "False", { expires: 365 });
+    } else {
+     // Cookies.set("darktheme", "False", { expires: 365 });
+      window.document.body.classList.toggle("dark-mode"); 
+      Cookies.set("darktheme", "true", { expires: 365 });     
     }
   }
   //секция переменных============================================
@@ -58,7 +66,6 @@
 
   // ==на время разработки==
   myip = "192.168.36.127";
-
 
   let connectionType = "WS";
   let client;
@@ -135,9 +142,16 @@
   if (connectionType == "MQTT") {
     // ==на время разработки==
     MQTTconnections = JSON.parse(MQTTconnections);
-    //	var MQTTconnections = [{"user_id" : "1", "connection_name" : "IotManager", "connection_protocol" : "wss", "mqtt_host" : "meef.ru", "mqtt_port" : "18883", "mqtt_prefix" : "/IotManager", "mqtt_username" : "IotManager:guest", "mqtt_password" : "guest", "mqtt_path" : "/ws", "mqtt_id" : "mqtt_id"},{"user_id" : "1", "connection_name" : "meef.ru", "connection_protocol" : "wss", "mqtt_host" : "meef.ru", "mqtt_port" : "18883", "mqtt_prefix" : "/demo", "mqtt_username" : "IotManager:guest", "mqtt_password" : "guest", "mqtt_path" : "/ws", "mqtt_id" : "mqtt_id"}];
-
-    clientId += "_" + Math.floor(Math.random() * 10000);
+   	//var MQTTconnections = [{"user_id" : "1", "connection_name" : "IotManager", "connection_protocol" : "wss", "mqtt_host" : "meef.ru", "mqtt_port" : "18883", "mqtt_prefix" : "/IotManager", "mqtt_username" : "IotManager:guest", "mqtt_password" : "guest", "mqtt_path" : "/ws", "mqtt_id" : "mqtt_id"},{"user_id" : "1", "connection_name" : "meef.ru", "connection_protocol" : "wss", "mqtt_host" : "meef.ru", "mqtt_port" : "18883", "mqtt_prefix" : "/demo", "mqtt_username" : "IotManager:guest", "mqtt_password" : "guest", "mqtt_path" : "/ws", "mqtt_id" : "mqtt_id"}];
+     if (Cookies.get("darktheme") == "") {
+    window.document.body.classList.value = "dark-mode";
+  }
+  if (!Cookies.get("darktheme")) {
+    window.document.body.classList.value = "dark-mode";
+    Cookies.set("darktheme", "true", { expires: 365 });
+  }
+    
+     clientId += "_" + Math.floor(Math.random() * 10000);
     connected = false;
     const mqtt_options = {
       clientId: clientId,
@@ -506,8 +520,32 @@
                     // получаем время
                     date = new Date(item.x * 1000);
                     hours = date.getHours();
-                    minutes = date.getMinutes();
-                    graf_time = [...graf_time, hours + ":" + minutes];
+                    //	minutes =date.getMinutes();
+                    minutes = checkTime(date.getMinutes());
+                    function checkTime(i) {
+                      return i < 10 ? "0" + i : i;
+                    }
+                    let days = ["Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"];
+                    let dayW = days[date.getDay()];
+                    //let dw = days[dayW];
+                    let day = date.getDate();
+                    let month = checkTime(date.getMonth());
+
+                    //graf_time = [... graf_time,  hours+':'+minutes+' '+day+'.'+month, ];
+                    if ((element.dateFormat = "HH:mm")) {
+                      graf_time = [
+                        ...graf_time,
+                        hours + ":" + minutes + " " + dayW,
+                      ];
+                    } else if ((element.dateFormat = "DD.MM.YYYY")) {
+                      graf_time = [
+                        ...graf_time,
+                        day + "." + month + " " + dayW,
+                      ];
+                    } else {
+                      graf_time = [...graf_time, hours + ":" + minutes];
+                    }
+
                     graf_val = [...graf_val, item.y1];
                   });
 
@@ -551,14 +589,14 @@
 
                 //два графика в одном / пока работает криво только для WS	, надо делать
                 if (connectionType === "MQTT") {
-                } else {
-                  if (json.topic.includes("_1/status")) {
+                  if (topic.includes("_1/status")) {
                     graf_1 = element.status.datasets[0];
                   }
-                  if (json.topic.includes("_2/status")) {
+                  if (topic.includes("_2/status")) {
                     graf_2 = element.status.datasets[0];
                     element.status.datasets[1] = graf_1;
                   }
+                } else {
                 }
               }
               // данные для прочих витжетов	(заменяем статус на новый)
@@ -642,14 +680,14 @@
 
   // шлем данные в websocket
   function WSpush(ws, uri, val) {
-        console.log(ws, uri, val);
+    //    console.log(ws, uri, val);
     if (connectionType == "MQTT") {
       client.publish(uri + "/control", val.toString());
     } else {
+      socket[ws].send(
+        '{"path":"' + uri + '/control", "status":"' + val.toString() + '"}'
+      );
       
-      socket[ws].send('{"path":"' + uri + '/control", "status":"' + val.toString() + '"}');
-    
-
       if (socket[ws].readyState !=1){
       addConnection(devices);
 
@@ -708,40 +746,40 @@
       </select>
     </form>
   {/if}
-	{:else}
-		<div class="Shutter" style="{Shuttervisibl} position: absolute; z-index: 1; right: 1%; top: 0px" id="layer1">
-			<span>
-				<progress value="{elapsed / duration}"></progress>
-				<br><br>
-			  <!--Перечисляем девайсы в сети-->
-			  {#each devices as NetworkDevice , i}
-			  {#if !NetworkDevice.status && NetworkDevice.status!=false }
-				  <p align="left" style=" margin-top: -5px; margin-bottom: -5px">
-				   {NetworkDevice.deviceIP} {NetworkDevice.deviceName} waiting 
-				  </p>
-			  {/if}  	
-				 {#if NetworkDevice.status == true}
-				  <p align="left" style="color: green; margin-top: -5px; margin-bottom: -5px">
-				   {NetworkDevice.deviceIP} {NetworkDevice.deviceName} connected
-				  
-				  </p>
-			  {/if}  		  
-			  {#if NetworkDevice.status == false}
-				  <p align="left" style="color: red; margin-top: -5px; margin-bottom: -5px" on:click={addConnection(devices)}>
-				   {NetworkDevice.deviceIP} {NetworkDevice.deviceName} disconnected
-				   
-				   </p>
-			  {/if}  		  
-				{/each}  
-				
-			</span>
-		</div>
-		{/if}	
+{:else}
+<div class="Shutter" style="{Shuttervisibl} position: absolute; z-index: 1; right: 1%; top: 0px" id="layer1">
+  <span>
+    <progress value="{elapsed / duration}"></progress>
+    <br><br>
+    <!--Перечисляем девайсы в сети-->
+    {#each devices as NetworkDevice , i}
+    {#if !NetworkDevice.status && NetworkDevice.status!=false }
+      <p align="left" style=" margin-top: -5px; margin-bottom: -5px">
+       {NetworkDevice.deviceIP} {NetworkDevice.deviceName} waiting 
+      </p>
+    {/if}  	
+     {#if NetworkDevice.status == true}
+      <p align="left" style="color: green; margin-top: -5px; margin-bottom: -5px">
+       {NetworkDevice.deviceIP} {NetworkDevice.deviceName} connected
+      
+      </p>
+    {/if}  		  
+    {#if NetworkDevice.status == false}
+      <p align="left" style="color: red; margin-top: -5px; margin-bottom: -5px" on:click={addConnection(devices)}>
+       {NetworkDevice.deviceIP} {NetworkDevice.deviceName} disconnected
+       
+       </p>
+    {/if}  		  
+    {/each}  
     
-    <div
-    style=" position: absolute;  z-index: 2; right: 7%; top: 0%; color:red"
-    on:click={toggleTheme}
-    id="toggleTheme">🔆</div>
+  </span>
+</div>
+{/if}	
+
+<div
+style=" position: absolute;  z-index: 2; right: 7%; top: 0%; color:red"
+on:click={toggleTheme}
+id="toggleTheme">🔆</div>
 
 {#if connectionType == "MQTT"}
   {#if connected == false}
@@ -775,8 +813,6 @@
 <div on:mouseenter={Shuttervisibil} on:click={Shutterhiddn} style="color:red;  position: absolute;  z-index: 2; right: 1.5%; top: 0px" id="layerWS; ">localNET</div>
 {/if}	
 {/if}	
-
-
 <!-- селектор префиксов  -->
 {#if prefics[2]}
   <form on:submit|preventDefault={handleSubmit}>
@@ -820,13 +856,14 @@
               <tr>
                 <!-- Toggle -->
                 {#if widget.widget === "toggle"}
-                  <td style="width: 100%;">
-                    <span style="float: left"> {widget.descr}</span>
-                  </td>
-                  
-                  <td />
+                <td style="width: 100%;">
+                  <span style="float: left"> {widget.descr}</span>
+                </td>
+                
+                <td />
 
-                  <td>
+                <td>
+                  
                     {#if widget.status == "1"}
                       <span style="float: right">
                         <Toggle
@@ -937,12 +974,10 @@
                 {#if widget.widget === "input"}
                   <td><span style="float: left"> {widget.descr}</span></td>
                   <td />
-                 
                   {#if widget.type === "number"}
                     <td align="right">
                       <div style="float: right; display:inline;  width: 120px  ">
                         <input
-                          
                           type="button"
                           value="-  "
                           style=" border: 1px solid lightblue; width: 25px"
@@ -953,7 +988,6 @@
                           )}
                         />
                         <input
-                        
                           class:red={widget["send"] == true}
                           style="width: 45px "
                           type="tel"
@@ -966,11 +1000,10 @@
                           max="1000000"
                         />
                         <input
-                        
                           type="button"
                           value="+  "
                           style="border: 1px solid lightblue; width: 25px"
-                          on:click={WSpush(
+                           on:click={WSpush(
                             widget.socket,
                             widget.topic,
                             widget.status - 1 + 2
@@ -1168,9 +1201,19 @@
   label {
     display: flex;
   }
+  :global(body.light-mode) {
+        background-color: white;
+       
+    }
+
+
+  :global(body.dark-mode) {
+        background-color: #1d3040;
+        color: #bfc2c7;
+    }
 
   :global(body.dark-mode) span {
-    background-color: #1d3040;
+    background-color:  #1d3040;
     color: #bfc2c7;
   }
 
@@ -1214,7 +1257,6 @@
   }
 
   .btn {
-    
     display: inline-block;
     box-sizing: border-box;
     padding: 1px;
