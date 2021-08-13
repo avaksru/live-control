@@ -1,32 +1,28 @@
 <script>
-  	import { onMount } from "svelte";
+  import { onMount } from "svelte";
   import Cookies, { get } from "js-cookie";
   import { Tabs, Tab, TabList, TabPanel } from "svelte-tabs";
   import Toggle from "svelte-toggle";
   import Chart from "svelte-frappe-charts";
   import Logo from "./Logo.svelte";
- // import mqtt from 'mqtt/dist/mqtt.min';
+  import mqtt from "mqtt/dist/mqtt.min";
 
   // темная тема
   onMount(async () => {
     if (Cookies.get("darktheme") == "true") {
-    window.document.body.classList.value = "dark-mode";
-    //window.document.body.classList.toggle("dark-mode");
-  }
-  
+      window.document.body.classList.value = "dark-mode";
+      //window.document.body.classList.toggle("dark-mode");
+    }
+  });
 
-});
-  
   function toggleTheme() {
-  //  window.document.body.classList.toggle("dark-mode");
+    //  window.document.body.classList.toggle("dark-mode");
     if (window.document.body.classList.value == "dark-mode") {
-     // Cookies.set("darktheme", "true", { expires: 365 });
       window.document.body.classList.value = "light-mode";
       Cookies.set("darktheme", "False", { expires: 365 });
     } else {
-     // Cookies.set("darktheme", "False", { expires: 365 });
-      window.document.body.classList.toggle("dark-mode"); 
-      Cookies.set("darktheme", "true", { expires: 365 });     
+      window.document.body.classList.toggle("dark-mode");
+      Cookies.set("darktheme", "true", { expires: 365 });
     }
   }
   //секция переменных============================================
@@ -65,9 +61,9 @@
   let dataLine = [];
 
   // ==на время разработки==
-  myip = "192.168.36.127";
+  //myip = "192.168.36.127";
 
-  let connectionType = "WS";
+  let connectionType = "MQTT";
   let client;
   let topic;
   let connected = false;
@@ -76,7 +72,9 @@
 
   // MQTT====================================================================
   function MQTTChange() {
-    console.log("The selected option is " + JSON.stringify(selected));
+    // console.log("The selected option is " + JSON.stringify(selected));
+    Cookies.set("selectedMQTT", selected, { expires: 365 });
+
     wigets = [];
     prefics = [];
     pages = [];
@@ -141,147 +139,55 @@
   }
   if (connectionType == "MQTT") {
     // ==на время разработки==
-    MQTTconnections = JSON.parse(MQTTconnections);
-   	//var MQTTconnections = [{"user_id" : "1", "connection_name" : "IotManager", "connection_protocol" : "wss", "mqtt_host" : "meef.ru", "mqtt_port" : "18883", "mqtt_prefix" : "/IotManager", "mqtt_username" : "IotManager:guest", "mqtt_password" : "guest", "mqtt_path" : "/ws", "mqtt_id" : "mqtt_id"},{"user_id" : "1", "connection_name" : "meef.ru", "connection_protocol" : "wss", "mqtt_host" : "meef.ru", "mqtt_port" : "18883", "mqtt_prefix" : "/demo", "mqtt_username" : "IotManager:guest", "mqtt_password" : "guest", "mqtt_path" : "/ws", "mqtt_id" : "mqtt_id"}];
-     if (Cookies.get("darktheme") == "") {
-    window.document.body.classList.value = "dark-mode";
-  }
-  if (!Cookies.get("darktheme")) {
-    window.document.body.classList.value = "dark-mode";
-    Cookies.set("darktheme", "true", { expires: 365 });
-  }
-    
-     clientId += "_" + Math.floor(Math.random() * 10000);
-    connected = false;
-    const mqtt_options = {
-      clientId: clientId,
-      servers: [
-        {
-          host: MQTTconnections[0].mqtt_host,
-          port: Number(MQTTconnections[0].mqtt_port),
-          protocol: MQTTconnections[0].connection_protocol,
-        },
-      ],
-      path: "" + MQTTconnections[0].mqtt_path,
-      protocolId: "MQTT",
-      protocolVersion: 4,
-      keepalive: 30,
-      clean: true,
-      reconnectPeriod: 100000,
-      connectTimeout: 30 * 1000,
-      rejectUnauthorized: false,
-    };
-    mqtt_options.username = MQTTconnections[0].mqtt_username;
-    mqtt_options.password = MQTTconnections[0].mqtt_password;
-    topic = MQTTconnections[0].mqtt_prefix;
-    const url = `${mqtt_options.servers[0].protocol}://${mqtt_options.servers[0].host}:${mqtt_options.servers[0].port}${mqtt_options.path}`;
+    //MQTTconnections = JSON.parse(MQTTconnections);
 
-    const onConnect = () => {
-      console.log(`MQTT connected ${url}`);
-      connected = client.connected;
-      const topic = MQTTconnections[0].mqtt_prefix;
-      client.subscribe(topic + "/#", function (err) {
-        if (err) {
-          console.error(err);
-        } else {
-          console.log(`MQTT subscribed on topic '${topic}'`);
-          client.publish(topic, "HELLO");
-        }
-      });
-    };
+    var MQTTconnections = [
+      {
+        user_id: "1",
+        connection_name: "IotManager",
+        connection_protocol: "wss",
+        mqtt_host: "meef.ru",
+        mqtt_port: "18883",
+        mqtt_prefix: "/IotManager",
+        mqtt_username: "IotManager:guest",
+        mqtt_password: "guest",
+        mqtt_path: "/ws",
+        mqtt_id: "mqtt_id",
+      },
+      {
+        user_id: "1",
+        connection_name: "demo",
+        connection_protocol: "wss",
+        mqtt_host: "meef.ru",
+        mqtt_port: "18883",
+        mqtt_prefix: "/demo",
+        mqtt_username: "IotManager:guest",
+        mqtt_password: "guest",
+        mqtt_path: "/ws",
+        mqtt_id: "mqtt_id",
+      },
+    ];
 
-    const onMessage = (topic, message) => {
-      const msg = message.toString();
-      const time = new Date().getTime();
-      addMessage(msg, topic);
-    };
+    if (Cookies.get("selectedMQTT")) {
+      selected = Cookies.get("selectedMQTT");
+    } else {
+      selected = MQTTconnection[0];
+    }
+    if (selected) {
+      selected = JSON.parse(selected);
+    }
+    MQTTChange();
 
-    //try{
-    client = mqtt.connect(mqtt_options);
-    client.on("connect", onConnect);
-    client.on("message", onMessage);
-    client.on("error", (err) => {
-      console.log("MQTT", err);
-      client.end();
-      connected = client.connected;
-    });
-    client.on("close", () => {
-      console.log("MQTT " + clientId + " disconnected");
-      connected = client.connected;
-    });
-    //} catch (e) {
-    //}
-    //console.log(MQTTconnections);
+    if (Cookies.get("darktheme") == "") {
+      window.document.body.classList.value = "dark-mode";
+    }
+    if (!Cookies.get("darktheme")) {
+      window.document.body.classList.value = "dark-mode";
+      Cookies.set("darktheme", "true", { expires: 365 });
+    }
   }
 
   // MQTT =============================================================================================
-
-  //Get(Post)=======================================================
-  /*		if (connectionType != 'MQTT'){
-		onMount(async () => {
-			getСonfigSetupJson();
-		});
-		}
-		async function getСonfigSetupJson() {
-			let res = await fetch("http://" + myip + "/config.setup.json", {
-				mode: "no-cors",
-				method: "GET",
-			});
-			if (res.ok) {
-				configSetupJson = await res.json();
-			} else {
-		
-			//	console.log("getСonfigSetupJson error", res.status);
-			}
-			getValues();
-			getNetworkMap() 
-		}
-	
-		function parseСonfigSetupJson(key) {
-			let result = configSetupJson[key];
-			return result;
-		}
-	
-		function getValues() {
-			espName = parseСonfigSetupJson("name");
-			chipID = parseСonfigSetupJson("chipID");
-		}
-	
-	
-	 //Получаем из файла NetworkMap.json список ESP к которым надо подключатся
-	 let configNetworkMap = {};
-	 let myhost = document.location.host
-	 console.log("myhost", myhost);
-	
-	
-	 async function getNetworkMap() {
-			let res = await fetch("http://" + myip + "/NetworkMap.json", {
-				mode: "no-cors",
-				method: "GET",
-			});
-			if (res.ok) {
-				configNetworkMap = await res.json();
-				devices=configNetworkMap;
-				console.log("получена карта сети",devices);
-			} else {
-				console.log("NetworkMap.json отсутствует или содержит ошибки", res.status);
-				// Если файла не нашли подключаемся к локальной машне
-				configNetworkMap = '[{"deviceID":"' +  chipID + '","deviceIP":"' + myip + '","deviceName":"' + espName + '"}]'; 
-				  try{
-					 devices= JSON.parse(configNetworkMap);
-					 console.log("Подключаемся локально",devices);
-				 } catch (e) {
-				 console.log("configNetworkMap содержит ошибки", configNetworkMap);
-	 }
-				
-			}
-			if(connectionType != "MQTT")
-			{
-				addConnection(devices);
-			}
-		}
-		
-	*/
 
   // подключаемся к локальной машине, получаем карту сети
   function getNetworkMap() {
@@ -687,13 +593,12 @@
       socket[ws].send(
         '{"path":"' + uri + '/control", "status":"' + val.toString() + '"}'
       );
-      
-      if (socket[ws].readyState !=1){
-      addConnection(devices);
 
-     // добавить GET запрос
+      if (socket[ws].readyState != 1) {
+        addConnection(devices);
 
-    }
+        // добавить GET запрос
+      }
     }
   }
 
@@ -739,52 +644,72 @@
     <form on:submit|preventDefault={MQTTChange}>
       <select bind:value={selected} on:change={MQTTChange}>
         {#each MQTTconnections as MQTTconnection}
-          <option value={MQTTconnection}>
-            {MQTTconnection.connection_name}
-          </option>
+          {#if MQTTconnection.connection_name == selected.connection_name}
+            <option selected value={MQTTconnection}>
+              {MQTTconnection.connection_name}
+            </option>
+          {:else}
+            <option value={MQTTconnection}>
+              {MQTTconnection.connection_name}
+            </option>
+          {/if}
         {/each}
       </select>
     </form>
   {/if}
 {:else}
-<div class="Shutter" style="{Shuttervisibl} position: absolute; z-index: 1; right: 1%; top: 0px" id="layer1">
-  <span>
-    <progress value="{elapsed / duration}"></progress>
-    <br><br>
-    <!--Перечисляем девайсы в сети-->
-    {#each devices as NetworkDevice , i}
-    {#if !NetworkDevice.status && NetworkDevice.status!=false }
-      <p align="left" style=" margin-top: -5px; margin-bottom: -5px">
-       {NetworkDevice.deviceIP} {NetworkDevice.deviceName} waiting 
-      </p>
-    {/if}  	
-     {#if NetworkDevice.status == true}
-      <p align="left" style="color: green; margin-top: -5px; margin-bottom: -5px">
-       {NetworkDevice.deviceIP} {NetworkDevice.deviceName} connected
-      
-      </p>
-    {/if}  		  
-    {#if NetworkDevice.status == false}
-      <p align="left" style="color: red; margin-top: -5px; margin-bottom: -5px" on:click={addConnection(devices)}>
-       {NetworkDevice.deviceIP} {NetworkDevice.deviceName} disconnected
-       
-       </p>
-    {/if}  		  
-    {/each}  
-    
-  </span>
-</div>
-{/if}	
+  <div
+    class="Shutter"
+    style="{Shuttervisibl} position: absolute; z-index: 1; right: 1%; top: 0px"
+    id="layer1"
+  >
+    <span>
+      <progress value={elapsed / duration} />
+      <br /><br />
+      <!--Перечисляем девайсы в сети-->
+      {#each devices as NetworkDevice, i}
+        {#if !NetworkDevice.status && NetworkDevice.status != false}
+          <p align="left" style=" margin-top: -5px; margin-bottom: -5px">
+            {NetworkDevice.deviceIP}
+            {NetworkDevice.deviceName} waiting
+          </p>
+        {/if}
+        {#if NetworkDevice.status == true}
+          <p
+            align="left"
+            style="color: green; margin-top: -5px; margin-bottom: -5px"
+          >
+            {NetworkDevice.deviceIP}
+            {NetworkDevice.deviceName} connected
+          </p>
+        {/if}
+        {#if NetworkDevice.status == false}
+          <p
+            align="left"
+            style="color: red; margin-top: -5px; margin-bottom: -5px"
+            on:click={addConnection(devices)}
+          >
+            {NetworkDevice.deviceIP}
+            {NetworkDevice.deviceName} disconnected
+          </p>
+        {/if}
+      {/each}
+    </span>
+  </div>
+{/if}
 
 <div
-style=" position: absolute;  z-index: 2; right: 7%; top: 0%; color:red"
-on:click={toggleTheme}
-id="toggleTheme">🔆</div>
+  style=" position: absolute;  z-index: 2; right: 7%; top: 0%; color:red"
+  on:click={toggleTheme}
+  id="toggleTheme"
+>
+  🔆
+</div>
 
 {#if connectionType == "MQTT"}
   {#if connected == false}
     <div
-      style=" position: absolute;  z-index: 2; right: 2%; top: 1%; color:red"
+      style=" position: absolute;  z-index: 2; right: 2%; top: 0%; color:red"
       on:click={toggleTheme}
       id="layerMQTT"
     >
@@ -799,20 +724,32 @@ id="toggleTheme">🔆</div>
   {/if}
   {#if connected == true}
     <div
-      style=" position: absolute;  z-index: 2; right: 2%; top: 1%; color:green"
+      style=" position: absolute;  z-index: 2; right: 2%; top: 0%; color:green"
       on:click={toggleTheme}
       id="layerMQTT"
     >
       MQTT
     </div>
   {/if}
+{:else if connected == true}
+  <div
+    on:mouseenter={Shuttervisibil}
+    on:click={Shutterhiddn}
+    style="color:green; position: absolute;  z-index: 2; right: 1.5%; top: 0px"
+    id="layerWS;  "
+  >
+    localNET
+  </div>
 {:else}
-{#if connected == true}
-<div on:mouseenter={Shuttervisibil} on:click={Shutterhiddn} style="color:green; position: absolute;  z-index: 2; right: 1.5%; top: 0px" id="layerWS;  ">localNET</div>
-{:else}
-<div on:mouseenter={Shuttervisibil} on:click={Shutterhiddn} style="color:red;  position: absolute;  z-index: 2; right: 1.5%; top: 0px" id="layerWS; ">localNET</div>
-{/if}	
-{/if}	
+  <div
+    on:mouseenter={Shuttervisibil}
+    on:click={Shutterhiddn}
+    style="color:red;  position: absolute;  z-index: 2; right: 1.5%; top: 0px"
+    id="layerWS; "
+  >
+    localNET
+  </div>
+{/if}
 <!-- селектор префиксов  -->
 {#if prefics[2]}
   <form on:submit|preventDefault={handleSubmit}>
@@ -856,14 +793,13 @@ id="toggleTheme">🔆</div>
               <tr>
                 <!-- Toggle -->
                 {#if widget.widget === "toggle"}
-                <td style="width: 100%;">
-                  <span style="float: left"> {widget.descr}</span>
-                </td>
-                
-                <td />
+                  <td style="width: 100%;">
+                    <span style="float: left"> {widget.descr}</span>
+                  </td>
 
-                <td>
-                  
+                  <td />
+
+                  <td>
                     {#if widget.status == "1"}
                       <span style="float: right">
                         <Toggle
@@ -923,7 +859,7 @@ id="toggleTheme">🔆</div>
 
 </lable>-->
                   </td>
-                  <td align="right"  style="white-space: nowrap;">
+                  <td align="right" style="white-space: nowrap;">
                     <!--Делаем anidata разноцветными если есть кастомизация цвета-->
                     {#if Array.isArray(widget.color) && widget.status}
                       {#each widget.color as anydataColor, i}
@@ -976,7 +912,9 @@ id="toggleTheme">🔆</div>
                   <td />
                   {#if widget.type === "number"}
                     <td align="right">
-                      <div style="float: right; display:inline;  width: 120px  ">
+                      <div
+                        style="float: right; display:inline;  width: 120px  "
+                      >
                         <input
                           type="button"
                           value="-  "
@@ -1003,7 +941,7 @@ id="toggleTheme">🔆</div>
                           type="button"
                           value="+  "
                           style="border: 1px solid lightblue; width: 25px"
-                           on:click={WSpush(
+                          on:click={WSpush(
                             widget.socket,
                             widget.topic,
                             widget.status - 1 + 2
@@ -1037,7 +975,8 @@ id="toggleTheme">🔆</div>
                           on:change={((widget["send"] = true),
                           WSpush(widget.socket, widget.topic, widget.status))}
                         />
-                      </div></td>
+                      </div></td
+                    >
                   {/if}
                 {/if}
                 <!-- btn -->
@@ -1202,18 +1141,16 @@ id="toggleTheme">🔆</div>
     display: flex;
   }
   :global(body.light-mode) {
-        background-color: white;
-       
-    }
-
+    background-color: white;
+  }
 
   :global(body.dark-mode) {
-        background-color: #1d3040;
-        color: #bfc2c7;
-    }
+    background-color: #1d3040;
+    color: #bfc2c7;
+  }
 
   :global(body.dark-mode) span {
-    background-color:  #1d3040;
+    background-color: #1d3040;
     color: #bfc2c7;
   }
 
