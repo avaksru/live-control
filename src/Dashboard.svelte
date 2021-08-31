@@ -4,11 +4,12 @@
   import Toggle from "svelte-toggle";
   import Chart from "svelte-frappe-charts";
   import Logo from "./Logo.svelte";
-  // import mqtt from "mqtt/dist/mqtt.min";
+  import mqtt from "mqtt/dist/mqtt.min";
+
   // -------------------Swipe-------------------------------------
   let opacity = 100;
   let touchStart = [];
-  let TabCount;
+  let TabCount = 1;
   let selectedTab = 0;
   function onTouchStart(e) {
     opacity = 100;
@@ -99,22 +100,37 @@
   let graf_time = [];
   let graf_val = [];
   let dataLine = [];
-
+  // пропускаем первый тик графика для PZM
+  let miss;
   // ==на время разработки==
   //myip = "192.168.36.105";
 
-  let connectionType = "WS";
+  let connectionType = "MQTT";
   let client;
   let topic;
   let connected = false;
 
   let clientId = "IotManager_";
+  let monthStat = [
+    {
+      "00": 0,
+      "01": 0,
+      "02": 0,
+      "03": 0,
+      "04": 0,
+      "05": 0,
+      "06": 0,
+      "07": 0,
+      "08": 0,
+      "09": 0,
+      "10": 0,
+      "11": 0,
+      "12": 0,
+    },
+  ];
 
   // MQTT====================================================================
   function MQTTChange() {
-    // console.log("The selected option is " + JSON.stringify(selected));
-    // Cookies.set("selectedMQTT", selected, { expires: 365 });
-
     wigets = [];
     prefics = [];
     pages = [];
@@ -179,12 +195,12 @@
       connected = client.connected;
     });
   }
+  // let MQTTconnections;
   if (connectionType == "MQTT") {
     // ==на время разработки==
     MQTTconnections = JSON.parse(MQTTconnections);
 
-    /*
-    MQTTconnections = [
+    /*  MQTTconnections = [
       {
         user_id: "10000000",
         connection_name: "тест 1",
@@ -196,9 +212,9 @@
         mqtt_password: "guest",
         mqtt_path: "/ws",
         mqtt_id: "10000000",
-      }
-    ];
-*/
+      },
+    ];*/
+
     if (Cookies.get("selectedMQTT")) {
       selected = Cookies.get("selectedMQTT");
 
@@ -417,7 +433,9 @@
                 JSON.stringify({ page: json.page, topic: json.topic })
               ),
             ];
-            TabCount = pages.length - 1;
+            if (pages[1]) {
+              TabCount = pages.length - 1;
+            }
             pages.sort(function (a, b) {
               if (a.page < b.page) {
                 return -1;
@@ -460,37 +478,72 @@
                 graf_val = [];
                 try {
                   temp = json.status;
+
+                  // console.log("!!!!!!!!!!!!!", temp.length);
+                  if (!element.status) {
+                    // пропускаем первое значение
+                    miss = true;
+                  }
+                  // обнуляем статистикупо месяцам
+                  monthStat = [
+                    {
+                      "00": 0,
+                      "01": 0,
+                      "02": 0,
+                      "03": 0,
+                      "04": 0,
+                      "05": 0,
+                      "06": 0,
+                      "07": 0,
+                      "08": 0,
+                      "09": 0,
+                      "10": 0,
+                      "11": 0,
+                      "12": 0,
+                    },
+                  ];
                   temp.forEach(function (item, i, arr) {
-                    // получаем время
-                    date = new Date(item.x * 1000);
-                    hours = date.getHours();
-                    //	minutes =date.getMinutes();
-                    minutes = checkTime(date.getMinutes());
-                    function checkTime(i) {
-                      return i < 10 ? "0" + i : i;
-                    }
-                    let days = ["Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"];
-                    let dayW = days[date.getDay()];
-                    //let dw = days[dayW];
-                    let day = date.getDate();
-                    let month = checkTime(date.getMonth());
+                    if (miss != true) {
+                      // получаем время
+                      date = new Date(item.x * 1000);
+                      hours = date.getHours();
+                      //	minutes =date.getMinutes();
+                      minutes = checkTime(date.getMinutes());
+                      function checkTime(i) {
+                        return i < 10 ? "0" + i : i;
+                      }
+                      let days = ["Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"];
+                      let dayW = days[date.getDay()];
+                      //let dw = days[dayW];
+                      let day = date.getDate();
+                      let month = checkTime(date.getMonth() + 1);
+                      // заполняем статистику суточного потребления по месяцам
+                      if (element.type == "bar") {
+                        monthStat[0][month] = monthStat[0][month] + item.y1;
+                        try {
+                          if (i > status.length - 30) {
+                            monthStat[0]["00"] = monthStat[0]["00"] + item.y1;
+                          }
+                        } catch (e) {}
+                      }
+                      //graf_time = [... graf_time,  hours+':'+minutes+' '+day+'.'+month, ];
+                      if (element.dateFormat == "HH:mm") {
+                        graf_time = [
+                          ...graf_time,
+                          hours + ":" + minutes + " " + dayW,
+                        ];
+                      } else if (element.dateFormat == "DD.MM.YYYY") {
+                        graf_time = [
+                          ...graf_time,
+                          day + "." + month + " " + dayW,
+                        ];
+                      } else {
+                        graf_time = [...graf_time, hours + ":" + minutes];
+                      }
 
-                    //graf_time = [... graf_time,  hours+':'+minutes+' '+day+'.'+month, ];
-                    if ((element.dateFormat = "HH:mm")) {
-                      graf_time = [
-                        ...graf_time,
-                        hours + ":" + minutes + " " + dayW,
-                      ];
-                    } else if ((element.dateFormat = "DD.MM.YYYY")) {
-                      graf_time = [
-                        ...graf_time,
-                        day + "." + month + " " + dayW,
-                      ];
-                    } else {
-                      graf_time = [...graf_time, hours + ":" + minutes];
+                      graf_val = [...graf_val, item.y1];
                     }
-
-                    graf_val = [...graf_val, item.y1];
+                    miss = false;
                   });
 
                   axisOptions = { xAxisMode: "tick", xIsSeries: true };
@@ -513,6 +566,7 @@
                   if (!element.status) {
                     // архив графика отсутсутствует, то создаем статус и заполняем
                     element.status = dataLine;
+                    element.monthStat = monthStat;
                   } else {
                     //console.log(" дописываем новые значения к имеющимся");
                     element.status.labels = [
@@ -702,6 +756,15 @@
 
   function selectTab(i) {
     selectedTab = i;
+  }
+
+  // показать/скрыть статистику суточного потребления по месяцам
+  let n = 0;
+  function showStat() {
+    n = 1;
+  }
+  function hideStat() {
+    n = 0;
   }
 </script>
 
@@ -1170,6 +1233,58 @@
                           height="300"
                         /></span
                       >
+                      <span style={setleft(widget)}>
+                        {#if widget.type == "bar"}
+                          {#if n == 0}
+                            <div on:click={() => showStat()}>♻️</div>
+                          {/if}
+                          {#if n == 1}
+                            <div on:click={() => hideStat()}>♻️</div>
+                            <br />
+                            {#if widget.monthStat[0]["00"] > 0}
+                              за месяц {Math.round(
+                                widget.monthStat[0]["00"] * 10
+                              ) / 10}<br />
+                            {/if}
+                            {#if widget.monthStat[0]["01"] > 0}январь {Math.round(
+                                widget.monthStat[0]["01"] * 10
+                              ) / 10}<br />{/if}
+                            {#if widget.monthStat[0]["02"] > 0}февраль {Math.round(
+                                widget.monthStat[0]["02"] * 10
+                              ) / 10}<br />{/if}
+                            {#if widget.monthStat[0]["03"] > 0}март {Math.round(
+                                widget.monthStat[0]["03"] * 10
+                              ) / 10}<br />{/if}
+                            {#if widget.monthStat[0]["04"] > 0}апрель {Math.round(
+                                widget.monthStat[0]["04"] * 10
+                              ) / 10}<br />{/if}
+                            {#if widget.monthStat[0]["05"] > 0}май {Math.round(
+                                widget.monthStat[0]["05"] * 10
+                              ) / 10}<br />{/if}
+                            {#if widget.monthStat[0]["06"] > 0}июнь {Math.round(
+                                widget.monthStat[0]["06"] * 10
+                              ) / 10}<br />{/if}
+                            {#if widget.monthStat[0]["07"] > 0}июль {Math.round(
+                                widget.monthStat[0]["07"] * 10
+                              ) / 10}<br />{/if}
+                            {#if widget.monthStat[0]["08"] > 0}август {Math.round(
+                                widget.monthStat[0]["08"] * 10
+                              ) / 10}<br />{/if}
+                            {#if widget.monthStat[0]["09"] > 0}сентябрь {Math.round(
+                                widget.monthStat[0]["09"] * 10
+                              ) / 10}<br />{/if}
+                            {#if widget.monthStat[0]["10"] > 0}октябрь {Math.round(
+                                widget.monthStat[0]["10"] * 10
+                              ) / 10}<br />{/if}
+                            {#if widget.monthStat[0]["11"] > 0}ноябрь {Math.round(
+                                widget.monthStat[0]["11"] * 10
+                              ) / 10}<br />{/if}
+                            {#if widget.monthStat[0]["12"] > 0}декабрь {Math.round(
+                                widget.monthStat[0]["12"] * 10
+                              ) / 10}<br />{/if}
+                          {/if}
+                        {/if}
+                      </span>
                     {/if}
                   {/if}
                 </td>
