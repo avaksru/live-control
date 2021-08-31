@@ -14,10 +14,10 @@
   let Conf = [];
   let name;
   let urlMQTT = "";
-  let editJSON;
+  let editJSON = "";
   let showModal = false;
-  let upgrade = 2;
-
+  let upgrade = 0;
+  let item;
   let seconds = 0;
   function onInterval(callback, milliseconds) {
     const interval = setInterval(callback, milliseconds);
@@ -203,19 +203,37 @@
     try {
       data = JSON.parse(data);
 
+      // сохраняем настройки на локальную машину
+      if (data.getFileName === "s.conf.csv") {
+        data = JSON.stringify(data);
+        data = data.replace(/#/g, "_");
+        data = JSON.parse(data);
+        editJSON = data.getFileText;
+        editJSON = editJSON + "/n";
+      } else if (data.getFileName === "s.scen.txt") {
+        data = JSON.stringify(data);
+        data = data.replace(/#/g, "_");
+        data = JSON.parse(data);
+        editJSON = editJSON + data.getFileText;
+      }
+      // editor
+      else if (
+        data.getFileText &&
+        data.getFileName != "s.scen.txt" &&
+        data.getFileName != "s.conf.csv"
+      ) {
+        editJSON = data.getFileText;
+      }
+
       if (data.upgrade) {
         console.log("upgrade ", data.upgrade);
         upgrade = data.upgrade;
       }
-      // editor
-      if (data.widget) {
-        editJSON = data;
-        editJSON = JSON.stringify(editJSON);
-      }
+
       // Если пришла карта сети
       if (data.deviceID) {
-        editJSON = data;
-        editJSON = JSON.stringify(editJSON);
+        //  editJSON = data;
+        //  editJSON = JSON.stringify(editJSON);
       }
 
       data.socket = socket;
@@ -246,8 +264,6 @@
       if (data[0].deviceID) {
         console.log("пришла карта сети :", data);
         devices = data;
-        editJSON = data;
-        editJSON = JSON.stringify(editJSON);
         //Conf=[];
 
         addConnection(devices);
@@ -283,7 +299,7 @@
     NetworkMap = NetworkMap;
     inputIP = "";
     inputName = "";
-    // сохраняем NetworkMap.json   // Надо добавить перебор сокетов
+    // сохраняем NetworkMap.json на ESP   // Надо добавить перебор сокетов
     //	socket.forEach(function(asd, i, arr) {
     socket[0].send("{NetworkMap:" + JSON.stringify(NetworkMap) + "}");
     //});
@@ -603,6 +619,25 @@
          if (upgrade == 2 || upgrade == 3 || upgrade == 4 || upgrade == 5) {
            countnul();
          }*/
+
+  // сохранение данных пользователя на комп
+  function download_settings(name) {
+    var json = "";
+    let newWigetJSON = document.getElementById("S1").value;
+    if (newWigetJSON) {
+      json = newWigetJSON;
+    }
+    let now = new Date().toLocaleDateString();
+    var uricontent = "data:application/octet-stream," + encodeURI(json);
+    var newwin = window.open("", "_blank");
+    var elem = newwin.document.createElement("a");
+    elem.download = name + "_" + now + "_settings.txt";
+    elem.href = uricontent;
+    elem.click();
+    setTimeout(function () {
+      newwin.close();
+    }, 0);
+  }
 </script>
 
 <body>
@@ -674,11 +709,35 @@
   {#if Conf != ""}
     {#if showModal}
       <Modal on:close={() => (showModal = false)}>
-        {seconds} %
-        <progress width="100%" align="center" max="100" value={seconds}
-          >{seconds}</progress
+        <button
+          on:click={() =>
+            //(showModal = true), socket[i].send("{'upgrade':1}", countnul())
+
+            download_settings(Conf[i].name)}
         >
-        {#if upgrade == 2}
+          Save settings
+        </button>
+        <button
+          on:click={(() => (showModal = true),
+          socket[i].send("{'upgrade':1}"),
+          countnul())}
+        >
+          UPGRADE FIRWARE
+        </button>
+        {#if upgrade == 0}
+          <p>Upgrade FS</p>
+          <p>Restore settings</p>
+          <p>Upgrade BUILD</p>
+          <p>Restart ESP</p>
+        {/if}
+
+        {#if upgrade == 1}
+          <p>
+            {seconds} %
+            <progress width="100%" align="center" max="100" value={seconds}
+              >{seconds}</progress
+            >
+          </p>
           {#if seconds > 100}
             <p>Upgrade FS, please wait... ❗️</p>
           {:else}
@@ -691,19 +750,37 @@
           <p>Restart ESP</p>
         {/if}
 
-        {#if upgrade == 1}
+        {#if upgrade == 2}
+          <p>
+            {seconds} %
+            <progress width="100%" align="center" max="100" value={seconds}
+              >{seconds}</progress
+            >
+          </p>
           <p>Upgrade FS ✔️</p>
           <p>Restore settings <img {src} alt="progress" /></p>
           <p>Upgrade BUILD</p>
           <p>Restart ESP</p>
         {/if}
         {#if upgrade == 3}
+          <p>
+            {seconds} %
+            <progress width="100%" align="center" max="100" value={seconds}
+              >{seconds}</progress
+            >
+          </p>
           <p>Upgrade FS ✔️</p>
           <p>Restore settings ✔️</p>
           <p>Upgrade BUILD</p>
           <p>Restart ESP</p>
         {/if}
         {#if upgrade == 4}
+          <p>
+            {seconds} %
+            <progress width="100%" align="center" max="100" value={seconds}
+              >{seconds}</progress
+            >
+          </p>
           <p>Upgrade FS ✔️</p>
           <p>Restore settings ✔️</p>
           {#if seconds > 100}
@@ -717,6 +794,12 @@
           <p>Restart ESP</p>
         {/if}
         {#if upgrade == 5}
+          <p>
+            {seconds} %
+            <progress width="100%" align="center" max="100" value={seconds}
+              >{seconds}</progress
+            >
+          </p>
           <p>Upgrade FS ✔️</p>
           <p>Restore settings ✔️</p>
           <p>BUILD upgrade done! ✔️</p>
@@ -728,11 +811,10 @@
           <p>BUILD upgrade done! ✔️</p>
           <p>Restart ESP...<img {src} alt="progress" /></p>
           {countnul()}
-          {#if seconds > 10}
-            {(showModal = false)}
-          {/if}
-          {#if seconds > 15}
-            {getNetworkMap()}
+          {#if seconds > 20}
+            <p hidden>{(upgrade = 0)}</p>
+            <p hidden>{getNetworkMap()}</p>
+            <p hidden>{(showModal = false)}</p>
           {/if}
         {/if}
       </Modal>
@@ -792,7 +874,9 @@
           <td width="30%" rowspan="2" align="center"
             ><button
               on:click={() => (
-                (showModal = true), socket[i].send("{'upgrade':1}", countnul())
+                (showModal = true),
+                socket[i].send('{"getFileName" : "s.conf.csv"}'),
+                socket[i].send('{"getFileName" : "s.scen.txt"}')
               )}
             >
               обновить
@@ -805,7 +889,13 @@
         >
         <tr>
           <td align="center"><h5>{Conf[i].firmware_version}</h5></td>
-          <td align="center"><h5>{Conf[i].last_version}</h5></td>
+          {#if Conf[i].last_version != Conf[i].firmware_version}
+            <td align="center" style="color: #FF0000"
+              ><h5>{Conf[i].last_version}</h5></td
+            >
+          {:else}
+            <td align="center"><h5>{Conf[i].last_version}</h5></td>
+          {/if}
           <td align="center" />
         </tr>
       </table></Box
@@ -1705,15 +1795,21 @@
               </option>
             {/each}
           </select>
-
-          <button
-            on:click={handleSubmit(fileSelected, editJSON, Conf[i].socket)}
-            >Save</button
-          >
-          <p>
-            <textarea rows="15" id="S1">{syntaxHighlight(editJSON)}</textarea>
-          </p>
         </form>
+        <button on:click={handleSubmit(fileSelected, editJSON, Conf[i].socket)}
+          >Save to ESP</button
+        >
+        <button
+          hidden
+          on:click={() =>
+            //(showModal = true), socket[i].send("{'upgrade':1}", countnul())
+            download_settings(fileSelected.name)}
+        >
+          Save to PC
+        </button>
+        <p>
+          <textarea rows="15" id="S1">{syntaxHighlight(editJSON)}</textarea>
+        </p>
       {/if}
     </Box>
   {:else}
