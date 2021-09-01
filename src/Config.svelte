@@ -255,13 +255,13 @@
     ID = JSON.parse(ID);
     if (ID.indexOf("btn") == 0) {
       ID = ID.split("btn").join("");
-      myWidgets[ID]["x"] = X;
-      myWidgets[ID]["y"] = Y;
+      myWidgets[ID]["pos"]["x"] = X;
+      myWidgets[ID]["pos"]["y"] = Y;
     }
     if (ID.indexOf("lable") == 0) {
       ID = ID.split("lable").join("");
-      myWidgets[ID]["lx"] = X;
-      myWidgets[ID]["ly"] = Y;
+      myWidgets[ID].pos["lx"] = X;
+      myWidgets[ID].pos["ly"] = Y;
     }
   }
 
@@ -294,6 +294,7 @@
   }
 
   function add(i) {
+    widgets[i]["pos"] = {};
     myWidgets = [...myWidgets, JSON.parse(JSON.stringify(widgets[i]))];
     if (widgets[i].tupe == "button-out") {
       myWidgets[myWidgets.length - 1].id =
@@ -352,12 +353,61 @@
         console.log(reader.result);
         myWidgets = JSON.parse(reader.result);
         findNewPage();
+        files = null;
       };
 
       reader.onerror = function () {
         console.log(reader.error);
       };
     }
+  }
+  function setcentr(widget, descr) {
+    let style;
+    if (descr == 1) {
+      style = widget.pos.ly
+        ? "position: absolute; left: " +
+          widget.pos.ly +
+          "; top: " +
+          widget.pos.lx
+        : "display: block; margin-left: auto; margin-right: auto; text-align: center";
+    } else {
+      style = widget.pos.y
+        ? "position: absolute; left: " + widget.pos.y + "; top: " + widget.pos.x
+        : "display: block; margin-left: auto; margin-right: auto; text-align: center";
+    }
+    return style;
+  }
+  function setleft(widget, descr) {
+    let style;
+    if (descr == 1) {
+      style = widget.pos.ly
+        ? "position: absolute; left: " +
+          widget.pos.ly +
+          "; top: " +
+          widget.pos.lx
+        : "margin:0;  float: left;";
+    } else {
+      style = widget.pos.y
+        ? "position: absolute; left: " + widget.pos.y + "; top: " + widget.pos.x
+        : "margin:0;  float: left;";
+    }
+    return style;
+  }
+  function setright(widget, descr) {
+    let style;
+    if (descr === 1) {
+      style = widget.pos.ly
+        ? "position: absolute; left: " +
+          widget.pos.ly +
+          "; top: " +
+          widget.pos.lx
+        : "margin:0; float: right;";
+    } else {
+      style = widget.pos.y
+        ? "position: absolute; left: " + widget.pos.y + "; top: " + widget.pos.x
+        : "margin:0; float: right;";
+    }
+    return style;
   }
 </script>
 
@@ -412,12 +462,7 @@
             <div style="margin-left:10px">
               {#if selected == i}
                 <span
-                  style={wiget.lx
-                    ? "position: absolute; left: " +
-                      wiget.ly +
-                      "; top: " +
-                      wiget.lx
-                    : "float: left;  background-color:#D1E2F9;  "}
+                  style={setleft(wiget, 1)}
                   in:fade={{ duration: 1000 }}
                   on:click={function () {
                     select(i);
@@ -427,16 +472,14 @@
                 >
                   {i}
                   <h6 style="display: inline;">({wiget.id})</h6>
+                  <h6 style="display: inline;">
+                    {wiget.pin ? "PIN(" + wiget.pin + ")" : ""}
+                  </h6>
                   {wiget.name}
                 </span>
               {:else}
                 <span
-                  style={wiget.lx
-                    ? "position: absolute; left: " +
-                      wiget.ly +
-                      "; top: " +
-                      wiget.lx
-                    : "float: left"}
+                  style={setleft(wiget, 1)}
                   in:fade={{ duration: 1000 }}
                   on:click={function () {
                     select(i);
@@ -456,13 +499,8 @@
               <!-- Toggle -->
               {#if wiget.widget == "toggleBtn"}
                 <span
-                  in:fade={{ duration: 2000 }}
-                  style={wiget.x
-                    ? "position: absolute; left: " +
-                      wiget.y +
-                      "; top: " +
-                      wiget.x
-                    : "float: right; margin-right:20%"}
+                  style={setright(wiget)}
+                  in:fade={{ duration: 1000 }}
                   on:click={function () {
                     select(i);
                   }}

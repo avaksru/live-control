@@ -1,9 +1,9 @@
 <script>
-  let mode = "Setup";
+  let mode = "Config";
 
-  // import Dashboard from "./Dashboard.svelte";
-  import Setup from "./Setup.svelte";
-  // import Config from "./Config.svelte";
+  //import Dashboard from "./Dashboard.svelte";
+  //import Setup from "./Setup.svelte";
+  //import Config from "./Config.svelte";
 </script>
 
 <a href="/">| | |</a> <br /><br />

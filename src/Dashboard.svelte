@@ -4,7 +4,7 @@
   import Toggle from "svelte-toggle";
   import Chart from "svelte-frappe-charts";
   import Logo from "./Logo.svelte";
-  import mqtt from "mqtt/dist/mqtt.min";
+  //import mqtt from "mqtt/dist/mqtt.min";
 
   // -------------------Swipe-------------------------------------
   let opacity = 100;
@@ -105,7 +105,7 @@
   // ==на время разработки==
   //myip = "192.168.36.105";
 
-  let connectionType = "MQTT";
+  let connectionType = "WS";
   let client;
   let topic;
   let connected = false;
@@ -705,23 +705,52 @@
     //	addConnection(devices);
   }
 
-  function setcentr(widget) {
-    let style = widget.pos
-      ? "position: absolute; left: " + widget.pos.dy + "; top: " + widget.pos.dx
-      : "display: block; margin-left: auto; margin-right: auto; text-align: center";
-
+  function setcentr(widget, descr) {
+    let style;
+    if (descr == 1) {
+      style = widget.pos.dy
+        ? "position: absolute; left: " +
+          widget.pos.dy +
+          "; top: " +
+          widget.pos.dx
+        : "display: block; margin-left: auto; margin-right: auto; text-align: center";
+    } else {
+      style = widget.pos.y
+        ? "position: absolute; left: " + widget.pos.y + "; top: " + widget.pos.x
+        : "display: block; margin-left: auto; margin-right: auto; text-align: center";
+    }
     return style;
   }
-  function setleft(widget) {
-    let style = widget.pos
-      ? "position: absolute; left: " + widget.pos.dy + "; top: " + widget.pos.dx
-      : "margin:0;  float: left;";
+  function setleft(widget, descr) {
+    let style;
+    if (descr == 1) {
+      style = widget.pos.dy
+        ? "position: absolute; left: " +
+          widget.pos.dy +
+          "; top: " +
+          widget.pos.dx
+        : "margin:0;  float: left;";
+    } else {
+      style = widget.pos.y
+        ? "position: absolute; left: " + widget.pos.y + "; top: " + widget.pos.x
+        : "margin:0;  float: left;";
+    }
     return style;
   }
-  function setright(widget) {
-    let style = widget.pos
-      ? "position: absolute; left: " + widget.pos.dy + "; top: " + widget.pos.dx
-      : "margin:0; float: right;";
+  function setright(widget, descr) {
+    let style;
+    if (descr == 1) {
+      style = widget.pos.dy
+        ? "position: absolute; left: " +
+          widget.pos.dy +
+          "; top: " +
+          widget.pos.dx
+        : "margin:0; float: right;";
+    } else {
+      style = widget.pos.y
+        ? "position: absolute; left: " + widget.pos.y + "; top: " + widget.pos.x
+        : "margin:0; float: right;";
+    }
     return style;
   }
   // обратный отсчет для 		Shutter
@@ -931,7 +960,7 @@
               <!-- Toggle -->
               {#if widget.widget === "toggle"}
                 <td style="width: 100%;">
-                  <span style={setleft(widget)}> {widget.descr}</span>
+                  <span style={setleft(widget, 1)}> {widget.descr}</span>
                 </td>
 
                 <td />
@@ -965,7 +994,7 @@
               {#if widget.widget === "anydata"}
                 <td>
                   {#if widget.descrColor}
-                    <span style={setleft(widget)}>
+                    <span style={setleft(widget, 1)}>
                       <lable
                         align="left"
                         style="color: {widget.descrColor}; font-family: '{widget.descrfont}'"
@@ -973,7 +1002,7 @@
                       >
                     </span>
                   {:else}
-                    <span style={setleft(widget)}>
+                    <span style={setleft(widget, 1)}>
                       <lable
                         align="left"
                         style="color: {widget.descrColor}; font-family: '{widget.descrfont}'"
@@ -1061,7 +1090,9 @@
               {/if}
               <!-- input -->
               {#if widget.widget === "input"}
-                <td> <span style={setleft(widget)}> {widget.descr}</span></td>
+                <td>
+                  <span style={setleft(widget, 1)}> {widget.descr}</span></td
+                >
                 <td />
                 {#if widget.type === "number"}
                   <td align="right">
@@ -1140,7 +1171,7 @@
               {/if}
               <!-- btn -->
               {#if widget.widget == "btn"}
-                <td> <span style={setright(widget)}>{widget.descr}</span></td>
+                <td> <span style={setleft(widget, 1)}>{widget.descr}</span></td>
                 <td />
                 <td align="right">
                   {#if widget.status != 0 && widget.status != 1}
@@ -1174,7 +1205,7 @@
               {/if}
               <!-- select -->
               {#if widget.widget === "select"}
-                <td> <span style={setleft(widget)}>{widget.descr}</span></td>
+                <td> <span style={setleft(widget, 1)}>{widget.descr}</span></td>
                 <td />
                 <td align="right">
                   {#if widget.status == 0}
@@ -1211,7 +1242,7 @@
                 <td colspan="3">
                   {#if widget.status}
                     {#if widget.topic.includes("_2")}
-                      <span style={setcentr(widget)}>
+                      <span style={setcentr(widget, 1)}>
                         <Chart
                           data={widget.status}
                           {lineOptions}
@@ -1222,7 +1253,7 @@
                         /></span
                       >
                     {:else if !widget.topic.includes("_1")}
-                      <span style={setcentr(widget)}> {widget.descr}</span>
+                      <span style={setcentr(widget, 1)}> {widget.descr}</span>
                       <span style={setcentr(widget)}>
                         <Chart
                           data={widget.status}
@@ -1292,7 +1323,7 @@
               <!-- range -->
               {#if widget.widget === "range"}
                 <td colspan="3">
-                  <span style={setcentr(widget)}>
+                  <span style={setcentr(widget, 1)}>
                     <div>
                       {widget.descr}
                       {widget.status / 10}

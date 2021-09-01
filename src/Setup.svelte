@@ -28,7 +28,7 @@
   }
 
   // ==на время разработки==
-  myip = "192.168.36.105";
+  //myip = "192.168.36.105";
 
   /*	if (Conf==""){
 		Conf = [{
@@ -1746,7 +1746,7 @@
             <Tooltip title=""><td>?</td></Tooltip>
           </tr>
           <tr>
-            <td width="40%">Console LOG</td>
+            <td width="40%">Log to browser console</td>
             <td>
               {#if Conf[i]["consolelog"] == "false"}
                 <td
@@ -1769,8 +1769,63 @@
                 >
               {/if}
             </td>
-            <Tooltip
-              title="Включает вывод в консоль браузера всех полученных пакетов"
+            <Tooltip title="Вывод в консоль браузера всех полученных пакетов"
+              ><td>?</td>
+            </Tooltip>
+          </tr>
+          <tr>
+            <td width="40%">Log to WS</td>
+            <td>
+              {#if Conf[i]["logtoWS"] == "false"}
+                <td
+                  ><input
+                    type="checkbox"
+                    on:change={changeConf("true", "logtoWS", Conf[i].socket)}
+                  /></td
+                >
+              {:else}
+                <td
+                  ><input
+                    type="checkbox"
+                    bind:checked={Conf[i]["logtoWS"]}
+                    on:change={changeConf(
+                      Conf[i].logtoWS,
+                      "logtoWS",
+                      Conf[i].socket
+                    )}
+                  /></td
+                >
+              {/if}
+            </td>
+            <Tooltip title="Вывод сообщений SerialPrint в WebSocket"
+              ><td>?</td>
+            </Tooltip>
+          </tr>
+          <tr>
+            <td width="40%">Log to MQTT</td>
+            <td>
+              {#if Conf[i]["logtoMQTT"] == "false"}
+                <td
+                  ><input
+                    type="checkbox"
+                    on:change={changeConf("true", "logtoMQTT", Conf[i].socket)}
+                  /></td
+                >
+              {:else}
+                <td
+                  ><input
+                    type="checkbox"
+                    bind:checked={Conf[i]["logtoMQTT"]}
+                    on:change={changeConf(
+                      Conf[i].logtoMQTT,
+                      "logtoMQTT",
+                      Conf[i].socket
+                    )}
+                  /></td
+                >
+              {/if}
+            </td>
+            <Tooltip title="Вывод сообщений SerialPrint в MQTT"
               ><td>?</td>
             </Tooltip>
           </tr>
