@@ -16,7 +16,50 @@
   let Y;
   let selected = -1;
   let pages = [];
-  let myWidgets = [];
+
+  let myWidgets = [
+    {
+      pos: {},
+      widget: "btn",
+      after: "",
+      icon: "speedometer",
+      info: " ",
+      page: "MySensors",
+      order: "1",
+      descr: "MySensors uptime",
+      topic: "/demo/14919376-1458208/upt9",
+    },
+    {
+      pos: {},
+      widget: "btn",
+      after: "°С",
+      icon: "thermometer",
+      font: "OCR A Std",
+      color: [
+        { level: 0, value: "#0000CC" },
+        { level: 12, value: "#3366FF" },
+        { level: 16, value: "#33CCFF" },
+        { level: 30, value: "#009933" },
+        { level: 100, value: "#FF9900" },
+      ],
+      info: " ",
+      page: "MySensors",
+      order: "2",
+      descr: "🌡Температура 2",
+      topic: "/demo/14919376-1458208/2-1",
+    },
+    {
+      pos: {},
+      widget: "select",
+      options: ["OF", "ON"],
+      status: 0,
+      info: " ",
+      page: "MySensors",
+      order: "10",
+      descr: "💡Реле",
+      topic: "/demo/14919376-1458208/btn39",
+    },
+  ];
   let widgetsType = {
     undef: "Ошибка",
     toggleBtn: "Переключатель",
@@ -155,7 +198,7 @@
     },
   ];
   onMount(async () => {
-    setStartPosition();
+    // setStartPosition();
     findNewPage();
   });
   document.addEventListener("mousedown", function (event) {
@@ -310,7 +353,7 @@
   function findNewPage() {
     pages = [];
     const newPage = Array.from(
-      new Set(Array.from(myWidgets, ({ pageName }) => pageName))
+      new Set(Array.from(myWidgets, ({ page }) => page))
     );
     newPage.forEach(function (item, i, arr) {
       pages = [...pages, JSON.parse(JSON.stringify({ page: item }))];
@@ -447,7 +490,7 @@
   >
 
   <br />
-
+  {JSON.stringify(myWidgets)}
   <Tabs>
     <TabList>
       {#each pages as pagesName, i}
@@ -458,7 +501,7 @@
     {#each pages as pagesName, i}
       <TabPanel>
         {#each myWidgets as wiget, i}
-          {#if wiget.pageName == pagesName.page}
+          {#if wiget.page == pagesName.page}
             <div style="margin-left:10px">
               {#if selected == i}
                 <span
@@ -471,11 +514,12 @@
                   id="lable{i}"
                 >
                   {i}
-                  <h6 style="display: inline;">({wiget.id})</h6>
+
+                  {wiget.descr}
+                  <h6 style="display: inline;">({wiget.topic})</h6>
                   <h6 style="display: inline;">
                     {wiget.pin ? "PIN(" + wiget.pin + ")" : ""}
                   </h6>
-                  {wiget.name}
                 </span>
               {:else}
                 <span
@@ -488,11 +532,12 @@
                   id="lable{i}"
                 >
                   {i}
-                  <h6 style="display: inline;">({wiget.id})</h6>
+
+                  {wiget.descr}
+                  <h6 style="display: inline;">({wiget.topic})</h6>
                   <h6 style="display: inline;">
                     {wiget.pin ? "PIN(" + wiget.pin + ")" : ""}
                   </h6>
-                  {wiget.name}
                 </span>
               {/if}
 
@@ -597,8 +642,8 @@
           }}>❌</button
         >
         <p>
-          <b>{wiget["description"]}</b>
-          <span class="letter1">({wiget["tupe"]})</span>
+          <b>{wiget["descr"]}</b>
+          <span class="letter1">({wiget["name"]})</span>
         </p>
         <table border="0" width="20%">
           <tr>
@@ -609,14 +654,14 @@
                   right
                   color="#92CBF1">?</SvelteTooltip
                 >
-                <input type="text" bind:value={wiget["name"]} />
+                <input type="text" bind:value={wiget["descr"]} />
               </div>
               <div>
                 ( Id ) <SvelteTooltip
                   tip="Бла-бла-бла про то как это использовать"
                   right
                   color="#92CBF1">?</SvelteTooltip
-                > <input type="text" bind:value={wiget["id"]} />
+                > <input type="text" bind:value={wiget["topic"]} />
               </div>
 
               <div>
@@ -629,7 +674,7 @@
                   on:change={function () {
                     findNewPage();
                   }}
-                  bind:value={wiget["pageName"]}
+                  bind:value={wiget["page"]}
                 />
               </div>
               <div>

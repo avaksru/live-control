@@ -1,9 +1,10 @@
 <script>
-  let mode = "Config";
+  let mode = "Dashboard";
 
-  //import Dashboard from "./Dashboard.svelte";
+  import Dashboard from "./Dashboard.svelte";
   //import Setup from "./Setup.svelte";
   //import Config from "./Config.svelte";
+  //import Easel from "./Easel.svelte";
 </script>
 
 <a href="/">| | |</a> <br /><br />
@@ -15,6 +16,9 @@
 {/if}
 {#if mode == "Setup"}
   <Setup />
+{/if}
+{#if mode == "Easel"}
+  <Easel />
 {/if}
 
 <style>

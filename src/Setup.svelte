@@ -28,51 +28,53 @@
   }
 
   // ==на время разработки==
-  //myip = "192.168.36.105";
+  myip = "192.168.36.108";
 
-  /*	if (Conf==""){
-		Conf = [{
- "ip": myip,		
-  "name": "IoT",
-  "chipID": "",
-  "apssid": "IoT",
-  "appass": "",
-  "routerssid": "EURECA",
-  "routerpass": "4455667788",
-  "timezone": 3,
-  "ntp": "pool.ntp.org",
-  "mqttServer": "",
-  "mqttPort": 0,
-  "mqttPortwss":"",
-  "mqttPath":"",
-  "mqttPrefix": "",
-  "mqttUser": "",
-  "mqttPass": "",
-  "mqttServer2": "",
-  "mqttPort2": 0,
-  "mqttPrefix2": "",
-  "mqttUser2": "",
-  "mqttPass2": "",
-  "scen": "1",
-  "telegramApi": "",
-  "telegonof": "0",
-  "teleginput": "0",
-  "autos": "1",
-  "weblogin": "admin",
-  "webpass": "admin",
-  "MqttIn": "0",
-  "MqttOut": "0",
-  "blink": "0",
-  "oneWirePin": "2",
-  "serverip": "http://meef.ru",
-  "uart": "0",
-  "uartS": "9600",
-  "uartTX": "12",
-  "uartRX": "13",
-  "grafmax": "0",
-  "socket": "0"
-}]; 
-}*/
+  //changeConf(selected.mqttServer, "mqttServer", i);
+
+  let defConf = [
+    {
+      ip: myip,
+      name: " ",
+      chipID: "none",
+      apssid: " ",
+      appass: " ",
+      routerssid: " ",
+      routerpass: "",
+      timezone: 3,
+      ntp: "pool.ntp.org",
+      mqttServer: " ",
+      mqttPort: 0,
+      mqttPortwss: " ",
+      mqttPath: " ",
+      mqttPrefix: " ",
+      mqttUser: " ",
+      mqttPass: " ",
+      mqttServer2: " ",
+      mqttPort2: 0,
+      mqttPrefix2: " ",
+      mqttUser2: " ",
+      mqttPass2: " ",
+      scen: "1",
+      telegramApi: " ",
+      telegonof: "0",
+      teleginput: "0",
+      autos: "1",
+      weblogin: "admin",
+      webpass: "admin",
+      MqttIn: "0",
+      MqttOut: "0",
+      blink: "0",
+      oneWirePin: "2",
+      serverip: " ",
+      uart: "0",
+      uartS: "9600",
+      uartTX: "12",
+      uartRX: "13",
+      grafmax: "0",
+      socket: "0",
+    },
+  ];
 
   // темная тема
   let darkMode = false;
@@ -106,6 +108,7 @@
         devices[0].status = true;
         devices = devices;
         console.log("WS CONNECTED! " + myip);
+        Conf = defConf;
 
         // получаем "карту сети" по websocket
         socket[0].send("getNetworkMap");
@@ -230,15 +233,12 @@
         upgrade = data.upgrade;
       }
 
-      // Если пришла карта сети
-      if (data.deviceID) {
-        //  editJSON = data;
-        //  editJSON = JSON.stringify(editJSON);
-      }
-
       data.socket = socket;
       // Если пришел Config
       if (data.apssid) {
+        if (Conf[0].chipID == "none") {
+          Conf = [];
+        }
         //	console.log(data);
         data.webMQTT = false;
         data.consolelog = false;
@@ -455,6 +455,11 @@
 
   function reboot(selected) {
     socket[selected].send('{"command":"reboot"}');
+  }
+  function saveOll(selected) {
+    // let arr = Conf[selected];
+    // arr.forEach(function (item, i, arr) {      console.log(i + ": " + item + " (массив:" + arr + ")");    });
+    //console.log(arr);
   }
   function Pastesettings(i) {
     Conf[i]["mqttServer"] = Conf[0]["mqttServer"];
@@ -824,16 +829,20 @@
       <table border="0" width="100%" cellspacing="0" cellpadding="0">
         <tr>
           <td colspan="4" align="center"
-            ><h4>{Conf[i].name}{@html Conf[i].warning4}</h4></td
+            ><h4>
+              {Conf[i].name ? Conf[i].name : ""}{@html Conf[i].warning4
+                ? Conf[i].warning4
+                : ""}
+            </h4></td
           >
         </tr>
         <tr>
           <td colspan="2"
-            >IP <h5>{Conf[i].ip}</h5></td
+            >IP <h5>{Conf[i].ip ? Conf[i].ip : ""}</h5></td
           >
           <td width="2%">&nbsp;</td>
           <td width="21%"
-            >память <h5>{Conf[i].freeBytes}</h5></td
+            >память <h5>{Conf[i].freeBytes ? Conf[i].freeBytes : ""}</h5></td
           >
         </tr>
         <tr>
@@ -843,11 +852,11 @@
         </tr>
         <tr>
           <td colspan="2"
-            >📶 <h5>{@html Conf[i].signal}</h5></td
+            >📶 <h5>{@html Conf[i].signal ? Conf[i].signal : ""}</h5></td
           >
           <td>&nbsp;</td>
           <td
-            >Uptime <h5>{Conf[i].uptime}</h5></td
+            >Uptime <h5>{Conf[i].uptime ? Conf[i].uptime : ""}</h5></td
           >
         </tr>
         <tr>
@@ -857,7 +866,9 @@
         </tr>
         <tr>
           <td colspan="2"
-            >прошивка <h5>{Conf[i].firmware_name}</h5></td
+            >прошивка <h5>
+              {Conf[i].firmware_name ? Conf[i].firmware_name : ""}
+            </h5></td
           >
           <td>&nbsp;</td>
           <td>&nbsp;</td>
@@ -888,13 +899,19 @@
           </td></tr
         >
         <tr>
-          <td align="center"><h5>{Conf[i].firmware_version}</h5></td>
+          <td align="center"
+            ><h5>
+              {Conf[i].firmware_version ? Conf[i].firmware_version : ""}
+            </h5></td
+          >
           {#if Conf[i].last_version != Conf[i].firmware_version}
             <td align="center" style="color: #FF0000"
-              ><h5>{Conf[i].last_version}</h5></td
+              ><h5>{Conf[i].last_version ? Conf[i].last_version : ""}</h5></td
             >
           {:else}
-            <td align="center"><h5>{Conf[i].last_version}</h5></td>
+            <td align="center"
+              ><h5>{Conf[i].last_version ? Conf[i].last_version : ""}</h5></td
+            >
           {/if}
           <td align="center" />
         </tr>
@@ -988,6 +1005,7 @@
       ></button
     >
     <button on:click={reboot(Conf[i].socket)}>Reboot</button>
+    <button hidden on:click={saveOll(Conf[i].socket)}>Save oll changes</button>
     <Box>
       <b on:click={handleClick}>WIFI</b><span
         on:click={handleClick1}
