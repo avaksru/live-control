@@ -658,6 +658,7 @@
     date = null;
     hours = null;
     minutes = null;
+    setStartPosition();
   }
 
   // функция получаем префикс
@@ -701,58 +702,156 @@
     }
   }
 
-  if (connectionType != "MQTT") {
-    //	addConnection(devices);
+  let StartPosition = 10;
+  function setStartPosition() {
+    StartPosition = 10;
+    wigets.forEach(function (item, i, arr) {
+      if (item.pos) {
+        if (item.pos.x) {
+          let pos_max = item.pos.x;
+          if (pos_max.split("px").join("") > StartPosition) {
+            StartPosition = pos_max.split("px").join("");
+          }
+        }
+        if (item.pos.dx) {
+          let pos_max = item.pos.dx;
+          if (pos_max.split("px").join("") > StartPosition) {
+            StartPosition = pos_max.split("px").join("");
+          }
+        }
+      }
+    });
   }
 
-  function setcentr(widget, descr) {
+  function setStyle(widget, align) {
     let style;
-    if (descr == 1) {
-      style = widget.pos.dy
-        ? "position: absolute; left: " +
-          widget.pos.dy +
-          "; top: " +
-          widget.pos.dx
-        : "display: block; margin-left: auto; margin-right: auto; text-align: center";
-    } else {
-      style = widget.pos.y
-        ? "position: absolute; left: " + widget.pos.y + "; top: " + widget.pos.x
-        : "display: block; margin-left: auto; margin-right: auto; text-align: center";
+    let descrStyle;
+    let statusStyle;
+    // если есть color проверяем наличие statusColor
+    if (widget.color != "" && !widget.statusColor) {
+      widget.statusColor = widget.color;
     }
-    return style;
-  }
-  function setleft(widget, descr) {
-    let style;
-    if (descr == 1) {
-      style = widget.pos.dy
-        ? "position: absolute; left: " +
-          widget.pos.dy +
-          "; top: " +
-          widget.pos.dx
-        : "margin:0;  float: left;";
-    } else {
-      style = widget.pos.y
-        ? "position: absolute; left: " + widget.pos.y + "; top: " + widget.pos.x
-        : "margin:0;  float: left;";
+    if (widget.font != "" && !widget.statusFont) {
+      widget.statusFont = widget.font;
     }
-    return style;
-  }
-  function setright(widget, descr) {
-    let style;
-    if (descr == 1) {
-      style = widget.pos.dy
-        ? "position: absolute; left: " +
-          widget.pos.dy +
-          "; top: " +
-          widget.pos.dx
-        : "margin:0; float: right;";
+
+    if (Array.isArray(widget.descrColor)) {
+      widget.descrColor.forEach(function (item, i, arr) {
+        if (
+          item.level &&
+          widget.status < item.level &&
+          widget.status > widget.descrColor[i - 1].level &&
+          i > 0
+        ) {
+          descrStyle = widget.descrStyle
+            ? widget.descrStyle
+            : "" +
+              " font-family:" +
+              widget.descrFont +
+              "; font-size: " +
+              widget.descrSize +
+              "px; color:" +
+              item.value +
+              ";";
+        }
+      });
     } else {
-      style = widget.pos.y
-        ? "position: absolute; left: " + widget.pos.y + "; top: " + widget.pos.x
-        : "margin:0; float: right;";
+      descrStyle = widget.descrStyle
+        ? widget.descrStyle
+        : "" +
+          " font-family:" +
+          widget.descrFont +
+          "; font-size: " +
+          widget.descrSize +
+          "px; color:" +
+          widget.descrColor +
+          ";";
     }
-    return style;
+
+    if (Array.isArray(widget.statusColor)) {
+      widget.statusColor.forEach(function (item, i, arr) {
+        if (
+          item.level &&
+          widget.status < item.level &&
+          widget.status > widget.statusColor[i - 1].level &&
+          i > 0
+        ) {
+          statusStyle = widget.statusStyle
+            ? widget.statusStyle
+            : "" +
+              " font-family:" +
+              widget.statusFont +
+              "; font-size: " +
+              widget.statusSize +
+              "px; color: " +
+              item.value +
+              ";";
+        }
+      });
+    } else {
+      statusStyle = widget.statusStyle
+        ? widget.statusStyle
+        : "" +
+          " font-family:" +
+          widget.statusFont +
+          "; font-size: " +
+          widget.statusSize +
+          "px; color: " +
+          widget.statusColor +
+          ";";
+    }
+
+    if (align === "left") {
+      if (widget.pos) {
+        if (widget.pos.dy) {
+          style =
+            "position: absolute; left: " +
+            widget.pos.dy +
+            "; top: " +
+            widget.pos.dx +
+            "; ";
+        }
+      } else {
+        style = "margin:0; float:left; ";
+      }
+      style = style + descrStyle;
+      return style;
+    }
+    if (align === "right") {
+      if (widget.pos) {
+        if (widget.pos.x) {
+          style =
+            "position: absolute; left: " +
+            widget.pos.y +
+            "; top: " +
+            widget.pos.x +
+            "; ";
+        }
+      } else {
+        style = "margin:0; float: right; ";
+      }
+      style = style + statusStyle;
+      return style;
+    }
+    if (align === "centr") {
+      if (widget.pos) {
+        if (widget.pos.dy) {
+          style =
+            "position: absolute; left: " +
+            widget.pos.dy +
+            "; top: " +
+            widget.pos.dx +
+            "; ";
+        }
+      } else {
+        style =
+          "display: block; margin-left: auto; margin-right: auto; text-align: center; ";
+      }
+      style = style + statusStyle;
+      return style;
+    }
   }
+
   // обратный отсчет для 		Shutter
   let frame;
   let elapsed = 0;
@@ -950,7 +1049,11 @@
 
 {#each pages as pagesName, i}
   {#if selectedTab === i}
-    <table style="opacity:{opacity}%; margin-left: 0%" border="0" width="99%">
+    <table
+      style="opacity:{opacity}%; margin-left: 0%; margin-top:{StartPosition}px"
+      border="0"
+      width="99%"
+    >
       {#each wigets as widget, i}
         <!--Отображаем виджеты только для выбранного префикса-->
 
@@ -960,17 +1063,18 @@
               <!-- Toggle -->
               {#if widget.widget === "toggle"}
                 <td style="width: 100%;">
-                  <span style={setleft(widget, 1)}> {widget.descr}</span>
+                  <span id="lable{i}" style={setStyle(widget, "left")}>
+                    {widget.descr}</span
+                  >
                 </td>
 
                 <td />
 
                 <td>
                   {#if widget.status == "1"}
-                    <span style={setright(widget)}>
+                    <span id="status{i}" style={setStyle(widget, "right")}>
                       <Toggle
                         style="float: right"
-                        on:toggle={WSpush(widget.socket, widget.topic, 0)}
                         label=""
                         toggledColor="#6495ED"
                         untoggledColor="#FF6347"
@@ -978,9 +1082,8 @@
                       />
                     </span>
                   {:else}
-                    <span style={setright(widget)}>
+                    <span id="status{i}" style={setStyle(widget, "right")}>
                       <Toggle
-                        on:toggle={WSpush(widget.socket, widget.topic, 1)}
                         label=""
                         toggledColor="#FF6347"
                         untoggledColor="gray"
@@ -991,112 +1094,54 @@
                   {/if}
                 </td>{/if}
               <!-- anydata -->
+
               {#if widget.widget === "anydata"}
                 <td>
-                  {#if widget.descrColor}
-                    <span style={setleft(widget, 1)}>
-                      <lable
-                        align="left"
-                        style="color: {widget.descrColor}; font-family: '{widget.descrfont}'"
-                        >{widget.descr}</lable
-                      >
-                    </span>
-                  {:else}
-                    <span style={setleft(widget, 1)}>
-                      <lable
-                        align="left"
-                        style="color: {widget.descrColor}; font-family: '{widget.descrfont}'"
-                        >{widget.descr}</lable
-                      >
-                      <!--Инфо от ноды mysens отображается под названием виджета-->
+                  <span style={setStyle(widget, "left")} id="lable{i}">
+                    {widget.descr}
+                    <!--Инфо от ноды mysens отображается под названием виджета-->
+                    {#if widget.nodeInfo}
                       <div
                         class="letter"
                         align="left"
                         style="color: {!widget.nodeInfoColor
                           ? 'gray'
-                          : widget.nodeInfoColor}"
+                          : widget.nodeInfoColor};font-family:{widget.descrFont}; font-size: {widget.descrSize /
+                          2}px;  "
                       >
                         {!widget.nodeInfo ? "" : widget.nodeInfo}
                       </div>
+                    {/if}
+                  </span>
+                </td>
+                <td />
+                <td align="right" style="white-space: nowrap;">
+                  <!--если статус пустой-->
+                  {#if !widget.status}
+                    <span id="status{i}" style={setStyle(widget, "right")}>
+                      ...</span
+                    >
+                  {:else}
+                    <span id="status{i}" style={setStyle(widget, "right")}>
+                      {!widget.status ? "" : widget.status}{!widget.after
+                        ? ""
+                        : widget.after}
                     </span>
                   {/if}
                 </td>
-                <td>
-                  <!--Инфо от ноды mysens отображается по середине
-                    <lable
-                      align="left"
-                      style="color: {!widget.nodeInfoColor
-                        ? 'gray'
-                        : widget.nodeInfoColor}"
-                    />
-                      -->
-                </td>
-                <td align="right" style="white-space: nowrap;">
-                  <!--Делаем anidata разноцветными если есть кастомизация цвета-->
-                  {#if Array.isArray(widget.color) && widget.status}
-                    {#each widget.color as anydataColor, i}
-                      <!--// убираем знаки после запятой -->
-                      {#if anydataColor.level && widget.status < anydataColor.level && widget.status > widget.color[i - 1].level && i > 0}
-                        <span style={setright(widget)}>
-                          <lable
-                            align="left"
-                            style="color: {anydataColor.value}; font-family: '{widget.font}' "
-                            >{Math.round(widget.status * 10) / 10
-                              ? Math.round(widget.status * 10) / 10
-                              : widget.status}{!widget.after
-                              ? ""
-                              : widget.after}</lable
-                          ></span
-                        >
-                      {/if}
-                    {/each}
-                    <!--если цвет задан значением а не массивом-->
-                  {:else if widget.color && widget.status}
-                    <span style={setright(widget)}>
-                      <lable
-                        align="left"
-                        style="color: {widget.color}; font-family: '{widget.font}'"
-                        >{Math.round(widget.status * 10) / 10
-                          ? Math.round(widget.status * 10) / 10
-                          : widget.status}{widget.after}</lable
-                      ></span
-                    >
-                    <!--если цвет не задан и статус пустой-->
-                  {:else if !widget.status}
-                    <span style={setright(widget)}>
-                      <lable align="left">...</lable></span
-                    >
-                    <!--если цвет не задан-->
-                  {:else if widget.status}
-                    <span style={setright(widget)}>
-                      <lable align="left" style="font-family: '{widget.font}'"
-                        >{Math.round(widget.status * 10) / 10
-                          ? Math.round(widget.status * 10) / 10
-                          : widget.status}{!widget.after
-                          ? ""
-                          : widget.after}</lable
-                      ></span
-                    >
-                  {:else}
-                    <span style={setright(widget)}>
-                      <lable align="left" style="font-family: '{widget.font}'">
-                        {!widget.status ? "" : widget.status}{!widget.after
-                          ? ""
-                          : widget.after}
-                      </lable></span
-                    >
-                  {/if}
-                </td>
               {/if}
+
               <!-- input -->
               {#if widget.widget === "input"}
                 <td>
-                  <span style={setleft(widget, 1)}> {widget.descr}</span></td
+                  <span id="lable{i}" style={setStyle(widget, "left")}>
+                    {widget.descr}</span
+                  ></td
                 >
                 <td />
                 {#if widget.type === "number"}
                   <td align="right">
-                    <span style={setright(widget)}>
+                    <span id="status{i}" style={setStyle(widget, "right")}>
                       <div
                         style="float: right; display:inline;  width: 120px  "
                       >
@@ -1104,11 +1149,6 @@
                           type="button"
                           value="-  "
                           style=" border: 1px solid lightblue; width: 25px"
-                          on:click={WSpush(
-                            widget.socket,
-                            widget.topic,
-                            widget.status - 1
-                          )}
                         />
                         <input
                           class:red={widget["send"] == true}
@@ -1117,8 +1157,6 @@
                           neme={widget.topic}
                           bind:value={widget.status}
                           size="20"
-                          on:change={((widget["send"] = true),
-                          WSpush(widget.socket, widget.topic, widget.status))}
                           min="-1000"
                           max="1000000"
                         />
@@ -1126,26 +1164,19 @@
                           type="button"
                           value="+  "
                           style="border: 1px solid lightblue; width: 25px"
-                          on:click={WSpush(
-                            widget.socket,
-                            widget.topic,
-                            widget.status - 1 + 2
-                          )}
                         />
                       </div></span
                     >
                   </td>
                 {:else if widget.type === "time"}
                   <td align="right">
-                    <span style={setright(widget)}>
+                    <span id="status{i}" style={setStyle(widget, "right")}>
                       <div style="float: right; display:inline-block">
                         <input
                           class:red={widget["send"] == true}
                           type="time"
                           bind:value={widget.status}
                           size="20"
-                          on:change={((widget["send"] = true),
-                          WSpush(widget.socket, widget.topic, widget.status))}
                           min="00:00"
                           max="23:59"
                           required
@@ -1155,14 +1186,12 @@
                   </td>
                 {:else}
                   <td align="right">
-                    <span style={setright(widget)}>
+                    <span id="status{i}" style={setStyle(widget, "right")}>
                       <div style="display:inline-block">
                         <input
                           class:red={widget["send"] == true}
                           bind:value={widget.status}
                           size="20"
-                          on:change={((widget["send"] = true),
-                          WSpush(widget.socket, widget.topic, widget.status))}
                         />
                       </div>
                     </span>
@@ -1171,15 +1200,16 @@
               {/if}
               <!-- btn -->
               {#if widget.widget == "btn"}
-                <td> <span style={setleft(widget, 1)}>{widget.descr}</span></td>
+                <td>
+                  <span id="lable{i}" style={setStyle(widget, "left")}>
+                    {widget.descr}</span
+                  ></td
+                >
                 <td />
                 <td align="right">
                   {#if widget.status != 0 && widget.status != 1}
-                    <span style={setright(widget)}>
-                      <button
-                        class="btn"
-                        on:click={((widget["send"] = true),
-                        WSpush(widget.socket, widget.topic, 1))}
+                    <span id="status{i}" style={setStyle(widget, "right")}>
+                      <button class="btn"
                         ><span
                           >&nbsp;&nbsp;{!widget.status
                             ? ""
@@ -1188,11 +1218,8 @@
                       ></span
                     ><br />
                   {:else}
-                    <span style={setright(widget)}>
-                      <button
-                        class="btn"
-                        on:click={((widget["send"] = true),
-                        WSpush(widget.socket, widget.topic, 1))}
+                    <span id="status{i}" style={setStyle(widget, "right")}>
+                      <button class="btn"
                         ><span
                           >&nbsp;&nbsp; {!widget.text
                             ? ""
@@ -1205,16 +1232,16 @@
               {/if}
               <!-- select -->
               {#if widget.widget === "select"}
-                <td> <span style={setleft(widget, 1)}>{widget.descr}</span></td>
+                <td>
+                  <span id="labl{i}" style={setStyle(widget, "left")}>
+                    {widget.descr}</span
+                  ></td
+                >
                 <td />
                 <td align="right">
                   {#if widget.status == 0}
-                    <span style={setright(widget)}>
-                      <button
-                        class="btnoff"
-                        on:click={((widget["send"] = true),
-                        (this.style.border = "1px solid red"),
-                        WSpush(widget.socket, widget.topic, 1))}
+                    <span id="status{i}" style={setStyle(widget, "right")}>
+                      <button class="btnoff"
                         ><span
                           >{!widget.options[0]
                             ? "OFF"
@@ -1223,12 +1250,8 @@
                       ></span
                     ><br />
                   {:else}
-                    <span style={setright(widget)}>
-                      <button
-                        class="btn"
-                        on:click={((widget["send"] = true),
-                        (this.style.border = "1px solid red"),
-                        WSpush(widget.socket, widget.topic, 0))}
+                    <span id="status{i}" style={setStyle(widget, "right")}>
+                      <button class="btn"
                         ><span
                           >{!widget.options[1] ? "ON" : widget.options[1]}</span
                         ></button
@@ -1242,7 +1265,7 @@
                 <td colspan="3">
                   {#if widget.status}
                     {#if widget.topic.includes("_2")}
-                      <span style={setcentr(widget, 1)}>
+                      <span style={setStyle(widget, "centr")}>
                         <Chart
                           data={widget.status}
                           {lineOptions}
@@ -1253,8 +1276,10 @@
                         /></span
                       >
                     {:else if !widget.topic.includes("_1")}
-                      <span style={setcentr(widget, 1)}> {widget.descr}</span>
-                      <span style={setcentr(widget)}>
+                      <span id="lable{i}" style={setStyle(widget, "left")}>
+                        {widget.descr}</span
+                      >
+                      <span id="status{i}" style={setStyle(widget, "centr")}>
                         <Chart
                           data={widget.status}
                           {lineOptions}
@@ -1262,9 +1287,7 @@
                           colors={[!widget.color ? "light-blue" : widget.color]}
                           type={!widget.type ? "line" : widget.type}
                           height="300"
-                        /></span
-                      >
-                      <span style={setleft(widget)}>
+                        />
                         {#if widget.type == "bar"}
                           {#if n == 0}
                             <div on:click={() => showStat()}>♻️</div>
@@ -1323,28 +1346,22 @@
               <!-- range -->
               {#if widget.widget === "range"}
                 <td colspan="3">
-                  <span style={setcentr(widget, 1)}>
+                  <span id="lable{i}" style={setStyle(widget, "left")}>
                     <div>
                       {widget.descr}
                       {widget.status / 10}
                       {widget.after}
                     </div>
                   </span>
-                  <span style={setcentr(widget)}>
-                    <label>
-                      <input
-                        type="range"
-                        bind:value={widget.status}
-                        min={widget.min}
-                        max={widget.max * 10}
-                        on:change={WSpush(
-                          widget.socket,
-                          widget.topic,
-                          widget.status
-                        )}
-                      />
-                    </label></span
-                  >
+
+                  <span id="status{i}" style={setStyle(widget, "centr")}>
+                    <input
+                      type="range"
+                      bind:value={widget.status}
+                      min={widget.min}
+                      max={widget.max * 10}
+                    />
+                  </span>
                 </td>
               {/if}
             </tr>
