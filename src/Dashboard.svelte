@@ -103,7 +103,7 @@
   // пропускаем первый тик графика для PZM
   let miss;
   // ==на время разработки==
-  myip = "192.168.36.108";
+  //myip = "192.168.36.108";
 
   let connectionType = "WS";
   let client;
@@ -735,26 +735,58 @@
       widget.statusFont = widget.font;
     }
 
-    if (Array.isArray(widget.descrColor)) {
-      widget.descrColor.forEach(function (item, i, arr) {
+    /*	
+		if ( Array.isArray(widget.descrColor) ){	
+		widget.descrColor.forEach(function (item, i, arr) {
+		if (item.level && widget.status < item.level && widget.status > widget.descrColor[i - 1].level && i > 0){
+		descrStyle =  widget.descrStyle?widget.descrStyle:"" + " font-family:"+widget.descrFont+"; font-size: "+widget.descrSize+"px; color:"+item.value+";";
+				}	 
+		 });
+	}else{
+descrStyle =  widget.descrStyle?widget.descrStyle:"" + " font-family:"+widget.descrFont+"; font-size: "+widget.descrSize+"px; color:"+widget.descrColor+";";
+			}
+			
+					if ( Array.isArray(widget.statusColor) ){	
+		widget.statusColor.forEach(function (item, i, arr) {
+		if (item.level && widget.status < item.level && widget.status > widget.statusColor[i - 1].level && i > 0){
+			statusStyle = widget.statusStyle?widget.statusStyle:"" +" font-family:"+widget.statusFont+"; font-size: "+widget.statusSize+"px; color: "+item.value+";";	
+		 }	 
+		 });
+	}else{
+statusStyle = widget.statusStyle?widget.statusStyle:"" + " font-family:"+widget.statusFont+"; font-size: "+widget.statusSize+"px; color: "+widget.statusColor+";";	
+	
+	}
+			
+*/
+
+    let color;
+    if (typeof widget.descrColor == "object") {
+      Object.keys(widget.descrColor).forEach(function (key, i) {
         if (
-          item.level &&
-          widget.status < item.level &&
-          widget.status > widget.descrColor[i - 1].level &&
-          i > 0
+          key - 1 + 1 <= widget.status - 1 + 1 &&
+          widget.status - 1 + 1 > -1 &&
+          key - 1 + 1 > -1
         ) {
-          descrStyle = widget.descrStyle
-            ? widget.descrStyle
-            : "" +
-              " font-family:" +
-              widget.descrFont +
-              "; font-size: " +
-              widget.descrSize +
-              "px; color:" +
-              item.value +
-              ";";
+          color = widget.descrColor[key];
+        }
+        if (
+          key - 1 + 1 <= widget.status - 1 + 1 &&
+          widget.status - 1 + 1 < 0 &&
+          key - 1 + 1 < 0
+        ) {
+          color = widget.descrColor[key];
         }
       });
+      descrStyle = widget.descrStyle
+        ? widget.descrStyle
+        : "" +
+          " font-family:" +
+          widget.descrFont +
+          "; font-size: " +
+          widget.descrSize +
+          "px; color: " +
+          color +
+          ";";
     } else {
       descrStyle = widget.descrStyle
         ? widget.descrStyle
@@ -768,26 +800,33 @@
           ";";
     }
 
-    if (Array.isArray(widget.statusColor)) {
-      widget.statusColor.forEach(function (item, i, arr) {
+    if (typeof widget.statusColor == "object") {
+      Object.keys(widget.statusColor).forEach(function (key, i) {
         if (
-          item.level &&
-          widget.status < item.level &&
-          widget.status > widget.statusColor[i - 1].level &&
-          i > 0
+          key - 1 + 1 <= widget.status - 1 + 1 &&
+          widget.status - 1 + 1 > -1 &&
+          key - 1 + 1 > -1
         ) {
-          statusStyle = widget.statusStyle
-            ? widget.statusStyle
-            : "" +
-              " font-family:" +
-              widget.statusFont +
-              "; font-size: " +
-              widget.statusSize +
-              "px; color: " +
-              item.value +
-              ";";
+          color = widget.statusColor[key];
+        }
+        if (
+          key - 1 + 1 <= widget.status - 1 + 1 &&
+          widget.status - 1 + 1 < 0 &&
+          key - 1 + 1 < 0
+        ) {
+          color = widget.statusColor[key];
         }
       });
+      statusStyle = widget.statusStyle
+        ? widget.statusStyle
+        : "" +
+          " font-family:" +
+          widget.statusFont +
+          "; font-size: " +
+          widget.statusSize +
+          "px; color: " +
+          color +
+          ";";
     } else {
       statusStyle = widget.statusStyle
         ? widget.statusStyle
@@ -1074,6 +1113,7 @@
                   {#if widget.status == "1"}
                     <span id="status{i}" style={setStyle(widget, "right")}>
                       <Toggle
+                        on:toggle={WSpush(widget.socket, widget.topic, 0)}
                         style="float: right"
                         label=""
                         toggledColor="#6495ED"
@@ -1084,6 +1124,7 @@
                   {:else}
                     <span id="status{i}" style={setStyle(widget, "right")}>
                       <Toggle
+                        on:toggle={WSpush(widget.socket, widget.topic, 1)}
                         label=""
                         toggledColor="#FF6347"
                         untoggledColor="gray"
@@ -1146,11 +1187,18 @@
                         style="float: right; display:inline;  width: 120px  "
                       >
                         <input
+                          on:click={WSpush(
+                            widget.socket,
+                            widget.topic,
+                            widget.status - 1
+                          )}
                           type="button"
                           value="-  "
                           style=" border: 1px solid lightblue; width: 25px"
                         />
                         <input
+                          on:change={((widget["send"] = true),
+                          WSpush(widget.socket, widget.topic, widget.status))}
                           class:red={widget["send"] == true}
                           style="width: 45px "
                           type="tel"
@@ -1161,6 +1209,11 @@
                           max="1000000"
                         />
                         <input
+                          on:click={WSpush(
+                            widget.socket,
+                            widget.topic,
+                            widget.status - 1 + 2
+                          )}
                           type="button"
                           value="+  "
                           style="border: 1px solid lightblue; width: 25px"
@@ -1173,6 +1226,8 @@
                     <span id="status{i}" style={setStyle(widget, "right")}>
                       <div style="float: right; display:inline-block">
                         <input
+                          on:change={((widget["send"] = true),
+                          WSpush(widget.socket, widget.topic, widget.status))}
                           class:red={widget["send"] == true}
                           type="time"
                           bind:value={widget.status}
@@ -1189,6 +1244,8 @@
                     <span id="status{i}" style={setStyle(widget, "right")}>
                       <div style="display:inline-block">
                         <input
+                          on:change={((widget["send"] = true),
+                          WSpush(widget.socket, widget.topic, widget.status))}
                           class:red={widget["send"] == true}
                           bind:value={widget.status}
                           size="20"
@@ -1209,7 +1266,10 @@
                 <td align="right">
                   {#if widget.status != 0 && widget.status != 1}
                     <span id="status{i}" style={setStyle(widget, "right")}>
-                      <button class="btn"
+                      <button
+                        class="btn"
+                        on:click={((widget["send"] = true),
+                        WSpush(widget.socket, widget.topic, 1))}
                         ><span
                           >&nbsp;&nbsp;{!widget.status
                             ? ""
@@ -1219,7 +1279,10 @@
                     ><br />
                   {:else}
                     <span id="status{i}" style={setStyle(widget, "right")}>
-                      <button class="btn"
+                      <button
+                        class="btn"
+                        on:click={((widget["send"] = true),
+                        WSpush(widget.socket, widget.topic, 1))}
                         ><span
                           >&nbsp;&nbsp; {!widget.text
                             ? ""
@@ -1241,7 +1304,11 @@
                 <td align="right">
                   {#if widget.status == 0}
                     <span id="status{i}" style={setStyle(widget, "right")}>
-                      <button class="btnoff"
+                      <button
+                        class="btnoff"
+                        on:click={((widget["send"] = true),
+                        (this.style.border = "1px solid red"),
+                        WSpush(widget.socket, widget.topic, 1))}
                         ><span
                           >{!widget.options[0]
                             ? "OFF"
@@ -1251,7 +1318,11 @@
                     ><br />
                   {:else}
                     <span id="status{i}" style={setStyle(widget, "right")}>
-                      <button class="btn"
+                      <button
+                        class="btn"
+                        on:click={((widget["send"] = true),
+                        (this.style.border = "1px solid red"),
+                        WSpush(widget.socket, widget.topic, 0))}
                         ><span
                           >{!widget.options[1] ? "ON" : widget.options[1]}</span
                         ></button
@@ -1270,7 +1341,7 @@
                           data={widget.status}
                           {lineOptions}
                           {axisOptions}
-                          colors={[!widget.color ? "red" : widget.color]}
+                          colors={[!widget.color ? "light-blue" : widget.color]}
                           type={!widget.type ? "line" : widget.type}
                           height="300"
                         /></span
@@ -1343,6 +1414,7 @@
                   {/if}
                 </td>
               {/if}
+
               <!-- range -->
               {#if widget.widget === "range"}
                 <td colspan="3">
@@ -1356,6 +1428,11 @@
 
                   <span id="status{i}" style={setStyle(widget, "centr")}>
                     <input
+                      on:change={WSpush(
+                        widget.socket,
+                        widget.topic,
+                        widget.status
+                      )}
                       type="range"
                       bind:value={widget.status}
                       min={widget.min}
