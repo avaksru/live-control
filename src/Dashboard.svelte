@@ -103,7 +103,7 @@
   // пропускаем первый тик графика для PZM
   let miss;
   // ==на время разработки==
-  //myip = "192.168.36.108";
+  myip = "192.168.36.108";
 
   let connectionType = "WS";
   let client;
@@ -933,7 +933,40 @@ statusStyle = widget.statusStyle?widget.statusStyle:"" + " font-family:"+widget.
   function hideStat() {
     n = 0;
   }
+
+  var fonts = [
+    "Montez",
+    "Lobster",
+    "Josefin Sans",
+    "Shadows Into Light",
+    "Pacifico",
+    "Amatic SC",
+    "Orbitron",
+    "Rokkitt",
+    "Righteous",
+    "Dancing Script",
+    "Bangers",
+    "Chewy",
+    "Sigmar One",
+    "Architects Daughter",
+    "Abril Fatface",
+    "Covered By Your Grace",
+    "Kaushan Script",
+    "Gloria Hallelujah",
+    "Satisfy",
+    "Lobster Two",
+    "Comfortaa",
+    "Cinzel",
+    "Courgette",
+  ];
+  let style = "Sigmar One";
 </script>
+
+<link
+  href="https://fonts.googleapis.com/css?family=Montez|Lobster|Josefin+Sans|Shadows+Into+Light|Pacifico|Amatic+SC:700|Orbitron:400,900|Rokkitt|Righteous|Dancing+Script:700|Bangers|Chewy|Sigmar+One|Architects+Daughter|Abril+Fatface|Covered+By+Your+Grace|Kaushan+Script|Gloria+Hallelujah|Satisfy|Lobster+Two:700|Comfortaa:700|Cinzel|Courgette"
+  rel="stylesheet"
+  type="text/css"
+/>
 
 <!---->
 
