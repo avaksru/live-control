@@ -326,7 +326,7 @@
       placeholder: "",
     },
     {
-      mqttServer: "meef.ru",
+      mqttServer: "live-control.ru",
       mqttPort: 1883,
       mqttPortwss: 18883,
       mqttPrefix: "/IotManager",
@@ -443,7 +443,7 @@
 
     if (val == true) {
       urlMQTT =
-        "https://meef.ru/dashboard/?id=" +
+        "https://live-control.ru/dashboard/?id=" +
         Math.floor(Math.random() * 100000000);
       //urlMQTT = "https://192.168.0.10/?id=" + Math.floor(Math.random() * 100000000);
       Cookies.set("urlMQTT", urlMQTT, { expires: 365 });

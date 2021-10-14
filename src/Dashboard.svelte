@@ -4,7 +4,7 @@
   import Toggle from "svelte-toggle";
   import Chart from "svelte-frappe-charts";
   import Logo from "./Logo.svelte";
-  //import mqtt from "mqtt/dist/mqtt.min";
+  import mqtt from "mqtt/dist/mqtt.min";
 
   // -------------------Swipe-------------------------------------
   let opacity = 100;
@@ -103,9 +103,9 @@
   // пропускаем первый тик графика для PZM
   let miss;
   // ==на время разработки==
-  myip = "192.168.36.108";
+  // myip = "192.168.36.108";
 
-  let connectionType = "WS";
+  let connectionType = "MQTT";
   let client;
   let topic;
   let connected = false;
@@ -195,17 +195,17 @@
       connected = client.connected;
     });
   }
-  // let MQTTconnections;
+  let MQTTconnections;
   if (connectionType == "MQTT") {
     // ==на время разработки==
-    MQTTconnections = JSON.parse(MQTTconnections);
+    //  MQTTconnections = JSON.parse(MQTTconnections);
 
-    /*  MQTTconnections = [
+    MQTTconnections = [
       {
         user_id: "10000000",
         connection_name: "тест 1",
         connection_protocol: "wss",
-        mqtt_host: "meef.ru",
+        mqtt_host: "live-control.ru",
         mqtt_port: "18883",
         mqtt_prefix: "/demo",
         mqtt_username: "IotManager:guest",
@@ -213,14 +213,13 @@
         mqtt_path: "/ws",
         mqtt_id: "10000000",
       },
-    ];*/
+    ];
 
     if (Cookies.get("selectedMQTT")) {
       selected = Cookies.get("selectedMQTT");
 
       try {
         selected = JSON.parse(selected);
-        console.log("парсим");
       } catch (e) {
         selected = MQTTconnections[0];
       }
@@ -521,7 +520,7 @@
                       if (element.type == "bar") {
                         monthStat[0][month] = monthStat[0][month] + item.y1;
                         try {
-                          if (i > status.length - 30) {
+                          if (i > temp.length - 30) {
                             monthStat[0]["00"] = monthStat[0]["00"] + item.y1;
                           }
                         } catch (e) {}
