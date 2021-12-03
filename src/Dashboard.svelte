@@ -5,6 +5,8 @@
   import Chart from "svelte-frappe-charts";
   import Logo from "./Logo.svelte";
   import mqtt from "mqtt/dist/mqtt.min";
+  let difference;
+  let last;
 
   // -------------------Swipe-------------------------------------
   let opacity = 100;
@@ -171,6 +173,9 @@
         } else {
           console.log(`MQTT subscribed on topic '${topic}'`);
           client.publish(topic, "HELLO");
+          //--------------Zigbee SLS gate---------------------
+          client.publish(topic + "/bridge/config/devices/get", "");
+          //--------------------------------------------------
         }
       });
     };
@@ -179,6 +184,8 @@
       const msg = message.toString();
       const time = new Date().getTime();
       addMessage(msg, topic);
+      //  console.log(topic);
+      //  console.log(msg);
     };
 
     //try{
@@ -347,7 +354,7 @@
   //console.log(devices);
 
   //обрабатываем пришедшее сообщение =====================================================================
-
+  let count = 0;
   function addMessage(data, socket) {
     if (connectionType == "MQTT") {
       // console.log("NEW data packet " + socket, data);
@@ -355,7 +362,7 @@
     }
 
     let json;
-    let tmp;
+    let tmp = [];
 
     try {
       let net = JSON.parse(data);
@@ -374,10 +381,89 @@
     }
 
     tmp = "[" + data + "]";
-
     //tmp = [data];
     try {
       tmp = JSON.parse(tmp);
+
+      //--------------Zigbee SLS gate---------------------
+
+      if (Array.isArray(tmp)) {
+        //let friendly_name = tmp[0].friendly_name;
+        // console.log("friendly_name ", friendly_name);
+        for (let key in tmp[0]) {
+          //console.log(key, ":", tmp[0][key]);
+          let descr;
+          if (tmp[0].friendly_name) {
+            descr = tmp[0].friendly_name + "  /  " + key;
+            if (key === "battery") {
+              descr = descr + "🔋";
+            } else if (key === "humidity") {
+              descr = descr + "💧";
+            } else if (key === "pressure") {
+              descr = descr + "⚖️";
+            } else if (key === "temperature") {
+              descr = descr + "🌡";
+            } else if (key === "linkquality") {
+              descr = descr + "📶";
+            } else if (key === "voltage") {
+              descr = descr + "♻️";
+            } else if (key === "illuminance") {
+              descr = descr + "🔆";
+            } else if (key === "occupancy") {
+              descr = descr + "🏃🏼";
+            } else if (key === "occupancy_timeout") {
+              descr = descr + "🔒";
+            } else if (key === "trSeqNum") {
+              descr = descr + "🛠";
+            }
+            let createWidget = {
+              widget: "anydata",
+              page: "zigbee SLS gate",
+              order: count++,
+              descr: descr,
+              status: tmp[0][key] ? tmp[0][key] : "False",
+              topic: topic + "/" + key,
+            };
+
+            tmp = [...tmp, createWidget];
+          } else if (tmp[0].UptimeStr) {
+            //console.log("tmp ", tmp[0]);
+            descr = "Zigbee шлюз " + " / " + key;
+            let createWidget = {
+              widget: "anydata",
+              page: "zigbee SLS gate",
+              order: count++,
+              descr: descr,
+              status: tmp[0][key] ? tmp[0][key] : "False",
+              topic: topic + "/" + key,
+            };
+
+            tmp = [...tmp, createWidget];
+          }
+        }
+      }
+      /*  let message = tmp[0].message;
+      message.forEach(function (json, i, array) {
+        let widget_name;
+        if (json.type === "EndDevice") {
+          if (json.friendly_name) {
+            widget_name = json.friendly_name;
+          } else {
+            widget_name = json.ieeeAddr;
+          }
+          let createWidget = {
+            widget: "anydata",
+            page: "zigbee SLS gate",
+            order: i,
+            descr: widget_name,
+            topic: json.ieeeAddr,
+          };
+          tmp = [...tmp, createWidget];
+        }
+      });
+*/
+      //----------//Zigbee SLS gate----------------------------------------
+
       tmp.forEach(function (json, i, array) {
         // собираем виджеты
         // если пришедшее сообщение виджет
@@ -460,14 +546,14 @@
         if (json.status) {
           // ищем виджет к которому относится этот статус
           wigets.forEach(function (element) {
-            //отличие MQTT и WS========================================================!!!!!!!!!!!!!!
+            //============================================отличие MQTT и WS============================================
             let messegetopic;
             if (connectionType === "MQTT") {
               messegetopic = topic.replace("/status", "");
             } else {
               messegetopic = json.topic.replace("/status", "");
             }
-            // ========================================================================
+            //============================================//отличие MQTT и WS============================================
 
             if (element.topic == messegetopic) {
               // если получен статус график
@@ -600,6 +686,115 @@
               else {
                 element.status = json.status;
                 element.send = false;
+                //console.log(element);
+
+                //==========================добавляем в виджет инфу о RSSI, Battary и LastSeen ============================================
+                if (messegetopic.toLowerCase().indexOf("_rssi") != -1) {
+                  wigets.forEach(function (wiriles_element) {
+                    if (
+                      wiriles_element.topic.substring(
+                        0,
+                        wiriles_element.topic.lastIndexOf("_")
+                      ) ===
+                      messegetopic.substring(
+                        0,
+                        messegetopic.toLowerCase().indexOf("_rssi")
+                      )
+                    ) {
+                      wiriles_element.rssi = json.status;
+                      //   console.log(wiriles_element);
+                    }
+                  });
+                }
+
+                if (messegetopic.toLowerCase().indexOf("_battery") != -1) {
+                  wigets.forEach(function (wiriles_element) {
+                    if (
+                      wiriles_element.topic.substring(
+                        0,
+                        wiriles_element.topic.lastIndexOf("_")
+                      ) ==
+                      messegetopic.substring(
+                        0,
+                        messegetopic.toLowerCase().indexOf("_battery")
+                      )
+                    ) {
+                      wiriles_element.battery = json.status;
+                      // console.log(wiriles_element);
+                    }
+                  });
+                }
+                if (messegetopic.toLowerCase().indexOf("_last") != -1) {
+                  wigets.forEach(function (wiriles_element) {
+                    if (
+                      wiriles_element.topic.substring(
+                        0,
+                        wiriles_element.topic.lastIndexOf("_")
+                      ) ===
+                      messegetopic.substring(
+                        0,
+                        messegetopic.toLowerCase().indexOf("_last")
+                      )
+                    ) {
+                      wiriles_element.lastseen = timeDifference(json.status);
+                      //console.log(wiriles_element.lastseen);
+                    }
+                  });
+                }
+                if (messegetopic.toLowerCase().indexOf("_last_seen") != -1) {
+                  wigets.forEach(function (wiriles_element) {
+                    if (
+                      wiriles_element.topic.substring(
+                        0,
+                        wiriles_element.topic.lastIndexOf("_")
+                      ) ===
+                      messegetopic.substring(
+                        0,
+                        messegetopic.toLowerCase().indexOf("_last_seen")
+                      )
+                    ) {
+                      wiriles_element.lastseen = timeDifference(json.status);
+                      //console.log(wiriles_element);
+                    }
+                  });
+                }
+                //==========================Только для  MySensors ============================================
+                if (messegetopic.toLowerCase().indexOf("-100") != -1) {
+                  wigets.forEach(function (wiriles_element) {
+                    if (
+                      wiriles_element.topic.substring(
+                        0,
+                        wiriles_element.topic.lastIndexOf("-")
+                      ) ===
+                      messegetopic.substring(
+                        0,
+                        messegetopic.toLowerCase().indexOf("-100")
+                      )
+                    ) {
+                      wiriles_element.rssi = json.status;
+                      //   console.log(wiriles_element);
+                    }
+                  });
+                }
+                if (messegetopic.toLowerCase().indexOf("-101") != -1) {
+                  wigets.forEach(function (wiriles_element) {
+                    if (
+                      wiriles_element.topic.substring(
+                        0,
+                        wiriles_element.topic.lastIndexOf("-")
+                      ) ===
+                      messegetopic.substring(
+                        0,
+                        messegetopic.toLowerCase().indexOf("-101")
+                      )
+                    ) {
+                      wiriles_element.battery = json.status;
+                      // console.log(wiriles_element);
+                    }
+                  });
+                }
+
+                //==========================//добавляем в виджет инфу о RSSI и Battary ============================================
               }
             }
             wigets = wigets;
@@ -622,6 +817,15 @@
 
             if (element.topic == messegetopic) {
               element.nodeInfo = json.info;
+              element.lastseen = timeDifference(json.info);
+              if (
+                timeDifference(json.info).indexOf("d") !== -1 ||
+                timeDifference(json.info).indexOf(":") !== -1
+              ) {
+                //              element.color = "red";
+                //console.log(timeDifference(json.info));
+                //console.log(element.lastseen, element.nodeInfo);
+              }
             }
           });
         }
@@ -647,6 +851,57 @@
       console.log("ERROR parse JSON", tmp);
     }
 
+    // функция получения времени с момента последнего сообщения
+    function timeDifference(endtime) {
+      //если дата timestamp
+      let date = new Date(+endtime);
+      if (date.getMinutes()) {
+        last = endtime;
+        //	console.log("1")
+      }
+      //если дата формат datetime'03.12.21 00:17:57'
+      if (endtime.indexOf(".") !== -1) {
+        endtime = endtime.split(".");
+        let newdate = endtime[1] + "," + endtime[0] + "," + endtime[2];
+        if (new Date(newdate)) {
+          last = new Date(newdate).getTime();
+          //	 			console.log("2")
+        }
+      } else {
+        //если дата формат datetime'2021-12-01T14:38:15'
+        if (Date.parse(endtime)) {
+          last = Date.parse(endtime);
+          //		console.log("3")
+        }
+      }
+      var difference = new Date().getTime() - last;
+      var daysDifference = Math.floor(difference / 1000 / 60 / 60 / 24);
+      difference -= daysDifference * 1000 * 60 * 60 * 24;
+      var hoursDifference = Math.floor(difference / 1000 / 60 / 60);
+      difference -= hoursDifference * 1000 * 60 * 60;
+      var minutesDifference = checkTime(Math.floor(difference / 1000 / 60));
+      function checkTime(i) {
+        return i < 10 ? "0" + i : i;
+      }
+      difference -= minutesDifference * 1000 * 60;
+      var secondsDifference = Math.floor(difference / 1000);
+      // console.log(difference);
+      if (difference) {
+        if (daysDifference > 0) {
+          return (difference =
+            daysDifference + " d " + hoursDifference + ":" + minutesDifference);
+        } else {
+          if (hoursDifference > 0) {
+            return (difference = hoursDifference + ":" + minutesDifference);
+          } else {
+            return (difference = minutesDifference + " min");
+          }
+        }
+      } else {
+        return (difference = endtime);
+      }
+    }
+    // --функция получения времени с момента последнего сообщения
     tmp = null;
     temp = null;
     json = null;
@@ -680,6 +935,7 @@
   // функция если произошла смена префикса в интерфейсе
   function handleSubmit() {
     console.log("The selected option is " + JSON.stringify(selected.prefics));
+
     selectedprefics = selected.prefics;
   }
 
@@ -1060,7 +1316,7 @@ statusStyle = widget.statusStyle?widget.statusStyle:"" + " font-family:"+widget.
   {#if connected == true}
     <div
       style=" position: absolute;  z-index: 2; right: 2%; top: 0%; color:green"
-      on:click={toggleTheme}
+      on:click={MQTTChange}
       id="layerMQTT"
     >
       MQTT
@@ -1172,9 +1428,33 @@ statusStyle = widget.statusStyle?widget.statusStyle:"" + " font-family:"+widget.
                 <td>
                   <span style={setStyle(widget, "left")} id="lable{i}">
                     {widget.descr}
+                    <!--    //==========================добавляем в виджет инфу о RSSI и Battary ============================================   -->
+
+                    {#if widget.nodeInfo || widget.battery}
+                      <div
+                        class="letter"
+                        align="left"
+                        style="color: {!widget.nodeInfoColor
+                          ? 'gray'
+                          : widget.nodeInfoColor};font-family:{widget.descrFont}; font-size: {widget.descrSize *
+                          2}px;  "
+                      >
+                        {!widget.battery ? "" : "🔋"}{!widget.battery
+                          ? ""
+                          : widget.battery}
+                        {!widget.rssi ? "" : "📶"}{!widget.rssi
+                          ? ""
+                          : widget.rssi}
+                        {!widget.lastseen ? "" : "⏱"}
+                        {!widget.lastseen ? "" : widget.lastseen}
+                      </div>
+                    {/if}
+
+                    <!--  //==========================//добавляем в виджет инфу о RSSI и Battary ============================================   -->
                     <!--Инфо от ноды mysens отображается под названием виджета-->
                     {#if widget.nodeInfo}
-                      <div
+                      <!--  
+                    <div
                         class="letter"
                         align="left"
                         style="color: {!widget.nodeInfoColor
@@ -1182,8 +1462,9 @@ statusStyle = widget.statusStyle?widget.statusStyle:"" + " font-family:"+widget.
                           : widget.nodeInfoColor};font-family:{widget.descrFont}; font-size: {widget.descrSize /
                           2}px;  "
                       >
-                        {!widget.nodeInfo ? "" : widget.nodeInfo}
-                      </div>
+                        {!widget.nodeInfo ? "" : widget.nodeInfo} 
+                      </div>   
+                    -->
                     {/if}
                   </span>
                 </td>
