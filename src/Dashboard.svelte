@@ -7,7 +7,31 @@
   import mqtt from "mqtt/dist/mqtt.min";
   let difference;
   let last;
-
+  //----------------------settings-----------------------------------------
+  let nodeInfo = false;
+  let Info = false;
+  if (Cookies.get("nodeInfo") == "true") {
+    nodeInfo = true;
+  } else {
+    nodeInfo = false;
+  }
+  if (Cookies.get("Info") == "true") {
+    Info = true;
+  } else {
+    Info = false;
+  }
+  function showInfo() {
+    if (Cookies.get("Info") == "true") {
+      Info = false;
+      //  nodeInfo = false;
+      Cookies.set("Info", "false", { expires: 365 });
+    } else {
+      Info = true;
+      //  nodeInfo = true;
+      Cookies.set("Info", "true", { expires: 365 });
+    }
+  }
+  //----------------------settings-----------------------------------------
   // -------------------Swipe-------------------------------------
   let opacity = 100;
   let touchStart = [];
@@ -205,9 +229,9 @@
   let MQTTconnections;
   if (connectionType == "MQTT") {
     // ==на время разработки==
-    //  MQTTconnections = JSON.parse(MQTTconnections);
+    // MQTTconnections = JSON.parse(MQTTconnections);
 
-    MQTTconnections = [
+    /*  MQTTconnections = [
       {
         user_id: "10000000",
         connection_name: "тест 1",
@@ -221,7 +245,7 @@
         mqtt_id: "10000000",
       },
     ];
-
+*/
     if (Cookies.get("selectedMQTT")) {
       selected = Cookies.get("selectedMQTT");
 
@@ -738,6 +762,12 @@
                     ) {
                       wiriles_element.lastseen = timeDifference(json.status);
                       //console.log(wiriles_element.lastseen);
+                      if (
+                        wiriles_element.lastseen.indexOf("d") !== -1 ||
+                        wiriles_element.lastseen.indexOf("h") !== -1
+                      ) {
+                        wiriles_element.statusColor = "DarkSlateBlue";
+                      }
                     }
                   });
                 }
@@ -755,6 +785,12 @@
                     ) {
                       wiriles_element.lastseen = timeDifference(json.status);
                       //console.log(wiriles_element);
+                      if (
+                        wiriles_element.lastseen.indexOf("d") !== -1 ||
+                        wiriles_element.lastseen.indexOf("h") !== -1
+                      ) {
+                        wiriles_element.statusColor = "DarkSlateBlue";
+                      }
                     }
                   });
                 }
@@ -819,12 +855,10 @@
               element.nodeInfo = json.info;
               element.lastseen = timeDifference(json.info);
               if (
-                timeDifference(json.info).indexOf("d") !== -1 ||
-                timeDifference(json.info).indexOf(":") !== -1
+                element.lastseen.indexOf("d") !== -1 ||
+                element.lastseen.indexOf("h") !== -1
               ) {
-                //              element.color = "red";
-                //console.log(timeDifference(json.info));
-                //console.log(element.lastseen, element.nodeInfo);
+                element.statusColor = "DarkSlateBlue";
               }
             }
           });
@@ -853,11 +887,16 @@
 
     // функция получения времени с момента последнего сообщения
     function timeDifference(endtime) {
+      last = "";
+      difference = "";
+      daysDifference = "";
+      hoursDifference = "";
+      minutesDifference = "";
       //если дата timestamp
       let date = new Date(+endtime);
       if (date.getMinutes()) {
         last = endtime;
-        //	console.log("1")
+        //console.log("1");
       }
       //если дата формат datetime'03.12.21 00:17:57'
       if (endtime.indexOf(".") !== -1) {
@@ -865,13 +904,13 @@
         let newdate = endtime[1] + "," + endtime[0] + "," + endtime[2];
         if (new Date(newdate)) {
           last = new Date(newdate).getTime();
-          //	 			console.log("2")
+          // console.log("2");
         }
       } else {
         //если дата формат datetime'2021-12-01T14:38:15'
         if (Date.parse(endtime)) {
           last = Date.parse(endtime);
-          //		console.log("3")
+          // console.log("3");
         }
       }
       var difference = new Date().getTime() - last;
@@ -885,16 +924,18 @@
       }
       difference -= minutesDifference * 1000 * 60;
       var secondsDifference = Math.floor(difference / 1000);
-      // console.log(difference);
-      if (difference) {
+
+      if (last) {
         if (daysDifference > 0) {
+          // console.log(difference, endtime, daysDifference, last);
           return (difference =
             daysDifference + " d " + hoursDifference + ":" + minutesDifference);
         } else {
           if (hoursDifference > 0) {
-            return (difference = hoursDifference + ":" + minutesDifference);
+            return (difference =
+              hoursDifference + "h " + minutesDifference + "min");
           } else {
-            return (difference = minutesDifference + " min");
+            return (difference = minutesDifference + "min");
           }
         }
       } else {
@@ -1013,23 +1054,25 @@ statusStyle = widget.statusStyle?widget.statusStyle:"" + " font-family:"+widget.
 	}
 			
 */
-
+    // console.log(widget);
     let color;
+
     if (typeof widget.descrColor == "object") {
-      Object.keys(widget.descrColor).forEach(function (key, i) {
+      widget.descrColor.forEach(function (key, i) {
         if (
-          key - 1 + 1 <= widget.status - 1 + 1 &&
+          key.level - 1 + 1 <= widget.status - 1 + 1 &&
           widget.status - 1 + 1 > -1 &&
-          key - 1 + 1 > -1
+          key.level - 1 + 1 > -1
         ) {
-          color = widget.descrColor[key];
+          color = key.value;
         }
+
         if (
-          key - 1 + 1 <= widget.status - 1 + 1 &&
+          key.level - 1 >= widget.status - 1 &&
           widget.status - 1 + 1 < 0 &&
-          key - 1 + 1 < 0
+          key.level - 1 < 0
         ) {
-          color = widget.descrColor[key];
+          color = key.value;
         }
       });
       descrStyle = widget.descrStyle
@@ -1056,20 +1099,21 @@ statusStyle = widget.statusStyle?widget.statusStyle:"" + " font-family:"+widget.
     }
 
     if (typeof widget.statusColor == "object") {
-      Object.keys(widget.statusColor).forEach(function (key, i) {
+      widget.statusColor.forEach(function (key, i) {
         if (
-          key - 1 + 1 <= widget.status - 1 + 1 &&
+          key.level - 1 + 1 <= widget.status - 1 + 1 &&
           widget.status - 1 + 1 > -1 &&
-          key - 1 + 1 > -1
+          key.level - 1 + 1 > -1
         ) {
-          color = widget.statusColor[key];
+          color = key.value;
         }
+
         if (
-          key - 1 + 1 <= widget.status - 1 + 1 &&
+          key.level - 1 >= widget.status - 1 &&
           widget.status - 1 + 1 < 0 &&
-          key - 1 + 1 < 0
+          key.level - 1 < 0
         ) {
-          color = widget.statusColor[key];
+          color = key.value;
         }
       });
       statusStyle = widget.statusStyle
@@ -1092,7 +1136,7 @@ statusStyle = widget.statusStyle?widget.statusStyle:"" + " font-family:"+widget.
           widget.statusSize +
           "px; color: " +
           widget.statusColor +
-          ";";
+          "; ";
     }
 
     if (align === "left") {
@@ -1290,11 +1334,18 @@ statusStyle = widget.statusStyle?widget.statusStyle:"" + " font-family:"+widget.
 {/if}
 
 <div
-  style=" position: absolute;  z-index: 2; right: 20%; top: 0%; color:red"
+  style=" position: absolute;  z-index: 2; right: 20%; top: 0%;"
   on:click={toggleTheme}
   id="toggleTheme"
 >
   🔆
+</div>
+<div
+  style=" position: absolute;  z-index: 2; right: 25%; top: 0%; color:blue;"
+  on:click={showInfo}
+  id="toggleInfo"
+>
+  ℹ️
 </div>
 
 {#if connectionType == "MQTT"}
@@ -1431,30 +1482,48 @@ statusStyle = widget.statusStyle?widget.statusStyle:"" + " font-family:"+widget.
                     <!--    //==========================добавляем в виджет инфу о RSSI и Battary ============================================   -->
 
                     {#if widget.nodeInfo || widget.battery}
-                      <div
-                        class="letter"
-                        align="left"
-                        style="color: {!widget.nodeInfoColor
-                          ? 'gray'
-                          : widget.nodeInfoColor};font-family:{widget.descrFont}; font-size: {widget.descrSize *
-                          2}px;  "
-                      >
-                        {!widget.battery ? "" : "🔋"}{!widget.battery
-                          ? ""
-                          : widget.battery}
-                        {!widget.rssi ? "" : "📶"}{!widget.rssi
-                          ? ""
-                          : widget.rssi}
-                        {!widget.lastseen ? "" : "⏱"}
-                        {!widget.lastseen ? "" : widget.lastseen}
-                      </div>
+                      {#if Info == true}
+                        <div
+                          class="letter"
+                          align="left"
+                          style="color: {!widget.nodeInfoColor
+                            ? 'gray'
+                            : widget.nodeInfoColor};font-family:{widget.descrFont}; font-size: {widget.descrSize *
+                            2}px;  "
+                        >
+                          {!widget.battery ? "" : "🔋"}
+
+                          {#if widget.battery < 4}
+                            {!widget.battery ? "" : widget.battery}
+                          {:else if widget.battery < 10}
+                            <span style="color: red;">
+                              {!widget.battery ? "" : widget.battery}
+                            </span>
+                          {:else if widget.battery < 30}
+                            <span style="color: reoranged;">
+                              {!widget.battery ? "" : widget.battery}
+                            </span>
+                          {:else}
+                            <span style="color: green;">
+                              {!widget.battery ? "" : widget.battery}
+                            </span>
+                          {/if}
+
+                          {!widget.rssi ? "" : "📶"}{!widget.rssi
+                            ? ""
+                            : widget.rssi}
+                          {!widget.lastseen ? "" : "⏱"}
+
+                          {!widget.lastseen ? "" : widget.lastseen}
+                        </div>
+                      {/if}
                     {/if}
 
                     <!--  //==========================//добавляем в виджет инфу о RSSI и Battary ============================================   -->
                     <!--Инфо от ноды mysens отображается под названием виджета-->
-                    {#if widget.nodeInfo}
-                      <!--  
-                    <div
+
+                    {#if widget.nodeInfo && nodeInfo == true}
+                      <div
                         class="letter"
                         align="left"
                         style="color: {!widget.nodeInfoColor
@@ -1462,9 +1531,8 @@ statusStyle = widget.statusStyle?widget.statusStyle:"" + " font-family:"+widget.
                           : widget.nodeInfoColor};font-family:{widget.descrFont}; font-size: {widget.descrSize /
                           2}px;  "
                       >
-                        {!widget.nodeInfo ? "" : widget.nodeInfo} 
-                      </div>   
-                    -->
+                        {!widget.nodeInfo ? "" : widget.nodeInfo}
+                      </div>
                     {/if}
                   </span>
                 </td>
