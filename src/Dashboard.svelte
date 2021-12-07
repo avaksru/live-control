@@ -205,7 +205,7 @@
   let MQTTconnections;
   if (connectionType == "MQTT") {
     // ==на время разработки==
-    //  MQTTconnections = JSON.parse(MQTTconnections);
+    //MQTTconnections = JSON.parse(MQTTconnections);
 
     MQTTconnections = [
       {
@@ -1054,7 +1054,7 @@ statusStyle = widget.statusStyle?widget.statusStyle:"" + " font-family:"+widget.
           widget.descrColor +
           ";";
     }
-
+    console.log(widget.statusColor);
     if (typeof widget.statusColor == "object") {
       Object.keys(widget.statusColor).forEach(function (key, i) {
         if (
@@ -1062,7 +1062,9 @@ statusStyle = widget.statusStyle?widget.statusStyle:"" + " font-family:"+widget.
           widget.status - 1 + 1 > -1 &&
           key - 1 + 1 > -1
         ) {
-          color = widget.statusColor[key];
+          color = widget.statusColor[key].value;
+          console.log("key ", key, color.value);
+          console.log(" widget.status ", widget.status);
         }
         if (
           key - 1 + 1 <= widget.status - 1 + 1 &&
@@ -1424,7 +1426,19 @@ statusStyle = widget.statusStyle?widget.statusStyle:"" + " font-family:"+widget.
                 </td>{/if}
               <!-- anydata -->
 
-              {#if widget.widget === "anydata"}
+              {#if widget.widget === "anydata" && widget.topic
+                  .toLowerCase()
+                  .indexOf("_rssi") == -1 && widget.topic
+                  .toLowerCase()
+                  .indexOf("_battery") == -1 && widget.topic
+                  .toLowerCase()
+                  .indexOf("_last") == -1 && widget.topic
+                  .toLowerCase()
+                  .indexOf("_last_seen") == -1 && widget.topic
+                  .toLowerCase()
+                  .indexOf("-100") == -1 && widget.topic
+                  .toLowerCase()
+                  .indexOf("-101") == -1}
                 <td>
                   <span style={setStyle(widget, "left")} id="lable{i}">
                     {widget.descr}
