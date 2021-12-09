@@ -7,6 +7,89 @@
   import mqtt from "mqtt/dist/mqtt.min";
   let difference;
   let last;
+  //----------------------settings-----------------------------------------
+  let nodeInfo = false;
+  let Info = false;
+  if (Cookies.get("nodeInfo") == "true") {
+    nodeInfo = true;
+  } else {
+    nodeInfo = false;
+  }
+  if (Cookies.get("Info") == "true") {
+    Info = true;
+  } else {
+    Info = false;
+  }
+  function showInfo() {
+    if (Cookies.get("Info") == "true") {
+      Info = false;
+      //  nodeInfo = false;
+      Cookies.set("Info", "false", { expires: 365 });
+    } else {
+      Info = true;
+      //  nodeInfo = true;
+      Cookies.set("Info", "true", { expires: 365 });
+    }
+  }
+  //----------------------settings-----------------------------------------
+
+  // функция получения времени с момента последнего сообщения
+  function timeDifference(endtime) {
+    last = "";
+    difference = "";
+    daysDifference = "";
+    hoursDifference = "";
+    minutesDifference = "";
+    //если дата timestamp
+    let date = new Date(+endtime);
+    if (date.getMinutes()) {
+      last = endtime;
+      // console.log("1", endtime);
+      //если дата формат datetime'03.12.21 00:17:57'
+    } else if (endtime.indexOf(".") !== -1) {
+      endtime = endtime.split(".");
+      let newdate = endtime[1] + "," + endtime[0] + "," + endtime[2];
+      if (new Date(newdate)) {
+        last = new Date(newdate).getTime();
+        //  console.log("2", endtime);
+      }
+    } else {
+      //если дата формат datetime'2021-12-01T14:38:15'
+      if (Date.parse(endtime)) {
+        last = Date.parse(endtime);
+        //  console.log("3".endtime);
+      }
+    }
+    var difference = new Date().getTime() - last;
+    var daysDifference = Math.floor(difference / 1000 / 60 / 60 / 24);
+    difference -= daysDifference * 1000 * 60 * 60 * 24;
+    var hoursDifference = Math.floor(difference / 1000 / 60 / 60);
+    difference -= hoursDifference * 1000 * 60 * 60;
+    var minutesDifference = checkTime(Math.floor(difference / 1000 / 60));
+    function checkTime(i) {
+      return i < 10 ? "0" + i : i;
+    }
+    difference -= minutesDifference * 1000 * 60;
+    var secondsDifference = Math.floor(difference / 1000);
+
+    if (last) {
+      if (daysDifference > 0) {
+        // console.log(difference, endtime, daysDifference, last);
+        return (difference =
+          daysDifference + " d " + hoursDifference + ":" + minutesDifference);
+      } else {
+        if (hoursDifference > 0) {
+          return (difference =
+            hoursDifference + "h " + minutesDifference + "min");
+        } else {
+          return (difference = minutesDifference + " min");
+        }
+      }
+    } else {
+      return (difference = endtime);
+    }
+  }
+  // --функция получения времени с момента последнего сообщения
 
   // -------------------Swipe-------------------------------------
   let opacity = 100;
@@ -205,7 +288,7 @@
   let MQTTconnections;
   if (connectionType == "MQTT") {
     // ==на время разработки==
-    //MQTTconnections = JSON.parse(MQTTconnections);
+    //  MQTTconnections = JSON.parse(MQTTconnections);
 
     MQTTconnections = [
       {
@@ -386,15 +469,28 @@
       tmp = JSON.parse(tmp);
 
       //--------------Zigbee SLS gate---------------------
-
+      /*  tmp = [
+        {
+          battery: 100,
+          illuminance: 123,
+          last_seen: 1638974524,
+          linkquality: 123,
+          occupancy: false,
+          occupancy_timeout: 60,
+          voltage: 3.04,
+          friendly_name: "",
+          model_name: "lumi.sensor_motion.aq2",
+        },
+      ];*/
       if (Array.isArray(tmp)) {
-        //let friendly_name = tmp[0].friendly_name;
-        // console.log("friendly_name ", friendly_name);
+        let friendly_name = tmp[0].friendly_name;
+        //console.log("friendly_name ", friendly_name);
         for (let key in tmp[0]) {
-          //console.log(key, ":", tmp[0][key]);
+          //   console.log(key, ":", tmp[0][key]);
           let descr;
-          if (tmp[0].friendly_name) {
-            descr = tmp[0].friendly_name + "  /  " + key;
+          count = 0;
+          if (tmp[0].model_name) {
+            descr = tmp[0].model_name + " " + key;
             if (key === "battery") {
               descr = descr + "🔋";
             } else if (key === "humidity") {
@@ -406,26 +502,44 @@
             } else if (key === "linkquality") {
               descr = descr + "📶";
             } else if (key === "voltage") {
-              descr = descr + "♻️";
+              descr = descr + "⚡";
             } else if (key === "illuminance") {
               descr = descr + "🔆";
             } else if (key === "occupancy") {
               descr = descr + "🏃🏼";
             } else if (key === "occupancy_timeout") {
-              descr = descr + "🔒";
+              descr = descr + "⏱";
             } else if (key === "trSeqNum") {
               descr = descr + "🛠";
+            } else if (key === "last_seen") {
+              descr = descr + "⏱";
             }
+
             let createWidget = {
               widget: "anydata",
               page: "zigbee SLS gate",
               order: count++,
               descr: descr,
               status: tmp[0][key] ? tmp[0][key] : "False",
-              topic: topic + "/" + key,
+              battery: tmp[0]["battery"],
+              rssi: tmp[0]["linkquality"],
+              lastseen: timeDifference(tmp[0]["last_seen"] * 1000),
+              // lastseen: tmp[0]["last_seen"],
+              voltage: tmp[0]["voltage"],
+              topic: topic + "_" + key,
             };
 
+            if (createWidget.lastseen) {
+              if (
+                createWidget.lastseen.indexOf("d") !== -1 ||
+                createWidget.lastseen.indexOf("h") !== -1
+              ) {
+                createWidget.statusColor = "DarkSlateBlue";
+              }
+            }
+            // console.log(createWidget);
             tmp = [...tmp, createWidget];
+            //   console.log(tmp);
           } else if (tmp[0].UptimeStr) {
             //console.log("tmp ", tmp[0]);
             descr = "Zigbee шлюз " + " / " + key;
@@ -435,7 +549,7 @@
               order: count++,
               descr: descr,
               status: tmp[0][key] ? tmp[0][key] : "False",
-              topic: topic + "/" + key,
+              topic: topic + "_" + key,
             };
 
             tmp = [...tmp, createWidget];
@@ -612,6 +726,7 @@
                         } catch (e) {}
                       }
                       //graf_time = [... graf_time,  hours+':'+minutes+' '+day+'.'+month, ];
+
                       if (element.dateFormat == "HH:mm") {
                         graf_time = [
                           ...graf_time,
@@ -738,6 +853,12 @@
                     ) {
                       wiriles_element.lastseen = timeDifference(json.status);
                       //console.log(wiriles_element.lastseen);
+                      if (
+                        wiriles_element.lastseen.indexOf("d") !== -1 ||
+                        wiriles_element.lastseen.indexOf("h") !== -1
+                      ) {
+                        wiriles_element.statusColor = "DarkSlateBlue";
+                      }
                     }
                   });
                 }
@@ -755,6 +876,12 @@
                     ) {
                       wiriles_element.lastseen = timeDifference(json.status);
                       //console.log(wiriles_element);
+                      if (
+                        wiriles_element.lastseen.indexOf("d") !== -1 ||
+                        wiriles_element.lastseen.indexOf("h") !== -1
+                      ) {
+                        wiriles_element.statusColor = "DarkSlateBlue";
+                      }
                     }
                   });
                 }
@@ -819,12 +946,10 @@
               element.nodeInfo = json.info;
               element.lastseen = timeDifference(json.info);
               if (
-                timeDifference(json.info).indexOf("d") !== -1 ||
-                timeDifference(json.info).indexOf(":") !== -1
+                element.lastseen.indexOf("d") !== -1 ||
+                element.lastseen.indexOf("h") !== -1
               ) {
-                //              element.color = "red";
-                //console.log(timeDifference(json.info));
-                //console.log(element.lastseen, element.nodeInfo);
+                element.statusColor = "DarkSlateBlue";
               }
             }
           });
@@ -851,57 +976,6 @@
       console.log("ERROR parse JSON", tmp);
     }
 
-    // функция получения времени с момента последнего сообщения
-    function timeDifference(endtime) {
-      //если дата timestamp
-      let date = new Date(+endtime);
-      if (date.getMinutes()) {
-        last = endtime;
-        //	console.log("1")
-      }
-      //если дата формат datetime'03.12.21 00:17:57'
-      if (endtime.indexOf(".") !== -1) {
-        endtime = endtime.split(".");
-        let newdate = endtime[1] + "," + endtime[0] + "," + endtime[2];
-        if (new Date(newdate)) {
-          last = new Date(newdate).getTime();
-          //	 			console.log("2")
-        }
-      } else {
-        //если дата формат datetime'2021-12-01T14:38:15'
-        if (Date.parse(endtime)) {
-          last = Date.parse(endtime);
-          //		console.log("3")
-        }
-      }
-      var difference = new Date().getTime() - last;
-      var daysDifference = Math.floor(difference / 1000 / 60 / 60 / 24);
-      difference -= daysDifference * 1000 * 60 * 60 * 24;
-      var hoursDifference = Math.floor(difference / 1000 / 60 / 60);
-      difference -= hoursDifference * 1000 * 60 * 60;
-      var minutesDifference = checkTime(Math.floor(difference / 1000 / 60));
-      function checkTime(i) {
-        return i < 10 ? "0" + i : i;
-      }
-      difference -= minutesDifference * 1000 * 60;
-      var secondsDifference = Math.floor(difference / 1000);
-      // console.log(difference);
-      if (difference) {
-        if (daysDifference > 0) {
-          return (difference =
-            daysDifference + " d " + hoursDifference + ":" + minutesDifference);
-        } else {
-          if (hoursDifference > 0) {
-            return (difference = hoursDifference + ":" + minutesDifference);
-          } else {
-            return (difference = minutesDifference + " min");
-          }
-        }
-      } else {
-        return (difference = endtime);
-      }
-    }
-    // --функция получения времени с момента последнего сообщения
     tmp = null;
     temp = null;
     json = null;
@@ -1013,23 +1087,25 @@ statusStyle = widget.statusStyle?widget.statusStyle:"" + " font-family:"+widget.
 	}
 			
 */
-
+    // console.log(widget);
     let color;
+
     if (typeof widget.descrColor == "object") {
-      Object.keys(widget.descrColor).forEach(function (key, i) {
+      widget.descrColor.forEach(function (key, i) {
         if (
-          key - 1 + 1 <= widget.status - 1 + 1 &&
+          key.level - 1 + 1 <= widget.status - 1 + 1 &&
           widget.status - 1 + 1 > -1 &&
-          key - 1 + 1 > -1
+          key.level - 1 + 1 > -1
         ) {
-          color = widget.descrColor[key];
+          color = key.value;
         }
+
         if (
-          key - 1 + 1 <= widget.status - 1 + 1 &&
+          key.level - 1 >= widget.status - 1 &&
           widget.status - 1 + 1 < 0 &&
-          key - 1 + 1 < 0
+          key.level - 1 < 0
         ) {
-          color = widget.descrColor[key];
+          color = key.value;
         }
       });
       descrStyle = widget.descrStyle
@@ -1054,24 +1130,23 @@ statusStyle = widget.statusStyle?widget.statusStyle:"" + " font-family:"+widget.
           widget.descrColor +
           ";";
     }
-    console.log(widget.statusColor);
+
     if (typeof widget.statusColor == "object") {
-      Object.keys(widget.statusColor).forEach(function (key, i) {
+      widget.statusColor.forEach(function (key, i) {
         if (
-          key - 1 + 1 <= widget.status - 1 + 1 &&
+          key.level - 1 + 1 <= widget.status - 1 + 1 &&
           widget.status - 1 + 1 > -1 &&
-          key - 1 + 1 > -1
+          key.level - 1 + 1 > -1
         ) {
-          color = widget.statusColor[key].value;
-          console.log("key ", key, color.value);
-          console.log(" widget.status ", widget.status);
+          color = key.value;
         }
+
         if (
-          key - 1 + 1 <= widget.status - 1 + 1 &&
+          key.level - 1 >= widget.status - 1 &&
           widget.status - 1 + 1 < 0 &&
-          key - 1 + 1 < 0
+          key.level - 1 < 0
         ) {
-          color = widget.statusColor[key];
+          color = key.value;
         }
       });
       statusStyle = widget.statusStyle
@@ -1094,7 +1169,7 @@ statusStyle = widget.statusStyle?widget.statusStyle:"" + " font-family:"+widget.
           widget.statusSize +
           "px; color: " +
           widget.statusColor +
-          ";";
+          "; ";
     }
 
     if (align === "left") {
@@ -1292,11 +1367,18 @@ statusStyle = widget.statusStyle?widget.statusStyle:"" + " font-family:"+widget.
 {/if}
 
 <div
-  style=" position: absolute;  z-index: 2; right: 20%; top: 0%; color:red"
+  style=" position: absolute;  z-index: 2; right: 20%; top: 0%;"
   on:click={toggleTheme}
   id="toggleTheme"
 >
   🔆
+</div>
+<div
+  style=" position: absolute;  z-index: 2; right: 35%; top: 0%; color:blue;"
+  on:click={showInfo}
+  id="toggleInfo"
+>
+  ℹ️
 </div>
 
 {#if connectionType == "MQTT"}
@@ -1438,37 +1520,61 @@ statusStyle = widget.statusStyle?widget.statusStyle:"" + " font-family:"+widget.
                   .toLowerCase()
                   .indexOf("-100") == -1 && widget.topic
                   .toLowerCase()
-                  .indexOf("-101") == -1}
+                  .indexOf("-101") == -1 && widget.topic
+                  .toLowerCase()
+                  .indexOf("linkquality") == -1 && widget.topic
+                  .toLowerCase()
+                  .indexOf("voltage") == -1}
                 <td>
                   <span style={setStyle(widget, "left")} id="lable{i}">
                     {widget.descr}
                     <!--    //==========================добавляем в виджет инфу о RSSI и Battary ============================================   -->
 
                     {#if widget.nodeInfo || widget.battery}
-                      <div
-                        class="letter"
-                        align="left"
-                        style="color: {!widget.nodeInfoColor
-                          ? 'gray'
-                          : widget.nodeInfoColor};font-family:{widget.descrFont}; font-size: {widget.descrSize *
-                          2}px;  "
-                      >
-                        {!widget.battery ? "" : "🔋"}{!widget.battery
-                          ? ""
-                          : widget.battery}
-                        {!widget.rssi ? "" : "📶"}{!widget.rssi
-                          ? ""
-                          : widget.rssi}
-                        {!widget.lastseen ? "" : "⏱"}
-                        {!widget.lastseen ? "" : widget.lastseen}
-                      </div>
+                      {#if Info == true}
+                        <div
+                          class="letter"
+                          align="left"
+                          style="color: {!widget.nodeInfoColor
+                            ? 'gray'
+                            : widget.nodeInfoColor};font-family:{widget.descrFont}; font-size: {widget.descrSize *
+                            2}px;  "
+                        >
+                          {!widget.battery ? "" : "🔋"}
+
+                          {#if widget.battery < 4}
+                            {!widget.battery ? "" : widget.battery}
+                          {:else if widget.battery < 10}
+                            <span style="color: red;">
+                              {!widget.battery ? "" : widget.battery}
+                            </span>
+                          {:else if widget.battery < 30}
+                            <span style="color: reoranged;">
+                              {!widget.battery ? "" : widget.battery}
+                            </span>
+                          {:else}
+                            <span style="color: green;">
+                              {!widget.battery ? "" : widget.battery}
+                            </span>
+                          {/if}
+                          {!widget.voltage ? "" : "⚡"}{!widget.voltage
+                            ? ""
+                            : widget.voltage}
+                          {!widget.rssi ? "" : "📶"}{!widget.rssi
+                            ? ""
+                            : widget.rssi}
+                          {!widget.lastseen ? "" : "⏱"}
+
+                          {!widget.lastseen ? "" : widget.lastseen}
+                        </div>
+                      {/if}
                     {/if}
 
                     <!--  //==========================//добавляем в виджет инфу о RSSI и Battary ============================================   -->
                     <!--Инфо от ноды mysens отображается под названием виджета-->
-                    {#if widget.nodeInfo}
-                      <!--  
-                    <div
+
+                    {#if widget.nodeInfo && nodeInfo == true}
+                      <div
                         class="letter"
                         align="left"
                         style="color: {!widget.nodeInfoColor
@@ -1476,9 +1582,8 @@ statusStyle = widget.statusStyle?widget.statusStyle:"" + " font-family:"+widget.
                           : widget.nodeInfoColor};font-family:{widget.descrFont}; font-size: {widget.descrSize /
                           2}px;  "
                       >
-                        {!widget.nodeInfo ? "" : widget.nodeInfo} 
-                      </div>   
-                    -->
+                        {!widget.nodeInfo ? "" : widget.nodeInfo}
+                      </div>
                     {/if}
                   </span>
                 </td>
