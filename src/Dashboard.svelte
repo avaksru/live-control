@@ -9,28 +9,34 @@
   let difference;
   let last;
   //----------------------settings-----------------------------------------
-
-  let nodeInfo = false;
   let Info = false;
+  let NewInfo = false;
   if (Cookies.get("showNew_info") == "true") {
-    nodeInfo = true;
-  } else {
-    nodeInfo = false;
-  }
-  if (Cookies.get("Info") == "true") {
     Info = true;
   } else {
     Info = false;
   }
+  if (Cookies.get("show_info") == "true") {
+    NewInfo = true;
+  } else {
+    NewInfo = false;
+  }
   function showInfo() {
-    if (Cookies.get("Info") == "true") {
+    if (Cookies.get("showNew_info") == "true") {
       Info = false;
-      //  nodeInfo = false;
-      Cookies.set("Info", "false", { expires: 365 });
+      Cookies.set("showNew_info", "false", { expires: 365 });
     } else {
       Info = true;
-      //  nodeInfo = true;
-      Cookies.set("Info", "true", { expires: 365 });
+      Cookies.set("showNew_info", "true", { expires: 365 });
+    }
+  }
+  function showNEWInfo() {
+    if (Cookies.get("show_info") == "true") {
+      NewInfo = false;
+      Cookies.set("show_info", "false", { expires: 365 });
+    } else {
+      NewInfo = true;
+      Cookies.set("show_info", "true", { expires: 365 });
     }
   }
   //----------------------settings-----------------------------------------
@@ -252,9 +258,8 @@
     const url = `${mqtt_options.servers[0].protocol}://${mqtt_options.servers[0].host}:${mqtt_options.servers[0].port}${mqtt_options.path}`;
 
     const onConnect = () => {
-      if (Cookies.get("enableMQTTcookies") == "true") {
-        Cookies.set("selectedMQTT", selected, { expires: 365 });
-      }
+      Cookies.set("selectedMQTT", selected, { expires: 365 });
+
       console.log(`MQTT connected ${url}`);
       connected = client.connected;
       const topic = selected.mqtt_prefix;
@@ -313,7 +318,10 @@
       },
     ];
 
-    if (Cookies.get("selectedMQTT")) {
+    if (
+      Cookies.get("selectedMQTT") &&
+      Cookies.get("enableMQTTcookies") == "true"
+    ) {
       selected = Cookies.get("selectedMQTT");
 
       try {
@@ -324,8 +332,6 @@
     } else {
       selected = MQTTconnections[0];
     }
-
-    //selected = MQTTconnections[0];
 
     MQTTChange();
 
@@ -1376,24 +1382,25 @@ statusStyle = widget.statusStyle?widget.statusStyle:"" + " font-family:"+widget.
 {/if}
 
 <div
-  style=" position: absolute;  z-index: 2; right: 20%; top: 0%;"
+  style=" position: absolute;  z-index: 2; right: 20%; top: 0%; cursor: pointer;"
   on:click={toggleTheme}
   id="toggleTheme"
 >
   🔆
 </div>
-<div
-  style=" position: absolute;  z-index: 2; right: 35%; top: 0%; color:blue;"
-  on:click={showInfo}
-  id="toggleInfo"
->
-  ℹ️
-</div>
-
+{#if Info == true}
+  <div
+    style=" position: absolute;  z-index: 2; right: 35%; top: 0%; color:blue; cursor: pointer;"
+    on:click={showNEWInfo}
+    id="toggleInfo"
+  >
+    ℹ️
+  </div>
+{/if}
 {#if connectionType == "MQTT"}
   {#if connected == false}
     <div
-      style=" position: absolute;  z-index: 2; right: 2%; top: 0%; color:red"
+      style=" position: absolute;  z-index: 2; right: 2%; top: 0%; color:red; cursor: pointer;"
       on:click={toggleTheme}
       id="layerMQTT"
     >
@@ -1408,7 +1415,7 @@ statusStyle = widget.statusStyle?widget.statusStyle:"" + " font-family:"+widget.
   {/if}
   {#if connected == true}
     <div
-      style=" position: absolute;  z-index: 2; right: 2%; top: 0%; color:green"
+      style=" position: absolute;  z-index: 2; right: 2%; top: 0%; color:green; cursor: pointer;"
       on:click={MQTTChange}
       id="layerMQTT"
     >
@@ -1516,7 +1523,43 @@ statusStyle = widget.statusStyle?widget.statusStyle:"" + " font-family:"+widget.
                   {/if}
                 </td>{/if}
               <!-- anydata -->
+              {#if widget.widget === "anydata" && Info == false}
+                <td>
+                  <span style={setStyle(widget, "left")} id="lable{i}">
+                    {widget.descr}
 
+                    {#if widget.nodeInfo && Info == false}
+                      <div
+                        class="letter"
+                        align="left"
+                        style="color: {!widget.nodeInfoColor
+                          ? 'gray'
+                          : widget.nodeInfoColor};font-family:{widget.descrFont}; font-size: {widget.descrSize /
+                          2}px;  "
+                      >
+                        {!widget.nodeInfo ? "" : widget.nodeInfo}
+                      </div>
+                    {/if}
+                  </span>
+                </td>
+                <td />
+                <td align="right" style="white-space: nowrap;">
+                  <!--если статус пустой-->
+                  {#if !widget.status}
+                    <span id="status{i}" style={setStyle(widget, "right")}>
+                      ...</span
+                    >
+                  {:else}
+                    <span id="status{i}" style={setStyle(widget, "right")}>
+                      {!widget.status ? "" : widget.status}{!widget.after
+                        ? ""
+                        : widget.after}
+                    </span>
+                  {/if}
+                </td>
+              {/if}
+
+              <!--    //======================добавляем в виджет инфу о RSSI и Battary =====================================   -->
               {#if widget.widget === "anydata" && widget.topic
                   .toLowerCase()
                   .indexOf("_rssi") == -1 && widget.topic
@@ -1533,14 +1576,13 @@ statusStyle = widget.statusStyle?widget.statusStyle:"" + " font-family:"+widget.
                   .toLowerCase()
                   .indexOf("linkquality") == -1 && widget.topic
                   .toLowerCase()
-                  .indexOf("voltage") == -1}
+                  .indexOf("voltage") == -1 && Info == true}
                 <td>
                   <span style={setStyle(widget, "left")} id="lable{i}">
                     {widget.descr}
-                    <!--    //==========================добавляем в виджет инфу о RSSI и Battary ============================================   -->
 
                     {#if widget.nodeInfo || widget.battery}
-                      {#if Info == true}
+                      {#if NewInfo == true}
                         <div
                           class="letter"
                           align="left"
@@ -1580,20 +1622,6 @@ statusStyle = widget.statusStyle?widget.statusStyle:"" + " font-family:"+widget.
                     {/if}
 
                     <!--  //==========================//добавляем в виджет инфу о RSSI и Battary ============================================   -->
-                    <!--Инфо от ноды mysens отображается под названием виджета-->
-
-                    {#if widget.nodeInfo && nodeInfo == true}
-                      <div
-                        class="letter"
-                        align="left"
-                        style="color: {!widget.nodeInfoColor
-                          ? 'gray'
-                          : widget.nodeInfoColor};font-family:{widget.descrFont}; font-size: {widget.descrSize /
-                          2}px;  "
-                      >
-                        {!widget.nodeInfo ? "" : widget.nodeInfo}
-                      </div>
-                    {/if}
                   </span>
                 </td>
                 <td />

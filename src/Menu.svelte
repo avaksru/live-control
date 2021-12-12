@@ -5,6 +5,13 @@
   let menuvisible = false;
   let settingsvisible = false;
   let mqttvisible = false;
+  let mqtt = Cookies.get("selectedMQTT");
+  let mqttEditEnable;
+  try {
+    mqtt = JSON.parse(mqtt);
+  } catch (e) {
+    console.log("Пустой selectedMQTT ", mqtt);
+  }
 
   function toggleTheme() {
     if (Cookies.get("darktheme") == "true") {
@@ -28,19 +35,29 @@
     if (Cookies.get("enableMQTTcookies") == "true") {
       Cookies.set("enableMQTTcookies", "false", { expires: 365 });
       Cookies.set("selectedMQTT", "", { expires: -365 });
+      mqttEditEnable = false;
     } else {
       Cookies.set("enableMQTTcookies", "true", { expires: 365 });
+      mqttEditEnable = true;
     }
   }
-  // показывать новый виджет info
+  // показать  новый виджет info
+  function show_info() {
+    if (Cookies.get("show_info") == "true") {
+      //Info = false;
+      Cookies.set("show_info", "false", { expires: 365 });
+    } else {
+      //Info = true;
+      Cookies.set("show_info", "true", { expires: 365 });
+    }
+  }
+  // использовать новый виджет info
   function showNew_info() {
     if (Cookies.get("showNew_info") == "true") {
-      // Info = false;
-      //  nodeInfo = false;
+      //Info = false;
       Cookies.set("showNew_info", "false", { expires: 365 });
     } else {
-      // Info = true;
-      //  nodeInfo = true;
+      //Info = true;
       Cookies.set("showNew_info", "true", { expires: 365 });
     }
   }
@@ -59,6 +76,9 @@
   let wsIP = Cookies.get("wsIP");
   function setwsIP() {
     Cookies.set("wsIP", wsIP, { expires: 365 });
+  }
+  function setMQTT() {
+    Cookies.set("selectedMQTT", mqtt, { expires: 365 });
   }
 </script>
 
@@ -215,10 +235,36 @@
         >
       </tr>
       <tr>
+        <td>Статус беспроводного датчика скрыть / показать</td>
+        <td>
+          {#if Cookies.get("show_info") == "true"}
+            <Toggle
+              on:toggle={() => show_info()}
+              style="float: right"
+              label=""
+              toggledColor="#6495ED"
+              untoggledColor="gray"
+              switchColor="#eee"
+            />
+          {:else}
+            <Toggle
+              on:toggle={() => show_info()}
+              style="float: right"
+              label=""
+              toggledColor="#6495ED"
+              untoggledColor="gray"
+              switchColor="#eee"
+              toggled=""
+            />
+          {/if}</td
+        >
+      </tr>
+      <tr>
         <td>Подключатся по WebSocket</td>
         <td>
           {#if Cookies.get("enableWS") == "true"}
             <Toggle
+              disabled
               on:toggle={() => enableWS()}
               style="float: right"
               label=""
@@ -228,6 +274,7 @@
             />
           {:else}
             <Toggle
+              disabled
               on:toggle={() => enableWS()}
               style="float: right"
               label=""
@@ -243,9 +290,9 @@
         <td>IP addres WebSocket</td>
         <td>
           <input
+            disabled
             type="text"
             id="id"
-            style="  width: 100%; height: calc(1.25rem + 2px);"
             bind:value={wsIP}
             on:change={setwsIP}
           /></td
@@ -257,7 +304,8 @@
         style="width: 75px;  display: flex;
         align-items: center;
         justify-content: center; height: calc(1.25rem + 2px);"
-        on:click={() => (settingsvisible = false)}>Закрыть</button
+        on:click={() => ((settingsvisible = false), window.location.reload())}
+        >Закрыть</button
       >
     </p>
   </div>
@@ -270,13 +318,103 @@
     id="settingsmenu"
   >
     <br /> <br />
-    mqtt
+    Запоминать последнее выбранное подключение
+
+    {#if Cookies.get("enableMQTTcookies") == "true"}
+      <Toggle
+        on:toggle={() => enableMQTTcookies()}
+        style="float: right"
+        label=""
+        toggledColor="#6495ED"
+        untoggledColor="gray"
+        switchColor="#eee"
+      />
+    {:else}
+      <Toggle
+        on:toggle={() => enableMQTTcookies()}
+        style="float: right"
+        label=""
+        toggledColor="#6495ED"
+        untoggledColor="gray"
+        switchColor="#eee"
+        toggled=""
+      />
+    {/if}
+    <br /> <br />
+
+    <!-- {JSON.stringify(mqtt)}-->
+    <input
+      hidden
+      type="text"
+      id="user_id"
+      bind:value={mqtt.user_id}
+      on:change={setMQTT}
+    />
+    <input
+      hidden
+      type="text"
+      id="mqtt_id"
+      bind:value={mqtt.mqtt_id}
+      on:change={setMQTT}
+    />
+
+    Connection_name
+    <input
+      type="text"
+      id="connection_name"
+      bind:value={mqtt.connection_name}
+      on:change={setMQTT}
+    />
+    MQTT server
+    <input
+      type="text"
+      id="mqtt_host"
+      bind:value={mqtt.mqtt_host}
+      on:change={setMQTT}
+    />
+    MQTT over WebSocket (WSS port)
+    <input
+      type="text"
+      id="mqtt_port"
+      bind:value={mqtt.mqtt_port}
+      on:change={setMQTT}
+    />
+    mqtt Prefix
+    <input
+      type="mqtt_prefix"
+      id="id"
+      bind:value={mqtt.mqtt_prefix}
+      on:change={setMQTT}
+    />
+    mqtt User
+    <input
+      type="text"
+      id="mqtt_username"
+      bind:value={mqtt.mqtt_username}
+      on:change={setMQTT}
+    />
+    mqtt Password
+    <input
+      type="text"
+      id="mqtt_password"
+      bind:value={mqtt.mqtt_password}
+      on:change={setMQTT}
+    />
+    mqtt Path
+    <input
+      type="text"
+      id="mqtt_path"
+      bind:value={mqtt.mqtt_path}
+      on:change={setMQTT}
+    />
+
     <p align="center">
       <button
         style="width: 75px;  display: flex;
       align-items: center;
       justify-content: center; height: calc(1.25rem + 2px);"
-        on:click={() => (mqttvisible = false)}>Закрыть</button
+        on:click={() => ((mqttvisible = false), window.location.reload())}
+        >Закрыть</button
       >
     </p>
   </div>
@@ -335,5 +473,11 @@
       width: 98%; /* Ширина слоя */
       height: 98%;
     }
+  }
+  input {
+    width: 100%;
+    height: calc(1.25rem + 2px);
+    background-color: #1d3040;
+    color: #bfc2c7;
   }
 </style>
