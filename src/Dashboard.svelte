@@ -9,9 +9,10 @@
   let difference;
   let last;
   //----------------------settings-----------------------------------------
+
   let nodeInfo = false;
   let Info = false;
-  if (Cookies.get("nodeInfo") == "true") {
+  if (Cookies.get("showNew_info") == "true") {
     nodeInfo = true;
   } else {
     nodeInfo = false;
@@ -107,19 +108,21 @@
     const dx = e.changedTouches[0].clientX - touchStart.x;
     const absDx = Math.abs(dx);
     //console.log(dx)
-    if (dx < 100) {
-      selectedTab = selectedTab + 1;
-      if (selectedTab > TabCount) {
-        selectedTab = 0;
+    if (Cookies.get("enableSwipe") == "true") {
+      if (dx < 100) {
+        selectedTab = selectedTab + 1;
+        if (selectedTab > TabCount) {
+          selectedTab = 0;
+        }
+        // console.log(selectedTab);
       }
-      // console.log(selectedTab);
-    }
-    if (dx > -100) {
-      selectedTab = selectedTab - 1;
-      if (selectedTab < 0) {
-        selectedTab = TabCount;
+      if (dx > -100) {
+        selectedTab = selectedTab - 1;
+        if (selectedTab < 0) {
+          selectedTab = TabCount;
+        }
+        //   console.log(selectedTab);
       }
-      //   console.log(selectedTab);
     }
     opacity = 100;
   }
@@ -127,7 +130,9 @@
     const dx = e.changedTouches[0].clientX - touchStart.x;
     const absDx = Math.abs(dx);
     //  console.log(absDx);
-    opacity = 100 / (absDx / 20);
+    if (Cookies.get("enableSwipe") == "true") {
+      opacity = 100 / (absDx / 20);
+    }
   }
 
   // -----------------------------------------------------
@@ -247,7 +252,9 @@
     const url = `${mqtt_options.servers[0].protocol}://${mqtt_options.servers[0].host}:${mqtt_options.servers[0].port}${mqtt_options.path}`;
 
     const onConnect = () => {
-      Cookies.set("selectedMQTT", selected, { expires: 365 });
+      if (Cookies.get("enableMQTTcookies") == "true") {
+        Cookies.set("selectedMQTT", selected, { expires: 365 });
+      }
       console.log(`MQTT connected ${url}`);
       connected = client.connected;
       const topic = selected.mqtt_prefix;
@@ -1307,6 +1314,7 @@ statusStyle = widget.statusStyle?widget.statusStyle:"" + " font-family:"+widget.
   on:touchstart={onTouchStart}
   on:touchend={onTouchEnd}
   on:touchmove={moveTouch} />
+
 <Menu />
 {#if connectionType == "MQTT"}
   {#if MQTTconnections[1]}

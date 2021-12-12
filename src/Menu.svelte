@@ -1,8 +1,65 @@
 <script>
   import { fade, fly } from "svelte/transition";
+  import Toggle from "svelte-toggle";
+  import Cookies, { get } from "js-cookie";
   let menuvisible = false;
   let settingsvisible = false;
   let mqttvisible = false;
+
+  function toggleTheme() {
+    if (Cookies.get("darktheme") == "true") {
+      Cookies.set("darktheme", "false", { expires: 365 });
+      window.document.body.classList.value = "light-mode";
+    } else {
+      Cookies.set("darktheme", "true", { expires: 365 });
+      window.document.body.classList.toggle("dark-mode");
+    }
+  }
+  // свайп
+  function enableSwipe() {
+    if (Cookies.get("enableSwipe") == "true") {
+      Cookies.set("enableSwipe", "false", { expires: 365 });
+    } else {
+      Cookies.set("enableSwipe", "true", { expires: 365 });
+    }
+  }
+  // сохранять MQTT в куки
+  function enableMQTTcookies() {
+    if (Cookies.get("enableMQTTcookies") == "true") {
+      Cookies.set("enableMQTTcookies", "false", { expires: 365 });
+      Cookies.set("selectedMQTT", "", { expires: -365 });
+    } else {
+      Cookies.set("enableMQTTcookies", "true", { expires: 365 });
+    }
+  }
+  // показывать новый виджет info
+  function showNew_info() {
+    if (Cookies.get("showNew_info") == "true") {
+      // Info = false;
+      //  nodeInfo = false;
+      Cookies.set("showNew_info", "false", { expires: 365 });
+    } else {
+      // Info = true;
+      //  nodeInfo = true;
+      Cookies.set("showNew_info", "true", { expires: 365 });
+    }
+  }
+  // использовать WS
+  function enableWS() {
+    if (Cookies.get("enableWS") == "true") {
+      //    Info = false;
+      //  nodeInfo = false;
+      Cookies.set("enableWS", "false", { expires: 365 });
+    } else {
+      //  Info = true;
+      //  nodeInfo = true;
+      Cookies.set("enableWS", "true", { expires: 365 });
+    }
+  }
+  let wsIP = Cookies.get("wsIP");
+  function setwsIP() {
+    Cookies.set("wsIP", wsIP, { expires: 365 });
+  }
 </script>
 
 <button
@@ -28,13 +85,13 @@
       <a style="color:grey" href="/"> На главную</a>
     </p>
     <p
-      style="margin-left: 15px;"
+      style="margin-left: 15px; cursor: pointer;"
       on:click={() => ((menuvisible = false), (settingsvisible = true))}
     >
       Настройки
     </p>
     <p
-      style="margin-left: 15px;"
+      style="margin-left: 15px; cursor: pointer;"
       on:click={() => ((menuvisible = false), (mqttvisible = true))}
     >
       MQTT
@@ -55,10 +112,153 @@
     id="settingsmenu"
   >
     <br /> <br />
-    settings
+
+    <table>
+      <tr>
+        <td>Тема светлая / темная</td>
+        <td>
+          {#if Cookies.get("darktheme") == "true"}
+            <Toggle
+              on:toggle={() => toggleTheme()}
+              style="float: right"
+              label=""
+              toggledColor="#6495ED"
+              untoggledColor="gray"
+              switchColor="#eee"
+            />
+          {:else}
+            <Toggle
+              on:toggle={() => toggleTheme()}
+              style="float: right"
+              label=""
+              toggledColor="#6495ED"
+              untoggledColor="gray"
+              switchColor="#eee"
+              toggled=""
+            />
+          {/if}
+        </td>
+      </tr>
+      <tr>
+        <td>Перелистывание страниц свайпом от края экрана </td>
+        <td>
+          {#if Cookies.get("enableSwipe") == "true"}
+            <Toggle
+              on:toggle={() => enableSwipe()}
+              style="float: right"
+              label=""
+              toggledColor="#6495ED"
+              untoggledColor="gray"
+              switchColor="#eee"
+            />
+          {:else}
+            <Toggle
+              on:toggle={() => enableSwipe()}
+              style="float: right"
+              label=""
+              toggledColor="#6495ED"
+              untoggledColor="gray"
+              switchColor="#eee"
+              toggled=""
+            />
+          {/if}</td
+        >
+      </tr>
+      <tr>
+        <td>Запоминать последнее выбранное подключение</td>
+        <td>
+          {#if Cookies.get("enableMQTTcookies") == "true"}
+            <Toggle
+              on:toggle={() => enableMQTTcookies()}
+              style="float: right"
+              label=""
+              toggledColor="#6495ED"
+              untoggledColor="gray"
+              switchColor="#eee"
+            />
+          {:else}
+            <Toggle
+              on:toggle={() => enableMQTTcookies()}
+              style="float: right"
+              label=""
+              toggledColor="#6495ED"
+              untoggledColor="gray"
+              switchColor="#eee"
+              toggled=""
+            />
+          {/if}</td
+        >
+      </tr>
+      <tr>
+        <td>Батарея, RSSI, last_seen в компактном виджете</td>
+        <td>
+          {#if Cookies.get("showNew_info") == "true"}
+            <Toggle
+              on:toggle={() => showNew_info()}
+              style="float: right"
+              label=""
+              toggledColor="#6495ED"
+              untoggledColor="gray"
+              switchColor="#eee"
+            />
+          {:else}
+            <Toggle
+              on:toggle={() => showNew_info()}
+              style="float: right"
+              label=""
+              toggledColor="#6495ED"
+              untoggledColor="gray"
+              switchColor="#eee"
+              toggled=""
+            />
+          {/if}</td
+        >
+      </tr>
+      <tr>
+        <td>Подключатся по WebSocket</td>
+        <td>
+          {#if Cookies.get("enableWS") == "true"}
+            <Toggle
+              on:toggle={() => enableWS()}
+              style="float: right"
+              label=""
+              toggledColor="#6495ED"
+              untoggledColor="gray"
+              switchColor="#eee"
+            />
+          {:else}
+            <Toggle
+              on:toggle={() => enableWS()}
+              style="float: right"
+              label=""
+              toggledColor="#6495ED"
+              untoggledColor="gray"
+              switchColor="#eee"
+              toggled=""
+            />
+          {/if}</td
+        >
+      </tr>
+      <tr>
+        <td>IP addres WebSocket</td>
+        <td>
+          <input
+            type="text"
+            id="id"
+            style="  width: 100%; height: calc(1.25rem + 2px);"
+            bind:value={wsIP}
+            on:change={setwsIP}
+          /></td
+        >
+      </tr>
+    </table>
     <p align="center">
-      <button on:click={() => (settingsvisible = false)}>Закрыть</button>
-      <button on:click={() => (settingsvisible = false)}>Сохранить</button>
+      <button
+        style="width: 75px;  display: flex;
+        align-items: center;
+        justify-content: center; height: calc(1.25rem + 2px);"
+        on:click={() => (settingsvisible = false)}>Закрыть</button
+      >
     </p>
   </div>
 {/if}
@@ -72,13 +272,21 @@
     <br /> <br />
     mqtt
     <p align="center">
-      <button on:click={() => (mqttvisible = false)}>Закрыть</button>
-      <button on:click={() => (mqttvisible = false)}>Сохранить</button>
+      <button
+        style="width: 75px;  display: flex;
+      align-items: center;
+      justify-content: center; height: calc(1.25rem + 2px);"
+        on:click={() => (mqttvisible = false)}>Закрыть</button
+      >
     </p>
   </div>
 {/if}
 
 <style>
+  table {
+    margin-left: 20px;
+  }
+
   #M_button {
     background-color: transparent;
     border-style: solid;
