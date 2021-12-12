@@ -4,6 +4,7 @@
   import Toggle from "svelte-toggle";
   import Chart from "svelte-frappe-charts";
   import Logo from "./Logo.svelte";
+  import Menu from "./Menu.svelte";
   import mqtt from "mqtt/dist/mqtt.min";
   let difference;
   let last;
@@ -1306,7 +1307,7 @@ statusStyle = widget.statusStyle?widget.statusStyle:"" + " font-family:"+widget.
   on:touchstart={onTouchStart}
   on:touchend={onTouchEnd}
   on:touchmove={moveTouch} />
-
+<Menu />
 {#if connectionType == "MQTT"}
   {#if MQTTconnections[1]}
     <form on:submit|preventDefault={MQTTChange}>
