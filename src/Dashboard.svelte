@@ -5,6 +5,11 @@
   import Chart from "svelte-frappe-charts";
   import Logo from "./Logo.svelte";
   import mqtt from "mqtt/dist/mqtt.min";
+  let connectionType = "WS";
+  let myip = document.location.hostname;
+  // ==на время разработки==
+  myip = "192.168.0.239";
+
   let difference;
   let last;
   //----------------------settings-----------------------------------------
@@ -152,7 +157,7 @@
     Cookies.set("selectedMQTT", "", { expires: -365 });
   }
   //секция переменных============================================
-  let myip = document.location.hostname;
+
   let configSetupJson = "{}";
   let espName = "IotManager";
   let chipID = "";
@@ -187,10 +192,7 @@
   let dataLine = [];
   // пропускаем первый тик графика для PZM
   let miss;
-  // ==на время разработки==
-  // myip = "192.168.36.108";
 
-  let connectionType = "MQTT";
   let client;
   let topic;
   let connected = false;

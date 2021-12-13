@@ -28,7 +28,7 @@
   }
 
   // ==на время разработки==
-  myip = "192.168.36.108";
+  // myip = "192.168.0.239";
 
   //changeConf(selected.mqttServer, "mqttServer", i);
 
@@ -830,9 +830,8 @@
         <tr>
           <td colspan="4" align="center"
             ><h4>
-              {Conf[i].name ? Conf[i].name : ""}{@html Conf[i].warning4
-                ? Conf[i].warning4
-                : ""}
+              {Conf[i].name ? Conf[i].name : ""}&nbsp;&nbsp;&nbsp;
+              {@html Conf[i].warning4 ? Conf[i].warning4 : ""}
             </h4></td
           >
         </tr>
@@ -1332,7 +1331,7 @@
             </Tooltip>
           </tr>
           <br />
-          <tr>
+          <!--  <tr>
             <td width="40%">Web dashbord over MQTT</td>
             <td>
               <form
@@ -1409,7 +1408,7 @@
 
                 {#if Conf[i].webMQTT == true}
                   <input type="submit" value="перейти на MQTT" />
-                  <!--<a href="{Cookies.get('urlMQTT')}" onclick="document.getElementById('mqttform').submit(); ">перейти на MQTT</a>-->
+                 // закомментируй <a href="{Cookies.get('urlMQTT')}" onclick="document.getElementById('mqttform').submit(); ">перейти на MQTT</a>
                   {(urlMQTT = Cookies.get("urlMQTT"))}
                 {/if}
               </form>
@@ -1419,7 +1418,7 @@
               ><td>?</td>
             </Tooltip>
           </tr>
-
+        -->
           <br /><br /><br /><br /><br />
 
           <!--MQTT2-->
