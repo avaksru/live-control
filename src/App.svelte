@@ -5,7 +5,6 @@
   // import Setup from "./Setup.svelte";
 </script>
 
-<a href="/">| | |</a> <br /><br />
 {#if mode == "Dashboard"}
   <Dashboard />
 {/if}
