@@ -6,10 +6,10 @@
   import Logo from "./Logo.svelte";
   import Menu from "./Menu.svelte";
   import mqtt from "mqtt/dist/mqtt.min";
-  let connectionType = "WS";
+  let connectionType = "MQTT";
   let myip = document.location.hostname;
   // ==на время разработки==
-  myip = "192.168.0.239";
+  //myip = "192.168.0.237";
 
   let difference;
   let last;
@@ -230,10 +230,6 @@
 
   // MQTT====================================================================
   function MQTTChange() {
-    wigets = [];
-    prefics = [];
-    pages = [];
-
     clientId += "_" + Math.floor(Math.random() * 10000);
     connected = false;
     const mqtt_options = {
@@ -248,9 +244,9 @@
       path: "" + selected.mqtt_path,
       protocolId: "MQTT",
       protocolVersion: 4,
-      keepalive: 30,
+      keepalive: 25,
       clean: true,
-      reconnectPeriod: 100000,
+      reconnectPeriod: 10000,
       connectTimeout: 30 * 1000,
       rejectUnauthorized: false,
     };
@@ -262,15 +258,21 @@
     const onConnect = () => {
       Cookies.set("selectedMQTT", selected, { expires: 365 });
 
-      console.log(`MQTT connected ${url}`);
+      console.log(new Date().toLocaleString() + ` MQTT connected ${url}`);
       connected = client.connected;
       const topic = selected.mqtt_prefix;
       client.subscribe(topic + "/#", function (err) {
         if (err) {
           console.error(err);
         } else {
-          console.log(`MQTT subscribed on topic '${topic}'`);
+          console.log(
+            new Date().toLocaleString() + ` MQTT subscribed on topic '${topic}'`
+          );
           client.publish(topic, "HELLO");
+          console.log("HELLO");
+          wigets = [];
+          prefics = [];
+          pages = [];
           //--------------Zigbee SLS gate---------------------
           client.publish(topic + "/bridge/config/devices/get", "");
           //--------------------------------------------------
@@ -291,19 +293,21 @@
     client.on("connect", onConnect);
     client.on("message", onMessage);
     client.on("error", (err) => {
-      console.log("MQTT", err);
+      console.log(new Date().toLocaleString() + " MQTT", err);
       client.end();
       connected = client.connected;
     });
     client.on("close", () => {
-      console.log("MQTT " + clientId + " disconnected");
+      console.log(
+        new Date().toLocaleString() + " MQTT " + clientId + " disconnected"
+      );
       connected = client.connected;
     });
   }
   let MQTTconnections;
   if (connectionType == "MQTT") {
     // ==на время разработки==
-    //  MQTTconnections = JSON.parse(MQTTconnections);
+    // MQTTconnections = JSON.parse(MQTTconnections);
 
     MQTTconnections = [
       {
@@ -363,7 +367,7 @@
         devices[0].status = true;
         connected = true;
         devices = devices;
-        console.log("WS CONNECTED! " + myip);
+        console.log(new Date().toLocaleString() + " WS CONNECTED! " + myip);
         // получаем "карту сети" по websocket
         socket[0].send("getNetworkMap");
         // получаем конфигурацию ESP по websocket
@@ -371,7 +375,10 @@
       });
       socket[0].addEventListener("message", function (event) {
         if (Cookies.get("consolelog") == "true") {
-          console.log("NEW data packet " + myip, event.data);
+          console.log(
+            new Date().toLocaleString() + " NEW data packet " + myip,
+            event.data
+          );
         }
         // запускаем обработку пришедшего сообщения
 
@@ -380,9 +387,11 @@
       // Обработка ошибок websocket
       socket[0].addEventListener("close", (event) => {
         if (item) {
-          console.log("ws close " + item.deviceIP);
+          console.log(
+            new Date().toLocaleString() + " ws close " + item.deviceIP
+          );
         } else {
-          console.log("ws close " + myip);
+          console.log(new Date().toLocaleString() + " ws close " + myip);
         }
         devices[0].status = false;
         connected = false;
@@ -390,9 +399,18 @@
       });
       socket[0].addEventListener("error", function (event) {
         if (item) {
-          console.log(item.deviceIP + " WebSocket error: ", event);
+          console.log(
+            new Date().toLocaleString() +
+              " " +
+              item.deviceIP +
+              " WebSocket error: ",
+            event
+          );
         } else {
-          console.log(myip + " WebSocket error: ", event);
+          console.log(
+            new Date().toLocaleString() + " " + myip + " WebSocket error: ",
+            event
+          );
         }
         devices[0].status = false;
         connected = false;
@@ -407,7 +425,7 @@
   function addConnection(devices) {
     if (devices) {
       devices.forEach(function (item, i, arr) {
-        console.log("trying connect", item);
+        console.log(new Date().toLocaleString() + " trying connect", item);
 
         // Create WebSocket connection.
         socket[i] = new WebSocket("ws://" + item.deviceIP + "/ws");
@@ -425,7 +443,10 @@
           // вывод отладочных сообщений в консоль
 
           if (Cookies.get("consolelog") == "true") {
-            console.log("NEW data packet " + item.deviceIP, event.data);
+            console.log(
+              new Date().toLocaleString() + " NEW data packet " + item.deviceIP,
+              event.data
+            );
           }
 
           // запускаем обработку пришедшего сообщения
@@ -434,14 +455,22 @@
         });
         // Обработка ошибок websocket
         socket[i].addEventListener("close", (event) => {
-          console.log("ws close " + item.deviceIP);
+          console.log(
+            new Date().toLocaleString() + " ws close " + item.deviceIP
+          );
           devices[i].status = false;
           connected = false;
           devices = devices;
           Shuttervisibil();
         });
         socket[i].addEventListener("error", function (event) {
-          console.log(item.deviceIP + " WebSocket error: ", event);
+          console.log(
+            new Date().toLocaleString() +
+              " " +
+              item.deviceIP +
+              " WebSocket error: ",
+            event
+          );
           devices[i].status = false;
           connected = false;
           devices = devices;
@@ -989,7 +1018,7 @@
         }
       });
     } catch (e) {
-      console.log("ERROR parse JSON", tmp);
+      //временно//   console.log(new Date().toLocaleString() + " ERROR parse JSON", tmp);
     }
 
     tmp = null;

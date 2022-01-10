@@ -22,8 +22,8 @@
     "svelte-swipe": "^1.8.1",
     "tinro": "^0.5.12",
     "webpack": "^5.35.0",
-    "webpack-cli": "^3.3.12",
-    "webpack-dev-server": "^3.11.2"
+    "webpack-cli": "^4.9.1",
+    "webpack-dev-server": "^4.7.1"
   },
   "dependencies": {
     "angular-gauge": "^4.0.0",

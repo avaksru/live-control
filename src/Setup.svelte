@@ -28,7 +28,7 @@
   }
 
   // ==на время разработки==
-  // myip = "192.168.0.239";
+  //myip = "192.168.0.236";
 
   //changeConf(selected.mqttServer, "mqttServer", i);
 

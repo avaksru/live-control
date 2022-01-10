@@ -110,12 +110,12 @@
     >
       Настройки
     </p>
-    <p
+    <!-- <p
       style="margin-left: 15px; cursor: pointer;"
       on:click={() => ((menuvisible = false), (mqttvisible = true))}
     >
       MQTT
-    </p>
+    </p> -->
     <br /><br />
     <p style="margin-left: 15px;" on:click={() => (menuvisible = false)}>
       <br /><a style="color:grey" href="https://live-control.ru"
@@ -440,11 +440,12 @@
     background-color: #002137;
     opacity: 0.7;
   }
+
   #leftmenu {
     position: absolute; /* Абсолютное позиционирование */
     left: 0; /* Положение левого края */
     top: 0; /* Положение верхнего края */
-    width: 25%; /* Ширина слоя */
+    width: 45%; /* Ширина слоя */
     height: 100%;
     background-image: linear-gradient(
       to right,
@@ -465,6 +466,7 @@
     color: gray; /* Цвет текста */
     border-radius: 5px; /* Уголки */
   }
+
   @media screen and (max-width: 650px) {
     #settingsmenu {
       position: absolute; /* Абсолютное позиционирование */
