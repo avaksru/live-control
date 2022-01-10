@@ -56,8 +56,8 @@
     //если дата timestamp
     let date = new Date(+endtime);
     if (date.getMinutes()) {
-      last = endtime;
-      // console.log("1", endtime);
+      last = endtime * 1000;
+      //console.log("1", endtime);
       //если дата формат datetime'03.12.21 00:17:57'
     } else if (endtime.indexOf(".") !== -1) {
       endtime = endtime.split(".");
@@ -568,7 +568,7 @@
               status: tmp[0][key] ? tmp[0][key] : "False",
               battery: tmp[0]["battery"],
               rssi: tmp[0]["linkquality"],
-              lastseen: timeDifference(tmp[0]["last_seen"] * 1000),
+              lastseen: timeDifference(tmp[0]["last_seen"]),
               // lastseen: tmp[0]["last_seen"],
               voltage: tmp[0]["voltage"],
               topic: topic + "_" + key,
@@ -862,6 +862,40 @@
                       )
                     ) {
                       wiriles_element.rssi = json.status;
+                      //   console.log(wiriles_element);
+                    }
+                  });
+                }
+                if (messegetopic.toLowerCase().indexOf("_linkquality") != -1) {
+                  wigets.forEach(function (wiriles_element) {
+                    if (
+                      wiriles_element.topic.substring(
+                        0,
+                        wiriles_element.topic.lastIndexOf("_")
+                      ) ===
+                      messegetopic.substring(
+                        0,
+                        messegetopic.toLowerCase().indexOf("_linkquality")
+                      )
+                    ) {
+                      wiriles_element.rssi = json.status;
+                      //console.log(wiriles_element);
+                    }
+                  });
+                }
+                if (messegetopic.toLowerCase().indexOf("_voltage") != -1) {
+                  wigets.forEach(function (wiriles_element) {
+                    if (
+                      wiriles_element.topic.substring(
+                        0,
+                        wiriles_element.topic.lastIndexOf("_")
+                      ) ===
+                      messegetopic.substring(
+                        0,
+                        messegetopic.toLowerCase().indexOf("_voltage")
+                      )
+                    ) {
+                      wiriles_element.voltage = json.status;
                       //   console.log(wiriles_element);
                     }
                   });
