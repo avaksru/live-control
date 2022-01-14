@@ -304,11 +304,11 @@
       connected = client.connected;
     });
   }
-  let MQTTconnections;
+  // let MQTTconnections;
   if (connectionType == "MQTT") {
     // ==на время разработки==
-    // MQTTconnections = JSON.parse(MQTTconnections);
-
+    MQTTconnections = JSON.parse(MQTTconnections);
+    /*
     MQTTconnections = [
       {
         user_id: "10000000",
@@ -316,14 +316,14 @@
         connection_protocol: "wss",
         mqtt_host: "live-control.ru",
         mqtt_port: "18883",
-        mqtt_prefix: "/demo",
+        mqtt_prefix: "/sls",
         mqtt_username: "IotManager:guest",
         mqtt_password: "guest",
         mqtt_path: "/ws",
         mqtt_id: "10000000",
       },
     ];
-
+*/
     if (
       Cookies.get("selectedMQTT") &&
       Cookies.get("enableMQTTcookies") == "true"
