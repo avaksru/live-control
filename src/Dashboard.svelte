@@ -9,18 +9,19 @@
   let difference;
   let last;
   //----------------------settings-----------------------------------------
-  let Info = false;
-  let NewInfo = false;
-  if (Cookies.get("showNew_info") != "true") {
+  let Info = true;
+  let NewInfo = true;
+  if (Cookies.get("showNew_info") === "false") {
     Info = false;
   } else {
     Info = true;
   }
-  if (Cookies.get("show_info") != "true") {
+  if (Cookies.get("show_info") === "false") {
     NewInfo = false;
   } else {
     NewInfo = true;
   }
+
   function showInfo() {
     if (Cookies.get("showNew_info") == "true") {
       Info = false;

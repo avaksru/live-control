@@ -212,7 +212,7 @@
       <tr>
         <td>Батарея, RSSI, last_seen в компактном виджете</td>
         <td>
-          {#if Cookies.get("showNew_info") == "true"}
+          {#if Cookies.get("showNew_info") === "false"}
             <Toggle
               on:toggle={() => showNew_info()}
               style="float: right"
@@ -220,6 +220,7 @@
               toggledColor="#6495ED"
               untoggledColor="gray"
               switchColor="#eee"
+              toggled=""
             />
           {:else}
             <Toggle
@@ -229,7 +230,6 @@
               toggledColor="#6495ED"
               untoggledColor="gray"
               switchColor="#eee"
-              toggled=""
             />
           {/if}</td
         >
@@ -237,7 +237,7 @@
       <tr>
         <td>Статус беспроводного датчика скрыть / показать</td>
         <td>
-          {#if Cookies.get("show_info") == "true"}
+          {#if Cookies.get("show_info") === "false"}
             <Toggle
               on:toggle={() => show_info()}
               style="float: right"
@@ -245,6 +245,7 @@
               toggledColor="#6495ED"
               untoggledColor="gray"
               switchColor="#eee"
+              toggled=""
             />
           {:else}
             <Toggle
@@ -254,7 +255,6 @@
               toggledColor="#6495ED"
               untoggledColor="gray"
               switchColor="#eee"
-              toggled=""
             />
           {/if}</td
         >
