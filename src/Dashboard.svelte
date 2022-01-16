@@ -11,15 +11,15 @@
   //----------------------settings-----------------------------------------
   let Info = false;
   let NewInfo = false;
-  if (Cookies.get("showNew_info") == "true") {
-    Info = true;
-  } else {
+  if (Cookies.get("showNew_info") != "true") {
     Info = false;
-  }
-  if (Cookies.get("show_info") == "true") {
-    NewInfo = true;
   } else {
+    Info = true;
+  }
+  if (Cookies.get("show_info") != "true") {
     NewInfo = false;
+  } else {
+    NewInfo = true;
   }
   function showInfo() {
     if (Cookies.get("showNew_info") == "true") {
