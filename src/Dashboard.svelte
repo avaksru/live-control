@@ -6,11 +6,6 @@
   import Logo from "./Logo.svelte";
   import Menu from "./Menu.svelte";
   import mqtt from "mqtt/dist/mqtt.min";
-  let connectionType = "MQTT";
-  let myip = document.location.hostname;
-  // ==на время разработки==
-  //myip = "192.168.0.237";
-
   let difference;
   let last;
   //----------------------settings-----------------------------------------
@@ -169,7 +164,7 @@
     Cookies.set("selectedMQTT", "", { expires: -365 });
   }
   //секция переменных============================================
-
+  let myip = document.location.hostname;
   let configSetupJson = "{}";
   let espName = "IotManager";
   let chipID = "";
@@ -192,6 +187,7 @@
   let socket = [];
   // декларируем массив для списка всех виджетов
   let wigets = [];
+
   // декларируем массив для списка всех страниц
   let pages = [];
   // декларируем массив для списка всех префиксов
@@ -204,6 +200,17 @@
   let dataLine = [];
   // пропускаем первый тик графика для PZM
   let miss;
+  // ==на время разработки==
+  // myip = "192.168.36.108";
+  let connectionType = "MQTT";
+
+  if (Cookies.get("enableWS") == "true" && Cookies.get("wsIP")) {
+    connectionType = "WS";
+    myip = Cookies.get("wsIP");
+    console.log(Cookies.get("enableWS"), Cookies.get("wsIP"));
+  } else {
+    connectionType = "MQTT";
+  }
 
   let client;
   let topic;
@@ -230,6 +237,11 @@
 
   // MQTT====================================================================
   function MQTTChange() {
+    wigets = [];
+    wigets = wigetsFromStartPage;
+    prefics = [];
+    pages = [];
+    findNewPage();
     clientId += "_" + Math.floor(Math.random() * 10000);
     connected = false;
     const mqtt_options = {
@@ -269,12 +281,9 @@
             new Date().toLocaleString() + ` MQTT subscribed on topic '${topic}'`
           );
           client.publish(topic, "HELLO");
-          console.log("HELLO");
-          wigets = [];
-          prefics = [];
-          pages = [];
           //--------------Zigbee SLS gate---------------------
           client.publish(topic + "/bridge/config/devices/get", "");
+
           //--------------------------------------------------
         }
       });
@@ -359,7 +368,7 @@
     );
     devices[0].id = 0;
     devices[0].status = false;
-    console.log("Подключаемся к WS на localhost ", devices);
+    console.log("Подключаемся к WS  ", devices);
     if (connectionType != "MQTT") {
       socket[0] = new WebSocket("ws://" + myip + "/ws");
       socket[0].addEventListener("open", function (event) {
@@ -480,12 +489,31 @@
     }
   }
   //console.log(devices);
+  // функция поиска новых страниц
+  function findNewPage() {
+    pages = [];
+    const newPage = Array.from(new Set(Array.from(wigets, ({ page }) => page)));
+
+    newPage.forEach(function (item, i, arr) {
+      pages = [...pages, JSON.parse(JSON.stringify({ page: item }))];
+    });
+
+    pages.sort(function (a, b) {
+      if (a.page < b.page) {
+        return -1;
+      }
+      if (a.page > b.page) {
+        return 1;
+      }
+      return 0;
+    });
+  }
 
   //обрабатываем пришедшее сообщение =====================================================================
   let count = 0;
   function addMessage(data, socket) {
     if (connectionType == "MQTT") {
-      // console.log("NEW data packet " + socket, data);
+      //   console.log("NEW data packet " + socket, data);
       topic = socket;
     }
 

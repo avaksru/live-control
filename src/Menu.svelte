@@ -110,12 +110,12 @@
     >
       Настройки
     </p>
-    <!-- <p
+    <p
       style="margin-left: 15px; cursor: pointer;"
       on:click={() => ((menuvisible = false), (mqttvisible = true))}
     >
       MQTT
-    </p> -->
+    </p>
     <br /><br />
     <p style="margin-left: 15px;" on:click={() => (menuvisible = false)}>
       <br /><a style="color:grey" href="https://live-control.ru"
@@ -260,7 +260,7 @@
         >
       </tr>
       <tr>
-        <td>Подключатся по WebSocket</td>
+        <td>Подключатся к заданному IP</td>
         <td>
           {#if Cookies.get("enableWS") == "true"}
             <Toggle
@@ -287,7 +287,7 @@
         >
       </tr>
       <tr>
-        <td>IP addres WebSocket</td>
+        <td>IP addres ESP</td>
         <td>
           <input
             disabled

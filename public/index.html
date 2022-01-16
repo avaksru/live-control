@@ -4,13 +4,55 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
 
-    <title>Live-Control v 0.3.1</title>
+    <title>Live-Control Portable v 0.3.6</title>
 
     <link rel="icon" type="image/png" href="/favicon.ico" />
     <link rel="stylesheet" href="/global.css" />
     <link rel="stylesheet" href="/build/bundle.css" />
 
     <script defer src="/build/bundle.js" onload="loadPage()"></script>
+    <script>
+      var MQTTconnections=[
+      {
+        user_id: "10000000",
+        connection_name: "тест 1",
+        connection_protocol: "wss",
+        mqtt_host: "live-control.ru",
+        mqtt_port: "18883",
+        mqtt_prefix: "/sls",
+        mqtt_username: "IotManager:guest",
+        mqtt_password: "guest",
+        mqtt_path: "/ws",
+        mqtt_id: "10000000",
+      }];
+      MQTTconnections=JSON.stringify(MQTTconnections);
+
+      var wigetsFromStartPage= [
+    {
+      "after": "",
+        "widget": "anydata",
+        "icon": "speedometer",
+        "page": "Виджеты из файла",
+        "order": "1",
+        "descr": "Виджет из файла uptime",
+        "topic": "/demo/1046360-1046360/upt",
+    },
+    {
+        "widget": "anydata",
+        "page": "Виджеты из файла",
+        "order": "2",
+        "descr": "IP",
+        "topic": "/demo/1046360-1046360/ip",
+    },
+    {
+        "widget": "anydata",
+        "page": "Виджеты из файла",
+        "order": "3",
+        "descr": "Время на устройстве",
+        "topic": "/demo/1046360-1046360/time",
+    }
+];
+      </script>
     <script>
          function get_cookie ( cookie_name ){
               var results = document.cookie.match ( '(^|;) ?' + cookie_name + '=([^;]*)(;|$)' );
