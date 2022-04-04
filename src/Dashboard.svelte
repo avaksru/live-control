@@ -954,6 +954,23 @@
                     }
                   });
                 }
+                if (messegetopic.toLowerCase().indexOf("_volt") != -1) {
+                  wigets.forEach(function (wiriles_element) {
+                    if (
+                      wiriles_element.topic.substring(
+                        0,
+                        wiriles_element.topic.lastIndexOf("_")
+                      ) ===
+                      messegetopic.substring(
+                        0,
+                        messegetopic.toLowerCase().indexOf("_volt")
+                      )
+                    ) {
+                      wiriles_element.voltage = json.status;
+                      //   console.log(wiriles_element);
+                    }
+                  });
+                }
 
                 if (messegetopic.toLowerCase().indexOf("_battery") != -1) {
                   wigets.forEach(function (wiriles_element) {
@@ -965,6 +982,24 @@
                       messegetopic.substring(
                         0,
                         messegetopic.toLowerCase().indexOf("_battery")
+                      )
+                    ) {
+                      wiriles_element.battery = json.status;
+                      // console.log(wiriles_element);
+                    }
+                  });
+                }
+
+                if (messegetopic.toLowerCase().indexOf("_batt") != -1) {
+                  wigets.forEach(function (wiriles_element) {
+                    if (
+                      wiriles_element.topic.substring(
+                        0,
+                        wiriles_element.topic.lastIndexOf("_")
+                      ) ==
+                      messegetopic.substring(
+                        0,
+                        messegetopic.toLowerCase().indexOf("_batt")
                       )
                     ) {
                       wiriles_element.battery = json.status;
@@ -1721,12 +1756,16 @@ statusStyle = widget.statusStyle?widget.statusStyle:"" + " font-family:"+widget.
                     .toLowerCase()
                     .indexOf("linkquality") == -1 && widget.topic
                     .toLowerCase()
+                    .indexOf("volt") == -1 && widget.topic
+                    .toLowerCase()
+                    .indexOf("batt") == -1 && widget.topic
+                    .toLowerCase()
                     .indexOf("voltage") == -1 && Info == true}
                   <td>
                     <span style={setStyle(widget, "left")} id="lable{i}">
                       {widget.descr}
 
-                      {#if widget.nodeInfo || widget.battery}
+                      {#if widget.nodeInfo || widget.rssi}
                         {#if NewInfo == true}
                           <div
                             class="letter"
