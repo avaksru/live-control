@@ -1754,13 +1754,13 @@ statusStyle = widget.statusStyle?widget.statusStyle:"" + " font-family:"+widget.
                     .toLowerCase()
                     .indexOf("-101") == -1 && widget.topic
                     .toLowerCase()
-                    .indexOf("linkquality") == -1 && widget.topic
+                    .indexOf("_linkquality") == -1 && widget.topic
                     .toLowerCase()
-                    .indexOf("volt") == -1 && widget.topic
+                    .indexOf("_volt") == -1 && widget.topic
                     .toLowerCase()
-                    .indexOf("batt") == -1 && widget.topic
+                    .indexOf("_batt") == -1 && widget.topic
                     .toLowerCase()
-                    .indexOf("voltage") == -1 && Info == true}
+                    .indexOf("_voltage") == -1 && Info == true}
                   <td>
                     <span style={setStyle(widget, "left")} id="lable{i}">
                       {widget.descr}
@@ -2207,14 +2207,18 @@ statusStyle = widget.statusStyle?widget.statusStyle:"" + " font-family:"+widget.
                   .toLowerCase()
                   .indexOf("-101") == -1 && widget.topic
                   .toLowerCase()
-                  .indexOf("linkquality") == -1 && widget.topic
+                  .indexOf("_linkquality") == -1 && widget.topic
                   .toLowerCase()
-                  .indexOf("voltage") == -1 && Info == true}
+                  .indexOf("_volt") == -1 && widget.topic
+                  .toLowerCase()
+                  .indexOf("_batt") == -1 && widget.topic
+                  .toLowerCase()
+                  .indexOf("_voltage") == -1 && Info == true}
                 <td>
                   <span style={setStyle(widget, "left")} id="lable{i}">
                     {widget.descr}
 
-                    {#if widget.nodeInfo || widget.battery}
+                    {#if widget.nodeInfo || widget.rssi}
                       {#if NewInfo == true}
                         <div
                           class="letter"
