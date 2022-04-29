@@ -289,7 +289,7 @@
           );
           client.publish(topic, "HELLO");
           //--------------Zigbee SLS gate---------------------
-          client.publish(topic + "/bridge/config/devices/get", "");
+          //client.publish(topic + "/bridge/config/devices/get", "");
 
           //--------------------------------------------------
         }
@@ -568,19 +568,7 @@
       tmp = JSON.parse(tmp);
 
       //--------------Zigbee SLS gate---------------------
-      /*  tmp = [
-        {
-          battery: 100,
-          illuminance: 123,
-          last_seen: 1638974524,
-          linkquality: 123,
-          occupancy: false,
-          occupancy_timeout: 60,
-          voltage: 3.04,
-          friendly_name: "",
-          model_name: "lumi.sensor_motion.aq2",
-        },
-      ];*/
+      /*  
       if (Array.isArray(tmp)) {
         let friendly_name = tmp[0].friendly_name;
         //console.log("friendly_name ", friendly_name);
@@ -655,26 +643,27 @@
           }
         }
       }
-      /*  let message = tmp[0].message;
-      message.forEach(function (json, i, array) {
-        let widget_name;
-        if (json.type === "EndDevice") {
-          if (json.friendly_name) {
-            widget_name = json.friendly_name;
-          } else {
-            widget_name = json.ieeeAddr;
-          }
-          let createWidget = {
-            widget: "anydata",
-            page: "zigbee SLS gate",
-            order: i,
-            descr: widget_name,
-            topic: json.ieeeAddr,
-          };
-          tmp = [...tmp, createWidget];
-        }
-      });
-*/
+      */
+      //      let message = tmp[0].message;
+      //    message.forEach(function (json, i, array) {
+      //      let widget_name;
+      //      if (json.type === "EndDevice") {
+      //        if (json.friendly_name) {
+      //          widget_name = json.friendly_name;
+      //        } else {
+      //          widget_name = json.ieeeAddr;
+      //        }
+      //        let createWidget = {
+      //          widget: "anydata",
+      //         page: "zigbee SLS gate",
+      //         order: i,
+      //          descr: widget_name,
+      //          topic: json.ieeeAddr,
+      //        };
+      //        tmp = [...tmp, createWidget];
+      //      }
+      //    });
+
       //----------//Zigbee SLS gate----------------------------------------
 
       tmp.forEach(function (json, i, array) {
@@ -1678,7 +1667,7 @@ statusStyle = widget.statusStyle?widget.statusStyle:"" + " font-family:"+widget.
                   <td />
 
                   <td>
-                    {#if widget.status == "1"}
+                    {#if widget.status == 1}
                       <span id="status{i}" style={setStyle(widget, "right")}>
                         <Toggle
                           on:toggle={WSpush(widget.socket, widget.topic, 0)}
@@ -2131,7 +2120,7 @@ statusStyle = widget.statusStyle?widget.statusStyle:"" + " font-family:"+widget.
                 <td />
 
                 <td>
-                  {#if widget.status == "1"}
+                  {#if widget.status == 1}
                     <span id="status{i}" style={setStyle(widget, "right")}>
                       <Toggle
                         on:toggle={WSpush(widget.socket, widget.topic, 0)}
