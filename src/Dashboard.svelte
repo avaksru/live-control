@@ -699,18 +699,25 @@
           });
 
           // Новый виджет дописываем в массив виджетов
-          if (!NewWiget) {
-            // дописываем виджету из какого сокета он получен
-            json.socket = socket;
-            // дописываем виджету префикс
-            json.prefics = getprefics(json.topic);
-            json.closed = true;
+          //   if (!NewWiget) {
+          // дописываем виджету из какого сокета он получен
+          json.socket = socket;
+          // дописываем виджету префикс
+          json.prefics = getprefics(json.topic);
+          json.closed = true;
 
-            wigets = [...wigets, json];
+          var top = json["topic"];
+          wigets.forEach(function (widg, i) {
+            if (widg["topic"] == json["topic"]) {
+              numbers.splice(i);
+              console.log(i, widg["topic"], json["topic"]);
+            }
+          });
+          wigets = [...wigets, json];
 
-            // сортируем
-            wigets.sort((a, b) => a.order - b.order);
-          }
+          // сортируем
+          wigets.sort((a, b) => a.order - b.order);
+          //      }
 
           // Дописываем новую страницу в массив страниц
           if (!NewPage) {
