@@ -709,8 +709,8 @@
           var top = json["topic"];
           wigets.forEach(function (widg, i) {
             if (widg["topic"] == json["topic"]) {
+              //удаляем старый виджет и вписываем новый
               numbers.splice(i);
-              console.log(i, widg["topic"], json["topic"]);
             }
           });
           wigets = [...wigets, json];
