@@ -675,7 +675,7 @@
           wigets.forEach(function (item, i, array) {
             if (json.topic == item.topic) {
               NewWiget = json.topic;
-              //	console.log("Нашли совпадение виджета");
+              //  console.log("Нашли совпадение виджета");
             }
           });
 
@@ -684,7 +684,7 @@
           pages.forEach(function (item, i, array) {
             if (json.page == item.page) {
               NewPage = json.page;
-              //	console.log("Нашли совпадение страницы");
+              //     console.log("Нашли совпадение страницы");
             }
           });
 
@@ -694,30 +694,38 @@
             let topic = getprefics(json.topic);
             if (topic == item.prefics) {
               NewPrefics = item.prefics;
-              //	console.log("Нашли совпадение префикса");
+              // console.log("Нашли совпадение префикса");
             }
           });
 
           // Новый виджет дописываем в массив виджетов
-          //   if (!NewWiget) {
-          // дописываем виджету из какого сокета он получен
-          json.socket = socket;
-          // дописываем виджету префикс
-          json.prefics = getprefics(json.topic);
-          json.closed = true;
-
+          if (!NewWiget) {
+            // дописываем виджету из какого сокета он получен
+            json.socket = socket;
+            // дописываем виджету префикс
+            json.prefics = getprefics(json.topic);
+            json.closed = true;
+            wigets = [...wigets, json];
+          }
           var top = json["topic"];
+
           wigets.forEach(function (widg, i) {
-            if (widg["topic"] == json["topic"]) {
+            if (widg["topic"] === json["topic"]) {
               //удаляем старый виджет и вписываем новый
-              numbers.splice(i);
+              //wigets.splice(i);
+              //delete wigets[i];
+              for (var key in json) {
+                //  console.log("key " + key + " has value " + json[key]);
+                wigets[i][key] = json[key];
+                //console.log(wigets[i][key]);
+              }
+            } else {
             }
           });
-          wigets = [...wigets, json];
 
+          // console.log(wigets);
           // сортируем
           wigets.sort((a, b) => a.order - b.order);
-          //      }
 
           // Дописываем новую страницу в массив страниц
           if (!NewPage) {
@@ -1221,10 +1229,11 @@
     let descrStyle;
     let statusStyle;
     // если есть color проверяем наличие statusColor
-    if (widget.color != "" && !widget.statusColor) {
+    //  if (widget.color != "" && !widget.statusColor) {
+    if (widget.color != "" && widget.color) {
       widget.statusColor = widget.color;
     }
-    if (widget.font != "" && !widget.statusFont) {
+    if (widget.font != "" && widget.font) {
       widget.statusFont = widget.font;
     }
 
