@@ -1,6 +1,6 @@
 # LiveControl
 
-DEMO https://live-control.ru/demo
+DEMO https://live-control.com/demo
 
 Телеграм канал https://t.me/live_control
 
