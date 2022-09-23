@@ -15,11 +15,22 @@
       var MQTTconnections=[
       {
         user_id: "10000000",
-        connection_name: "тест 1",
+        connection_name: "demo",
         connection_protocol: "wss",
         mqtt_host: "live-control.com",
         mqtt_port: "18883",
         mqtt_prefix: "/demo",
+        mqtt_username: "guest",
+        mqtt_password: "guest",
+        mqtt_path: "/ws",
+        mqtt_id: "10000000",
+      }, {
+        user_id: "10000000",
+        connection_name: "IotManager",
+        connection_protocol: "wss",
+        mqtt_host: "live-control.com",
+        mqtt_port: "18883",
+        mqtt_prefix: "/IotManager",
         mqtt_username: "IotManager:guest",
         mqtt_password: "guest",
         mqtt_path: "/ws",

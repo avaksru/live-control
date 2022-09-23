@@ -1494,12 +1494,23 @@ statusStyle = widget.statusStyle?widget.statusStyle:"" + " font-family:"+widget.
   on:touchstart={onTouchStart}
   on:touchend={onTouchEnd}
   on:touchmove={moveTouch} />
-
+<!--
 <Menu />
+-->
 {#if connectionType == "MQTT"}
   {#if MQTTconnections[1]}
     <form on:submit|preventDefault={MQTTChange}>
-      <select bind:value={selected} on:change={MQTTChange}>
+      <select
+        bind:value={selected}
+        on:change={MQTTChange}
+        style="  position: absolute;
+        top: 0%;
+        height:30px !important;
+        border: 1px solid #ABADB3;
+        margin: 0;
+        padding: 0 0 0 0;
+        font-size:14px;"
+      >
         {#each MQTTconnections as MQTTconnection}
           {#if MQTTconnection.connection_name == selected.connection_name}
             <option selected value={MQTTconnection}>
@@ -1554,7 +1565,7 @@ statusStyle = widget.statusStyle?widget.statusStyle:"" + " font-family:"+widget.
     </span>
   </div>
 {/if}
-
+<!--
 <div
   style=" position: absolute;  z-index: 2; right: 15%; top: 0%; cursor: pointer;"
   on:click={toggleCard}
@@ -1562,7 +1573,7 @@ statusStyle = widget.statusStyle?widget.statusStyle:"" + " font-family:"+widget.
 >
   📝
 </div>
-
+-->
 <div
   style=" position: absolute;  z-index: 2; right: 20%; top: 0%; cursor: pointer;"
   on:click={toggleTheme}
@@ -1570,6 +1581,7 @@ statusStyle = widget.statusStyle?widget.statusStyle:"" + " font-family:"+widget.
 >
   🔆
 </div>
+<!--
 {#if Info == true}
   <div
     style=" position: absolute;  z-index: 2; right: 35%; top: 0%; color:blue; cursor: pointer;"
@@ -1579,11 +1591,12 @@ statusStyle = widget.statusStyle?widget.statusStyle:"" + " font-family:"+widget.
     ℹ️
   </div>
 {/if}
+-->
 {#if connectionType == "MQTT"}
   {#if connected == false}
     <div
       style=" position: absolute;  z-index: 2; right: 2%; top: 0%; color:red; cursor: pointer;"
-      on:click={toggleTheme}
+      on:click={MQTTChange}
       id="layerMQTT"
     >
       MQTT
@@ -1637,6 +1650,7 @@ statusStyle = widget.statusStyle?widget.statusStyle:"" + " font-family:"+widget.
 {/if}
 
 <!--закончили селектор префиксов -->
+<br />
 
 {#if !pages[0]}
   <p align="center"><Logo /></p>
