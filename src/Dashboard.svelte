@@ -1996,7 +1996,7 @@ statusStyle = widget.statusStyle?widget.statusStyle:"" + " font-family:"+widget.
                         -->
                       <span id="status{i}" style={setStyle(widget, "centr")}>
                         
-                        <div style="padding-left: 20px; padding-right: 20px">
+                        <div style="padding-left: 15px; padding-right: 10px">
                           <ChartJS element={widget} />
                   </div>  
 

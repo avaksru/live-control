@@ -85,20 +85,24 @@ let dataLine = [];
 let monthStat = [];
 //console.log (JSON.stringify(element));
 let    temp 
+let prevStatus = {};
+
 
 $: element, collectDataToArr();
 
 function collectDataToArr() {
 
+  let firstTime = true;
+
+
+    try {
+//     if (prevStatus !== element.status){        
+//      prevStatus = element.status;
 
   dataLine =[];  
   graf_val = [];
   graf_time = [];
-  temp = element.status;
-  
-    try {
-             
-              
+  temp = element.status; 
             // обнуляем статистикупо месяцам
         monthStat = [
                     {
@@ -117,11 +121,13 @@ function collectDataToArr() {
                       "12": 0,
                     },
                   ];
-
+                 
 	
 	
                   temp.forEach(function (item, i, arr) {
-                   
+                    if (!firstTime  ) {
+                     
+                  //    console.log(item)
                       // получаем время
               let        date = new Date(item.x * 1000);
               let       hours = date.getHours();
@@ -147,7 +153,10 @@ function collectDataToArr() {
                         ];
                   graf_val = [...graf_val, item.y1];
                   
-                  });
+                
+                 }  
+                 firstTime = false;
+                });
                  
                   let grafpointRadius;
                   if (element.pointRadius == "0") {
@@ -174,12 +183,14 @@ function collectDataToArr() {
                         pointRadius: grafpointRadius,
 												borderColor: grafborderColor,
                         borderWidth: 2, 
+                        
                         cubicInterpolationMode: "monotone",
                         data: graf_val,
                       },
                     ],
                   };
-                } catch (e) {
+   //            }
+               } catch (e) {
                   console.log(
                     "полученные данные для графика содержат ошибки",
                     element
