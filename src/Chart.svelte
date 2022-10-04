@@ -124,15 +124,15 @@ function collectDataToArr() {
                  
 	
 	
-                  temp.forEach(function (item, i, arr) {
-                    if (!firstTime  ) {
+              temp.forEach(function (item, i, arr) {
+              if (!firstTime  ) {
                      
                   //    console.log(item)
                       // получаем время
-              let        date = new Date(item.x * 1000);
-              let       hours = date.getHours();
-              let       minutes = checkTime(date.getMinutes());
-                      function checkTime(i) {
+              let  date = new Date(item.x * 1000);
+              let  hours = date.getHours();
+              let  minutes = checkTime(date.getMinutes());
+              function checkTime(i) {
                         return i < 10 ? "0" + i : i;
                       }
               let days = ["Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"];
@@ -140,13 +140,13 @@ function collectDataToArr() {
               let day = date.getDate();
               let month = checkTime(date.getMonth() + 1);
 // заполняем статистику суточного потребления по месяцам
-                      if (element.type == "bar") {
-                        monthStat[0][month] = monthStat[0][month] + item.y1;
-                        try {
+              if (element.type == "bar") {
+              monthStat[0][month] = monthStat[0][month] + item.y1;
+              try {
                           if (i > temp.length - 30) {
                             monthStat[0]["00"] = monthStat[0]["00"] + item.y1;
                           }
-                        } catch (e) {}
+              } catch (e) {}
                       }
                   graf_time = [
                           ...graf_time, new Date(item.x*1000),
@@ -171,7 +171,7 @@ function collectDataToArr() {
                if (element.type == "bar") {
                 grafbackgroundColor = grafborderColor;
                }
-         dataLine = {
+            dataLine = {
                     labels: graf_time,
                     datasets: [											
                       {   
@@ -211,7 +211,7 @@ function collectDataToArr() {
 
 </script>
 {#if element.type == "bar"}
-<div style="height: 400px">
+<div style="height: 350px">
 <Bar data={dataLine} options={options} />
 </div><br>
 
@@ -265,7 +265,7 @@ function collectDataToArr() {
 {/if}
 
 {:else}
-<div style="height: 400px">
+<div style="height: 350px">
   <Line data={dataLine} options={options} />
 </div><br>
 
