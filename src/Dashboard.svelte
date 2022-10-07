@@ -797,7 +797,14 @@
               }
           
               // сортируем временные метки графика
-             
+              function uniqBy(a, key) {
+    var seen = {};
+    return a.filter(function(item) {
+        var k = key(item);
+        return seen.hasOwnProperty(k) ? false : (seen[k] = true);
+    })
+}
+element.status = uniqBy( element.status, JSON.stringify)
              
               element.status.sort(function (a, b) {
   if (a.x < b.x) {
