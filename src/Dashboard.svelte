@@ -1796,11 +1796,41 @@ statusStyle = widget.statusStyle?widget.statusStyle:"" + " font-family:"+widget.
                       ...</span
                     >
                   {:else}
+                  
+
+
+                  {#if widget.topic.indexOf('weatherCode') > -1}
+                  <span id="status{i}" style={setStyle(widget, "right")}>
+                    {#if widget.status=="113"}                                      
+                    <img src="pic/w1.jpg" >
+                    {:else if widget.status=="116"}
+                    <img src="pic/w2.jpg" >
+                    {:else if widget.status=="119" || widget.status=="122" || widget.status=="143" }
+                    <img src="pic/w4.jpg" >
+                    {:else if widget.status=="179" || widget.status=="182" || widget.status=="185" || widget.status=="311" || widget.status=="314" || widget.status=="317" || widget.status=="320" || widget.status=="362" || widget.status=="365" || widget.status=="368" || widget.status=="377" }
+                    <img src="pic/w5.jpg" >
+                    {:else if widget.status=="323" || widget.status=="326"}
+                    <img src="pic/w6.jpg" >
+                    {:else if widget.status=="176" || widget.status=="263" || widget.status=="266" || widget.status=="293" || widget.status=="296" }
+                    <img src="pic/w7.jpg" >
+                    {:else if widget.status=="248" || widget.status=="260" || widget.status=="299" || widget.status=="302" || widget.status=="305" || widget.status=="308" || widget.status=="356" || widget.status=="359"}
+                    <img src="pic/w8.jpg" >
+                    {:else if widget.status=="200" || widget.status=="227" || widget.status=="374" || widget.status=="386" || widget.status=="389" || widget.status=="392" }
+                    <img src="pic/w9.jpg" >
+                    {:else }
+                    <img src="pic/w0.jpg" >
+                    {/if}
+                  
+                  </span>
+                  {:else}
                     <span id="status{i}" style={setStyle(widget, "right")}>
                       {!widget.status ? "" : widget.status}{!widget.after
                         ? ""
                         : widget.after}
                     </span>
+                  
+                    {/if}
+
                   {/if}
                 </td>
               {/if}
