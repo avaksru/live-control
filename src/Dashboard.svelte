@@ -759,6 +759,26 @@
         }
         // закончили сбор виджетов
 
+        // если в статусе передан новый ключ добавляем его в виджет
+     if (!json.status) {
+          // ищем виджет к которому относится цвет INFO
+          wigets.forEach(function (element) {
+            //отличие MQTT и WS========================================================!!!!!!!!!!!!!!
+            let messegetopic;
+            if (connectionType === "MQTT") {
+              messegetopic = topic.replace("/status", "");
+            } else {
+              messegetopic = json.topic.replace("/status", "");
+            }
+            // ========================================================================
+            if (element.topic == messegetopic) {
+              for (const [key, value] of Object.entries(json)) {
+            element[key] = value;
+            }
+            }
+          });
+        }
+        
         // если новое сообщение статус
         if (json.status) {
           // ищем виджет к которому относится этот статус
