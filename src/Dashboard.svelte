@@ -53,24 +53,27 @@
     //если дата timestamp
     let date = new Date(+endtime);
     if (date.getMinutes()) {
-      last = (endtime * 1000)-30000 ;
-      //console.log("1", endtime);
+      last = endtime * 1000;
+     // console.log("1", endtime);
       //если дата формат datetime'03.12.21 00:17:57'
     } else if (endtime.indexOf(".") !== -1) {
       endtime = endtime.split(".");
       let newdate = endtime[1] + "," + endtime[0] + "," + endtime[2];
       if (new Date(newdate)) {
         last = new Date(newdate).getTime();
-        //  console.log("2", endtime);
+      //  console.log("2", endtime);
       }
     } else {
       //если дата формат datetime'2021-12-01T14:38:15'
       if (Date.parse(endtime)) {
         last = Date.parse(endtime);
-        //  console.log("3".endtime);
+    //    console.log("3", endtime);
       }
     }
-    var difference = new Date().getTime() - last;
+    let now_time = new Date().getTime();
+    if ( now_time - last >=0){
+    var difference = now_time - last;
+    } else {difference = 0; }
     var daysDifference = Math.floor(difference / 1000 / 60 / 60 / 24);
     difference -= daysDifference * 1000 * 60 * 60 * 24;
     var hoursDifference = Math.floor(difference / 1000 / 60 / 60);
