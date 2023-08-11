@@ -1,6 +1,6 @@
 <script>
   import { onMount } from "svelte";
-  import Cookies from 'js-cookie'
+  import Cookies from "js-cookie";
   import Toggle from "svelte-toggle";
   import Logo from "./Logo.svelte";
   //import Menu from "./Menu.svelte";
@@ -53,7 +53,7 @@
     //если дата timestamp
     let date = new Date(+endtime);
     if (date.getMinutes()) {
-      last = endtime * 1000;
+      last = (endtime * 1000)-30000 ;
       //console.log("1", endtime);
       //если дата формат datetime'03.12.21 00:17:57'
     } else if (endtime.indexOf(".") !== -1) {
@@ -595,11 +595,11 @@
             } else if (key === "occupancy") {
               descr = descr + "🏃🏼";
             } else if (key === "occupancy_timeout") {
-              descr = descr + "⏱";
+              descr = descr + "🕐";
             } else if (key === "trSeqNum") {
               descr = descr + "🛠";
             } else if (key === "last_seen") {
-              descr = descr + "⏱";
+              descr = descr + "🕐";
             }
 
             let createWidget = {
@@ -760,7 +760,7 @@
         // закончили сбор виджетов
 
         // если в статусе передан новый ключ добавляем его в виджет
-     if (!json.status) {
+        if (!json.status) {
           // ищем виджет к которому относится цвет INFO
           wigets.forEach(function (element) {
             //отличие MQTT и WS========================================================!!!!!!!!!!!!!!
@@ -773,12 +773,12 @@
             // ========================================================================
             if (element.topic == messegetopic) {
               for (const [key, value] of Object.entries(json)) {
-            element[key] = value;
-            }
+                element[key] = value;
+              }
             }
           });
         }
-        
+
         // если новое сообщение статус
         if (json.status) {
           // ищем виджет к которому относится этот статус
@@ -793,55 +793,48 @@
             //============================================//отличие MQTT и WS============================================
 
             if (element.topic == messegetopic) {
-           // если получен статус график
+              // если получен статус график
 
-           if (element.widget == "chart") {
-            
-                
-            if (!element.status) {
-                // архив графика отсутсутствует, то создаем статус и заполняем
-              element.status = json.status;
-           //   console.log(" новое",json.status);
-              } else {
-              
-             //   console.log(" дописываем новые значения к имеющимся",json.status);
-              
-                element.status.push.apply(element.status, json.status);
-              /*
+              if (element.widget == "chart") {
+                if (!element.status) {
+                  // архив графика отсутсутствует, то создаем статус и заполняем
+                  element.status = json.status;
+                  //   console.log(" новое",json.status);
+                } else {
+                  //   console.log(" дописываем новые значения к имеющимся",json.status);
+
+                  element.status.push.apply(element.status, json.status);
+                  /*
                 element.status = [
                   ...element.status[0],
                 json.status,
                 ];
               */
-          
-              }
-          
-              // сортируем временные метки графика
-              function uniqBy(a, key) {
-    var seen = {};
-    return a.filter(function(item) {
-        var k = key(item);
-        return seen.hasOwnProperty(k) ? false : (seen[k] = true);
-    })
-}
-element.status = uniqBy( element.status, JSON.stringify)
-             
-              element.status.sort(function (a, b) {
-  if (a.x < b.x) {
-    return -1;
-  }
-  if (a.x > b.x) {
-    return 1;
-  }
-  return 0;
-});
+                }
 
-// console.log (element.status)
-             
-            
-          
+                // сортируем временные метки графика
+                function uniqBy(a, key) {
+                  var seen = {};
+                  return a.filter(function (item) {
+                    var k = key(item);
+                    return seen.hasOwnProperty(k) ? false : (seen[k] = true);
+                  });
+                }
+                element.status = uniqBy(element.status, JSON.stringify);
 
-          /*  
+                element.status.sort(function (a, b) {
+                  if (a.x < b.x) {
+                    return -1;
+                  }
+                  if (a.x > b.x) {
+                    return 1;
+                  }
+                  return 0;
+                });
+
+                // console.log (element.status)
+
+                /*  
           //два графика в одном / пока работает криво только для WS	, надо делать
             if (connectionType === "MQTT") {
               if (topic.includes("_1/status")) {
@@ -853,9 +846,9 @@ element.status = uniqBy( element.status, JSON.stringify)
               }
             } 
 */
-          }
-          
-          // данные для прочих витжетов	(заменяем статус на новый)
+              }
+
+              // данные для прочих витжетов	(заменяем статус на новый)
               else {
                 element.status = json.status;
                 element.send = false;
@@ -1158,45 +1151,41 @@ element.status = uniqBy( element.status, JSON.stringify)
     }
   }
 
-// запрос графика за N дней
-function GetChart(ws, uri, days)
-{
-//console.log(ws,uri, days)
-var date = new Date();
-//date.setDate(date.getDate() + 1);
+  // запрос графика за N дней
+  function GetChart(ws, uri, days) {
+    //console.log(ws,uri, days)
+    var date = new Date();
+    //date.setDate(date.getDate() + 1);
 
-if (days == 1 ){
-  WSpush(ws, uri, formatDate(date.setDate(date.getDate() - 1)));
-  WSpush(ws, uri, formatDate(date.setDate(date.getDate() + 1)));
-}
-if (days == 3 ){
-  WSpush(ws, uri, formatDate(date.setDate(date.getDate() - 3)));
-  WSpush(ws, uri, formatDate(date.setDate(date.getDate() + 1)));
-  WSpush(ws, uri, formatDate(date.setDate(date.getDate() + 1)));
-  WSpush(ws, uri, formatDate(date.setDate(date.getDate() + 1)));
-}
-if (days == 5 ){
-  WSpush(ws, uri, formatDate(date.setDate(date.getDate() - 5)));
-  WSpush(ws, uri, formatDate(date.setDate(date.getDate() + 1)));
-  WSpush(ws, uri, formatDate(date.setDate(date.getDate() + 1)));
-  WSpush(ws, uri, formatDate(date.setDate(date.getDate() + 1)));
-  WSpush(ws, uri, formatDate(date.setDate(date.getDate() + 1)));
-  WSpush(ws, uri, formatDate(date.setDate(date.getDate() + 1)));
-}
-}
-function formatDate(date) {
+    if (days == 1) {
+      WSpush(ws, uri, formatDate(date.setDate(date.getDate() - 1)));
+      WSpush(ws, uri, formatDate(date.setDate(date.getDate() + 1)));
+    }
+    if (days == 3) {
+      WSpush(ws, uri, formatDate(date.setDate(date.getDate() - 3)));
+      WSpush(ws, uri, formatDate(date.setDate(date.getDate() + 1)));
+      WSpush(ws, uri, formatDate(date.setDate(date.getDate() + 1)));
+      WSpush(ws, uri, formatDate(date.setDate(date.getDate() + 1)));
+    }
+    if (days == 5) {
+      WSpush(ws, uri, formatDate(date.setDate(date.getDate() - 5)));
+      WSpush(ws, uri, formatDate(date.setDate(date.getDate() + 1)));
+      WSpush(ws, uri, formatDate(date.setDate(date.getDate() + 1)));
+      WSpush(ws, uri, formatDate(date.setDate(date.getDate() + 1)));
+      WSpush(ws, uri, formatDate(date.setDate(date.getDate() + 1)));
+      WSpush(ws, uri, formatDate(date.setDate(date.getDate() + 1)));
+    }
+  }
+  function formatDate(date) {
     var d = new Date(date),
-        month = '' + (d.getMonth() + 1),
-        day = '' + d.getDate(),
-        year = d.getFullYear();
+      month = "" + (d.getMonth() + 1),
+      day = "" + d.getDate(),
+      year = d.getFullYear();
 
-    if (month.length < 2) 
-        month = '0' + month;
-    if (day.length < 2) 
-        day = '0' + day;
-    return [day, month, year].join('.');
-}
-
+    if (month.length < 2) month = "0" + month;
+    if (day.length < 2) day = "0" + day;
+    return [day, month, year].join(".");
+  }
 
   let StartPosition = 10;
   function setStartPosition() {
@@ -1483,12 +1472,11 @@ statusStyle = widget.statusStyle?widget.statusStyle:"" + " font-family:"+widget.
   type="text/css"
 />
 
-
-
 <svelte:body
   on:touchstart={onTouchStart}
   on:touchend={onTouchEnd}
-  on:touchmove={moveTouch} />
+  on:touchmove={moveTouch}
+/>
 <!--
 <Menu />
 -->
@@ -1654,7 +1642,6 @@ statusStyle = widget.statusStyle?widget.statusStyle:"" + " font-family:"+widget.
 {/if}
 
 {#each pages as pagesName, i}
-
   {#if selectedTab === i && styleCard != true}
     <table
       style="opacity:{opacity}%; margin-left: 0%; margin-top:{StartPosition}px"
@@ -1798,7 +1785,7 @@ statusStyle = widget.statusStyle?widget.statusStyle:"" + " font-family:"+widget.
                           {!widget.rssi ? "" : "📶"}{!widget.rssi
                             ? ""
                             : widget.rssi}
-                          {!widget.lastseen ? "" : "⏱"}
+                          {!widget.lastseen ? "" : "🕐"}
 
                           {!widget.lastseen ? "" : widget.lastseen}
                         </div>
@@ -1815,42 +1802,34 @@ statusStyle = widget.statusStyle?widget.statusStyle:"" + " font-family:"+widget.
                     <span id="status{i}" style={setStyle(widget, "right")}>
                       ...</span
                     >
-                  {:else}
-                  
-
-
-                  {#if widget.topic.indexOf('weatherCode') > -1}
-                  <span id="status{i}" style={setStyle(widget, "right")}>
-                    {#if widget.status=="113"}                                      
-                    <img src="pic/w1.jpg" >
-                    {:else if widget.status=="116"}
-                    <img src="pic/w2.jpg" >
-                    {:else if widget.status=="119" || widget.status=="122" || widget.status=="143" }
-                    <img src="pic/w4.jpg" >
-                    {:else if widget.status=="179" || widget.status=="182" || widget.status=="185" || widget.status=="311" || widget.status=="314" || widget.status=="317" || widget.status=="320" || widget.status=="362" || widget.status=="365" || widget.status=="368" || widget.status=="377" }
-                    <img src="pic/w5.jpg" >
-                    {:else if widget.status=="323" || widget.status=="326"}
-                    <img src="pic/w6.jpg" >
-                    {:else if widget.status=="176" || widget.status=="263" || widget.status=="266" || widget.status=="293" || widget.status=="296" }
-                    <img src="pic/w7.jpg" >
-                    {:else if widget.status=="248" || widget.status=="260" || widget.status=="299" || widget.status=="302" || widget.status=="305" || widget.status=="308" || widget.status=="356" || widget.status=="359"}
-                    <img src="pic/w8.jpg" >
-                    {:else if widget.status=="200" || widget.status=="227" || widget.status=="374" || widget.status=="386" || widget.status=="389" || widget.status=="392" }
-                    <img src="pic/w9.jpg" >
-                    {:else }
-                    <img src="pic/w0.jpg" >
-                    {/if}
-                  
-                  </span>
+                  {:else if widget.topic.indexOf("weatherCode") > -1}
+                    <span id="status{i}" style={setStyle(widget, "right")}>
+                      {#if widget.status == "113"}
+                        <img src="pic/w1.jpg" />
+                      {:else if widget.status == "116"}
+                        <img src="pic/w2.jpg" />
+                      {:else if widget.status == "119" || widget.status == "122" || widget.status == "143"}
+                        <img src="pic/w4.jpg" />
+                      {:else if widget.status == "179" || widget.status == "182" || widget.status == "185" || widget.status == "311" || widget.status == "314" || widget.status == "317" || widget.status == "320" || widget.status == "362" || widget.status == "365" || widget.status == "368" || widget.status == "377"}
+                        <img src="pic/w5.jpg" />
+                      {:else if widget.status == "323" || widget.status == "326"}
+                        <img src="pic/w6.jpg" />
+                      {:else if widget.status == "176" || widget.status == "263" || widget.status == "266" || widget.status == "293" || widget.status == "296"}
+                        <img src="pic/w7.jpg" />
+                      {:else if widget.status == "248" || widget.status == "260" || widget.status == "299" || widget.status == "302" || widget.status == "305" || widget.status == "308" || widget.status == "356" || widget.status == "359"}
+                        <img src="pic/w8.jpg" />
+                      {:else if widget.status == "200" || widget.status == "227" || widget.status == "374" || widget.status == "386" || widget.status == "389" || widget.status == "392"}
+                        <img src="pic/w9.jpg" />
+                      {:else}
+                        <img src="pic/w0.jpg" />
+                      {/if}
+                    </span>
                   {:else}
                     <span id="status{i}" style={setStyle(widget, "right")}>
                       {!widget.status ? "" : widget.status}{!widget.after
                         ? ""
                         : widget.after}
                     </span>
-                  
-                    {/if}
-
                   {/if}
                 </td>
               {/if}
@@ -1922,26 +1901,30 @@ statusStyle = widget.statusStyle?widget.statusStyle:"" + " font-family:"+widget.
                       </div></span
                     >
                   </td>
-                  {:else if widget.type === "date"}
+                {:else if widget.type === "date"}
                   <td align="right">
                     <span id="status{i}" style={setStyle(widget, "right")}>
                       <div style="display:inline-block">
-                      <input
-                      on:change={((widget["send"] = true),
-                      WSpush(widget.socket, widget.topic, widget.status))}
-                      size="30"
-                      bind:value = {widget.status}
-                        
-                                               
-                      />
-                      <button   on:click={((widget["send"] = true),
-                      GetChart(widget.socket, widget.topic, 5))}>5d</button>
-                      <button   on:click={((widget["send"] = true),
-                      GetChart(widget.socket, widget.topic, 3))}>3d</button>
+                        <input
+                          on:change={((widget["send"] = true),
+                          WSpush(widget.socket, widget.topic, widget.status))}
+                          size="30"
+                          bind:value={widget.status}
+                        />
+                        <button
+                          on:click={((widget["send"] = true),
+                          GetChart(widget.socket, widget.topic, 5))}>5d</button
+                        >
+                        <button
+                          on:click={((widget["send"] = true),
+                          GetChart(widget.socket, widget.topic, 3))}>3d</button
+                        >
 
-                      <button   on:click={((widget["send"] = true),
-                      GetChart(widget.socket, widget.topic, 1))}>1day</button>
-                     
+                        <button
+                          on:click={((widget["send"] = true),
+                          GetChart(widget.socket, widget.topic, 1))}
+                          >1day</button
+                        >
                       </div>
                     </span>
                   </td>
@@ -2046,16 +2029,15 @@ statusStyle = widget.statusStyle?widget.statusStyle:"" + " font-family:"+widget.
                         <ChartJS element={widget} /></span
                       >
                     {:else if !widget.topic.includes("_1")}
-                        <!--
+                      <!--
                         <span id="lable{i}" style={setStyle(widget, "left")}>
                         {widget.descr}</span
                       >
                         -->
                       <span id="status{i}" style={setStyle(widget, "centr")}>
-                        
                         <div style="padding-left: 15px; padding-right: 10px">
                           <ChartJS element={widget} />
-                  </div>  
+                        </div>
 
                         <!--
                           <Chart
@@ -2069,7 +2051,6 @@ statusStyle = widget.statusStyle?widget.statusStyle:"" + " font-family:"+widget.
                           height="300"
                         />
                       -->
-                       
                       </span>
                     {/if}
                   {/if}
